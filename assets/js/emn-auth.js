@@ -259,9 +259,9 @@ function emnInjectAdminMenu(){
     <a href="#" class="emn-nav__link">Administrar</a>
     <button class="emn-nav__caret" aria-label="Abrir submenú de Administrar" aria-expanded="false">&#9662;</button>
     <div class="emn-nav__dropdown">
-      <a href="https://zareenterprises.github.io/usuarios" class="emn-nav__dropdown-item">Usuarios</a>
-      <a href="https://zareenterprises.github.io/actividad" class="emn-nav__dropdown-item">Actividad</a>
-      <a href="https://zareenterprises.github.io/admin-calendar" class="emn-nav__dropdown-item">Calendar</a>
+      <a href="/usuarios" class="emn-nav__dropdown-item">Usuarios</a>
+      <a href="/actividad" class="emn-nav__dropdown-item">Actividad</a>
+      <a href="/admin-calendar" class="emn-nav__dropdown-item">Calendar</a>
     </div>
   `;
   nav.appendChild(item);
@@ -301,9 +301,9 @@ function emnInjectCareerMenu(){
     <a href="#" class="emn-nav__link">Clases</a>
     <button class="emn-nav__caret" aria-label="Abrir submenú de Clases" aria-expanded="false">&#9662;</button>
     <div class="emn-nav__dropdown">
-      <a href="https://zareenterprises.github.io/career" class="emn-nav__dropdown-item ${path === '/career' ? 'is-active' : ''}">Calendar</a>
-      <a href="https://zareenterprises.github.io/clases-interview-prep" class="emn-nav__dropdown-item ${path === '/clases-interview-prep' ? 'is-active' : ''}">Interview Prep</a>
-      <a href="https://zareenterprises.github.io/career-progress" class="emn-nav__dropdown-item ${path === '/career-progress' ? 'is-active' : ''}">Career Progress</a>
+      <a href="/career" class="emn-nav__dropdown-item ${path === '/career' ? 'is-active' : ''}">Calendar</a>
+      <a href="/clases-interview-prep" class="emn-nav__dropdown-item ${path === '/clases-interview-prep' ? 'is-active' : ''}">Interview Prep</a>
+      <a href="/career-progress" class="emn-nav__dropdown-item ${path === '/career-progress' ? 'is-active' : ''}">Career Progress</a>
     </div>
   `;
   nav.appendChild(item);
