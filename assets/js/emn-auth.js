@@ -16,7 +16,21 @@
 const EMN_SUPABASE_URL = 'https://gpoddvcrsdkpgfmyniqu.supabase.co';
 const EMN_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb2RkdmNyc2RrcGdmbXluaXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0Nzc3MzksImV4cCI6MjEwNTA1MzczOX0.N9XvN4xdln5GFlTcpv3nE3iThH7Jfoym23HPp97_fxc';
 
-const emnSupabase = window.supabase.createClient(EMN_SUPABASE_URL, EMN_SUPABASE_ANON_KEY);
+// Email links (password reset, invite) land on whichever page Supabase's "Site
+// URL" points to whenever the requested redirect isn't on the project's
+// Redirect URLs allow-list — often the home page. Forward them to the login
+// page, the only one that knows how to finish the flow, before anything here
+// swallows the tokens in the URL.
+const emnAuthHash = new URLSearchParams(location.hash.slice(1));
+const emnForwardToLogin = ['recovery', 'invite'].includes(emnAuthHash.get('type'))
+  && emnAuthHash.get('access_token')
+  && !location.pathname.startsWith('/emn-login');
+if(emnForwardToLogin) location.replace('/emn-login' + location.hash);
+
+const emnSupabase = window.supabase.createClient(
+  EMN_SUPABASE_URL, EMN_SUPABASE_ANON_KEY,
+  emnForwardToLogin ? { auth: { detectSessionInUrl: false } } : undefined
+);
 
 let emnSession = null;
 let emnStudentProfile = null; // row from `students` — null until signed in AND loaded

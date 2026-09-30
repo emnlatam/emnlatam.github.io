@@ -10,19 +10,24 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/assets/js/emn-auth.js?v={{ site.time | date: '%s' }}"></script>
 </head>
-<body>
+<body class="has-cta-bar">
 <div class="wrap">
 
-{% include emn-header.html %}
+<div class="home-hero">
+    {% include emn-header.html variant="dark" %}
+
+    <section class="hero-dark">
+      <div class="hero-dark__inner">
+        <p class="hero-dark__eyebrow">Alumnos becados de Berklee ayudándote a ganar la tuya también.</p>
+        <h1>Sé uno de ellos.</h1>
+        <p class="hero-dark__sub">La primera academia online de preparación para postular a Berklee, creada por estudiantes y graduados de Berklee.</p>
+      </div>
+      {% assign hero_photo = site.static_files | where: "path", "/assets/img/hero.png" | first %}
+      {% if hero_photo %}<img class="hero-dark__photo" src="/assets/img/hero.png" alt="">{% endif %}
+    </section>
+  </div>
 
   <main>
-    <section class="hero">
-      <div class="hero__inner">
-        <p class="hero__eyebrow">EMN</p>
-        <h1>Escuela de Música y Negocios</h1>
-        <p>Alumnos becados de Berklee ayudándote a ganar una ti también.</p>
-      </div>
-    </section>
 
     <section class="band">
       <div class="band__inner">
@@ -111,6 +116,11 @@
     </div>
   </footer>
 
+</div>
+
+<div class="cta-bar" role="region" aria-label="Evaluación gratuita">
+  <p>Obtén una evaluación gratuita y un plan de trabajo para tu audición a Berklee.</p>
+  <a href="/feedback" class="cta-bar__btn">Postular</a>
 </div>
 
 <script>
