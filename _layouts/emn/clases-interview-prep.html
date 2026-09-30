@@ -448,7 +448,7 @@ function renderPreguntasStepper(){
       if(prelimAnswers[p.key]) prelimAnswers[p.key].ai_summary = summary;
     } catch(err){
       console.error(err);
-      alert('No se pudo generar la conclusión — probá de nuevo en un momento.');
+      emnAlert('No se pudo generar la conclusión — prueba de nuevo en un momento.');
     }
     btn.disabled = false;
     btn.textContent = 'Generar conclusión con AI';
@@ -525,7 +525,7 @@ function renderFinalesView(){
             .upsert({ student_id: effectiveStudentId, question_id: fq.id, ai_intro_draft: introDraft, ai_explicacion_draft: explicacionDraft, updated_at: new Date().toISOString() }, { onConflict: 'student_id,question_id' });
         } catch(err){
           console.error(err);
-          alert('No se pudo generar el resumen — probá de nuevo en un momento.');
+          emnAlert('No se pudo generar el resumen — prueba de nuevo en un momento.');
         }
         aiBtn.disabled = false;
         aiBtn.textContent = 'Generar resumen';

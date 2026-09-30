@@ -363,7 +363,7 @@ async function addTodo(){
   const { data, error } = await emnSupabase.from('career_todos').insert({
     user_id: selectedStudentId, date_iso: selectedDateStr, text, category, item_order: existing.length + 1
   }).select();
-  if(error){ alert('Could not add that:\n' + error.message); return; }
+  if(error){ emnAlert('No se pudo añadir: ' + error.message); return; }
   TODOS.push(data[0]);
   input.value = '';
   renderTodoList();

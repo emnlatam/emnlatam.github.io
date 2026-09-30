@@ -109,7 +109,17 @@ function setDirty(v = true){
   dirty = v;
   if(v){ $('#msg').textContent = 'Cambios sin guardar'; $('#msg').className = 'savebar__msg'; }
 }
+// Leaving through any link on the page gets EMN's own modal. Closing the tab
+// or reloading can't be intercepted that way: browsers only allow their own
+// generic prompt there, so that stays as the last-resort safety net.
 addEventListener('beforeunload', e => { if(dirty) e.preventDefault(); });
+document.addEventListener('click', async e => {
+  const a = e.target.closest('a[href]');
+  if(!dirty || !a || a.target === '_blank' || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey) return;
+  e.preventDefault();
+  const ok = await emnConfirm('Tienes cambios sin guardar. Si sales ahora se perderán.', { yesLabel: 'Salir sin guardar', noLabel: 'Seguir editando' });
+  if(ok){ dirty = false; location.href = a.href; }
+});
 
 /* ---------- rendering ---------- */
 function renderList(){
@@ -207,7 +217,7 @@ function renderCourse(){
 
 /* ---------- loading ---------- */
 async function openCourse(id){
-  if(dirty && !(await emnConfirm('Tienes cambios sin guardar. ¿Descartarlos?', { yesLabel: 'Descartar' }))) return;
+  if(dirty && !(await emnConfirm('Tienes cambios sin guardar. ¿Descartarlos?', { yesLabel: 'Descartar', noLabel: 'Seguir editando' }))) return;
   course = { ...courses.find(c => c.id === id) };
   const { data, error } = await emnSupabase.from('course_lessons').select('*, lesson_videos(video_url, quiz)').eq('course_id', id).order('position');
   if(error) console.error(error);
@@ -225,7 +235,7 @@ async function openCourse(id){
 }
 
 async function newCourse(){
-  if(dirty && !(await emnConfirm('Tienes cambios sin guardar. ¿Descartarlos?', { yesLabel: 'Descartar' }))) return;
+  if(dirty && !(await emnConfirm('Tienes cambios sin guardar. ¿Descartarlos?', { yesLabel: 'Descartar', noLabel: 'Seguir editando' }))) return;
   course = { id: newId(), isNew: true, title: '', description: '', cover_url: '', payment_url: '', published: false, position: courses.length + 1 };
   modules = [{ name: '', lessons: [blankLesson('video')] }];
   loadedIds = []; openLessons.clear();

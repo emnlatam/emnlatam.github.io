@@ -23,6 +23,11 @@
   .btn-primary:disabled{ opacity:.6; cursor:default; }
   .error-msg{ display:none; color:var(--red); font-size:12.5px; margin:-4px 0 14px; }
   .error-msg.show{ display:block; }
+  .ok-msg{ display:none; color:#1E8E5A; font-size:12.5px; line-height:1.45; margin:-4px 0 14px; }
+  .ok-msg.show{ display:block; }
+  .hint{ font-size:13px; color:var(--gray-700); line-height:1.5; margin:0 0 16px; }
+  .link-btn{ display:block; margin:14px auto 0; border:none; background:none; padding:4px; font-family:inherit; font-size:12.5px; font-weight:600; color:var(--gray-700); cursor:pointer; }
+  .link-btn:hover{ color:var(--red); }
   .footnote{ text-align:center; font-size:11.5px; color:var(--gray-500); margin:20px 0 0; }
 </style>
 </head>
@@ -46,6 +51,24 @@
       <p class="error-msg" id="error-msg">Ese correo y contraseña no coinciden.</p>
 
       <button type="submit" class="btn-primary" id="submit-btn">Ingresar</button>
+      <button type="button" class="link-btn" id="forgot-link">¿Olvidaste tu contraseña?</button>
+    </form>
+
+    <!-- Password reset: only sends a link to an email that already belongs to
+         an enrolled user. Supabase silently skips unknown addresses, and this
+         form never reveals which is which. -->
+    <form id="forgot-form" style="display:none">
+      <p class="hint">Escribe el correo con el que te inscribiste y te enviaremos un link para crear una nueva contraseña.</p>
+      <div class="field">
+        <label for="forgot-email">Correo</label>
+        <input type="email" id="forgot-email" placeholder="tucorreo@ejemplo.com" autocomplete="username" required>
+      </div>
+
+      <p class="error-msg" id="forgot-error"></p>
+      <p class="ok-msg" id="forgot-ok"></p>
+
+      <button type="submit" class="btn-primary" id="forgot-btn">Enviar link</button>
+      <button type="button" class="link-btn" id="forgot-back">← Volver a ingresar</button>
     </form>
 
     <!-- Shown instead of the form above when arriving from an invite email
@@ -90,9 +113,19 @@
     if(isSettingPassword){
       document.getElementById('login-form').style.display = 'none';
       document.getElementById('set-password-form').style.display = '';
-      document.getElementById('eyebrow').textContent = 'Último paso';
-      document.getElementById('heading').innerHTML = 'Elige tu<br><span>contraseña</span>';
+      if(hashParams.get('type') === 'recovery'){
+        document.getElementById('eyebrow').textContent = 'Recuperar acceso';
+        document.getElementById('heading').innerHTML = 'Crea tu nueva<br><span>contraseña</span>';
+      } else {
+        document.getElementById('eyebrow').textContent = 'Último paso';
+        document.getElementById('heading').innerHTML = 'Elige tu<br><span>contraseña</span>';
+      }
     } else {
+      // An expired or already-used email link comes back as #error_code=otp_expired.
+      if(hashParams.get('error_code')){
+        errorMsg.textContent = 'Ese link ya expiró o ya se usó. Pide uno nuevo con "¿Olvidaste tu contraseña?".';
+        errorMsg.classList.add('show');
+      }
       // Sign-in is optional across EMN — but if there's already a session,
       // no reason to show the form again.
       supabaseClient.auth.getSession().then(({ data }) => {
@@ -137,6 +170,50 @@
 
       await supabaseClient.from('students').update({ status: 'active' }).eq('id', session.user.id);
       window.location.href = '/practice-lab';
+    });
+
+    /* ---------- forgot password ---------- */
+    const forgotForm = document.getElementById('forgot-form');
+    const showForgot = (on) => {
+      form.style.display = on ? 'none' : '';
+      forgotForm.style.display = on ? '' : 'none';
+      document.getElementById('eyebrow').textContent = on ? 'Recuperar acceso' : 'Acceso de alumnos';
+      if(on){
+        document.getElementById('forgot-email').value = document.getElementById('email').value.trim();
+        document.getElementById('forgot-error').classList.remove('show');
+        document.getElementById('forgot-ok').classList.remove('show');
+        document.getElementById('forgot-email').focus();
+      }
+    };
+    document.getElementById('forgot-link').addEventListener('click', () => showForgot(true));
+    document.getElementById('forgot-back').addEventListener('click', () => showForgot(false));
+
+    forgotForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errEl = document.getElementById('forgot-error'), okEl = document.getElementById('forgot-ok');
+      const btn = document.getElementById('forgot-btn');
+      errEl.classList.remove('show'); okEl.classList.remove('show');
+      btn.disabled = true; btn.textContent = 'Enviando…';
+
+      // Same address the invite emails use, so it's already in this Supabase
+      // project's Redirect URLs allow-list.
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(
+        document.getElementById('forgot-email').value.trim(),
+        { redirectTo: 'https://emnlatam.github.io/emn-login' }
+      );
+
+      if(error){
+        console.error(error);
+        errEl.textContent = error.status === 429
+          ? 'Se enviaron demasiados correos. Espera unos minutos e inténtalo de nuevo.'
+          : 'No se pudo enviar el correo. Inténtalo de nuevo en un momento.';
+        errEl.classList.add('show');
+      } else {
+        // Deliberately the same answer whether or not the address is enrolled.
+        okEl.textContent = 'Si ese correo pertenece a un alumno inscrito, te enviamos un link para crear una nueva contraseña. Revisa también tu carpeta de spam.';
+        okEl.classList.add('show');
+      }
+      btn.disabled = false; btn.textContent = 'Enviar link';
     });
 
     form.addEventListener('submit', async (e) => {

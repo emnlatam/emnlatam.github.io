@@ -128,26 +128,57 @@ function emnEnsureModalStyles(){
   document.head.appendChild(style);
 }
 
+const emnEsc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+
 // In-page replacement for window.confirm() — returns a Promise<boolean>.
+// House rule: every popup on this site is one of these in-page modals, never
+// the browser's native alert()/confirm()/prompt().
 function emnConfirm(message, { yesLabel = 'Sí', noLabel = 'Cancelar' } = {}){
   emnEnsureModalStyles();
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
     overlay.className = 'emn-modal-overlay';
     overlay.innerHTML = `
-      <div class="emn-modal-box">
-        <h3>${message}</h3>
+      <div class="emn-modal-box" role="dialog" aria-modal="true">
+        <h3>${emnEsc(message)}</h3>
         <div class="emn-modal-actions">
-          <button type="button" class="emn-modal-btn-ghost" id="emn-confirm-no">${noLabel}</button>
-          <button type="button" class="emn-modal-btn-primary" id="emn-confirm-yes">${yesLabel}</button>
+          <button type="button" class="emn-modal-btn-ghost" id="emn-confirm-no">${emnEsc(noLabel)}</button>
+          <button type="button" class="emn-modal-btn-primary" id="emn-confirm-yes">${emnEsc(yesLabel)}</button>
         </div>
       </div>
     `;
     document.body.appendChild(overlay);
-    const cleanup = (result) => { document.body.removeChild(overlay); resolve(result); };
+    const onKey = (e) => { if(e.key === 'Escape') cleanup(false); };
+    const cleanup = (result) => { document.removeEventListener('keydown', onKey); document.body.removeChild(overlay); resolve(result); };
+    document.addEventListener('keydown', onKey);
     overlay.querySelector('#emn-confirm-yes').addEventListener('click', () => cleanup(true));
     overlay.querySelector('#emn-confirm-no').addEventListener('click', () => cleanup(false));
     overlay.addEventListener('click', (e) => { if(e.target === overlay) cleanup(false); });
+    overlay.querySelector('#emn-confirm-yes').focus();
+  });
+}
+
+// In-page replacement for window.alert() — resolves when dismissed.
+function emnAlert(message, { okLabel = 'Entendido' } = {}){
+  emnEnsureModalStyles();
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'emn-modal-overlay';
+    overlay.innerHTML = `
+      <div class="emn-modal-box" role="alertdialog" aria-modal="true">
+        <h3>${emnEsc(message)}</h3>
+        <div class="emn-modal-actions">
+          <button type="button" class="emn-modal-btn-primary" id="emn-alert-ok">${emnEsc(okLabel)}</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    const onKey = (e) => { if(e.key === 'Escape' || e.key === 'Enter') cleanup(); };
+    const cleanup = () => { document.removeEventListener('keydown', onKey); document.body.removeChild(overlay); resolve(); };
+    document.addEventListener('keydown', onKey);
+    overlay.querySelector('#emn-alert-ok').addEventListener('click', cleanup);
+    overlay.addEventListener('click', (e) => { if(e.target === overlay) cleanup(); });
+    overlay.querySelector('#emn-alert-ok').focus();
   });
 }
 
