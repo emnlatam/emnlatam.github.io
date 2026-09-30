@@ -21,6 +21,19 @@
   .who input{ background:var(--paper); border:1px solid var(--gray-300); border-radius:8px; padding:9px 11px; font-size:14px; font-family:inherit; }
   .save-state{ font-size:11.5px; color:var(--gray-500); min-height:1.4em; }
 
+  .overall{ background:var(--paper); border:1px solid var(--gray-300); border-radius:var(--radius); padding:14px 16px 16px; margin-bottom:12px; }
+  .overall-head{ display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:4px 16px; margin-bottom:10px; }
+  .overall-title{ font-family:var(--font-display); font-weight:600; font-size:15.5px; }
+  .overall-pct{ font-family:var(--font-display); font-weight:700; font-size:20px; color:var(--red); }
+  .overall-bar{ height:12px; border-radius:999px; background:var(--gray-300); overflow:hidden; }
+  .overall-fill{ height:100%; width:0; border-radius:999px; background:var(--red); transition:width .3s ease; }
+  .overall-count{ font-size:12px; color:var(--gray-500); margin-top:8px; }
+  .overall.complete{ border-color:#1E8E5A; }
+  .overall.complete .overall-pct, .overall.complete .overall-count{ color:#1E8E5A; }
+  .overall.complete .overall-count{ font-weight:700; }
+  .overall.complete .overall-fill{ background:#1E8E5A; }
+  @media (prefers-reduced-motion: reduce){ .overall-fill{ transition:none; } }
+
   .board{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-bottom:28px; }
   .meter{ all:unset; box-sizing:border-box; cursor:pointer; background:var(--paper); border:1px solid var(--gray-300); border-radius:var(--radius); padding:12px 14px 14px; display:flex; flex-direction:column; gap:8px; min-height:100px; font-family:inherit; }
   .meter:hover{ border-color:var(--red); }
@@ -118,6 +131,7 @@
     </div>
   </header>
 
+  <div class="overall" id="overall"></div>
   <nav class="board" id="board" aria-label="Áreas"></nav>
   <section class="cat" id="cat"></section>
 </div>
@@ -244,7 +258,35 @@ function scheduleSave(){
 }
 
 /* ---------- rendering ---------- */
+// Overall progress counts every stage box across all areas, so partially
+// advanced rows move the bar too; it only hits 100% when every row in every
+// area is on its last stage.
+function renderOverall(){
+  let boxes = 0, filled = 0, total = 0, done = 0;
+  CATS.forEach(c=>{
+    const sf = stageField(c), n = sf.o.length;
+    state.rows[c.id].forEach(r=>{
+      const reached = sf.o.indexOf(r[sf.k]) + 1;
+      boxes += n; filled += reached; total++;
+      if(reached===n) done++;
+    });
+  });
+  const complete = total>0 && done===total;
+  const pct = complete ? 100 : (boxes ? Math.min(99, Math.round(filled/boxes*100)) : 0);
+  const count = !total ? 'Sin elementos' : complete ? `¡Todo completado! ${done} de ${total} elementos` : `${done} de ${total} elementos completados`;
+  const el = $('#overall');
+  el.classList.toggle('complete', complete);
+  if(!el.firstChild){
+    el.innerHTML = `<div class="overall-head"><span class="overall-title">Progreso general</span><span class="overall-pct"></span></div><div class="overall-bar" role="progressbar" aria-label="Progreso general" aria-valuemin="0" aria-valuemax="100"><div class="overall-fill"></div></div><div class="overall-count"></div>`;
+  }
+  el.querySelector('.overall-pct').textContent = pct + '%';
+  el.querySelector('.overall-bar').setAttribute('aria-valuenow', pct);
+  el.querySelector('.overall-fill').style.width = pct + '%';
+  el.querySelector('.overall-count').textContent = count;
+}
+
 function renderBoard(){
+  renderOverall();
   $('#board').innerHTML = CATS.map(c=>{
     const rows = state.rows[c.id], sf = stageField(c), n = sf.o.length;
     const done = rows.filter(r=>r[sf.k]===sf.o[n-1]).length;

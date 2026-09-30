@@ -1,1 +1,3 @@
-﻿supabase/.temp/
+_site
+.sass-cache
+.jekyll-metadata
