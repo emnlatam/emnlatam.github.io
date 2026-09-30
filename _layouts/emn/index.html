@@ -16,7 +16,12 @@
 
 {% include emn-header.html variant="dark" %}
 
-  <section class="hero-dark">
+  {% comment %} Fondo del inicio: el video assets/videos/emnvideohead.mp4 (si no existe, el primer .mp4 de esa carpeta) y, mientras carga, la imagen assets/img/hero-poster.jpg. Sin nada de eso queda el degradado. {% endcomment %}
+  {% assign hero_video = site.static_files | where: "basename", "emnvideohead" | first %}
+  {% unless hero_video %}{% assign hero_video = site.static_files | where: "extname", ".mp4" | where_exp: "f", "f.path contains '/assets/videos/'" | first %}{% endunless %}
+  {% assign hero_poster = site.static_files | where: "basename", "hero-poster" | first %}
+  <section class="hero-dark{% if hero_video or hero_poster %} hero-dark--media{% endif %}"{% if hero_poster %} style="--hero-poster: url('{{ hero_poster.path }}')"{% endif %}>
+    {% if hero_video %}<video class="hero-dark__video" data-src="{{ hero_video.path | uri_escape }}" autoplay muted loop playsinline preload="auto" disablepictureinpicture aria-hidden="true" tabindex="-1"></video>{% endif %}
     <div class="hero-dark__inner">
       <p class="hero-dark__eyebrow">Alumnos becados de Berklee ayudándote a ganar la tuya también.</p>
       <h1>Sé uno de ellos.</h1>
@@ -48,7 +53,7 @@
           <p class="stat__figure stat__figure--red">$76,000</p>
         </div>
       </div>
-      <p class="section__body">Berklee cuesta $418,400 por toda la carrera. Pero con una preparación integral bajo un sistema probado, puedes disminuir tus costos a $76k. Observa el siguiente gráfico.</p>
+      <p class="section__body">El costo total de una carrera en Berklee puede alcanzar los $418,400. Sin embargo, una preparación integral y personalizada puede ayudarte a reducir significativamente el costo final de tu formación. Observa cómo una estrategia adecuada puede hacer la diferencia.</p>
       </div>
       <figure>
         <img src="/assets/img/berkleeCost.png" alt="Comparación de costos: carrera completa en Berklee frente al costo con beca.">
@@ -56,39 +61,128 @@
     </section>
 
     <div class="m-bleed">
-      {% include emn-mentores.html title="Conoce a nuestros mentores, quienes te prepararán para lograr tus sueños" %}
+      {% include emn-mentores.html title="Conoce a nuestros mentores, quienes te prepararán para ingresar a tu universidad soñada" %}
     </div>
 
-    <div class="band--gray">
-      <div class="band-inner">
-        <section class="section">
-          <h2 class="section__title">¿En qué consiste la audición a Berklee?</h2>
-          <p class="section__body">Se conforma de 5 pruebas explicadas a continuación. El tiempo total es entre 30 a 45 minutos, y a veces se puede extender a 1 hora.</p>
-          <figure>
-            <img src="/assets/img/auditionParts.png" alt="Partes que componen la audición a Berklee.">
-          </figure>
-        </section>
+    <div class="band--gray band--wide">
+      <section class="section section--wide section--audition">
+        <div class="section--wide__text">
+          <p class="section__eyebrow">Lo más importante</p>
+          <h2 class="section__title section__title--feature">La audición</h2>
+          <p class="section__body">Ahí tendrás la oportunidad de ganar la beca más grande de toda tu carrera. Te la explicamos.</p>
+        </div>
+        <figure>
+          <img src="/assets/img/auditionParts.png" alt="Las 5 pruebas de la audición a Berklee: Piece Presentation, Ear Training, Sight-Reading, Improvisation e Interview.">
+        </figure>
+      </section>
+    </div>
+
+    <section class="apps-banner" aria-label="Aplicaciones de EMN">
+      <div class="apps-banner__inner">
+        <p class="apps-banner__text">EMN desarrolló sus propias aplicaciones para modernizar la educación musical en Latinoamérica. <strong>¡Comienza a practicar desde ya con nuestras apps!</strong></p>
+        <a href="/practice-lab" class="apps-banner__btn">Ir a Practice Lab</a>
       </div>
-    </div>
-
-    <section class="section">
-      <h2 class="section__title">Prepárate con Nosotros</h2>
-      <p class="section__body">Prepárate y aprende de quienes ya consiguieron una beca en Berklee, y desarrolla las habilidades requeridas y las estrategias no antes compartidas que necesitarás para conseguir la tuya.</p>
-      <p class="section__body">EMN trabaja bajo un sistema propio de entrenamiento (PISEI) enfocado netamente en la audición. Para más información, visita <a href="https://academy.emnlatam.com/" target="_blank" rel="noopener">nuestra página web</a> o escríbenos directamente a <a href="https://wa.me/51986658866" target="_blank" rel="noopener">nuestro WhatsApp</a>.</p>
-      <p class="section__body">Finalmente, si deseas que te evaluemos y te brindemos un plan de trabajo hoy mismo para lograr tu sueño, postula gratuitamente aquí.</p>
-      <div class="btn-row"><a href="/feedback" class="btn">Postular</a></div>
-      <p class="section__note">Esta evaluación nos permitirá saber en qué áreas de la audición necesitas ayuda, y te propondremos un paquete personalizado para conseguirlo.</p>
     </section>
 
-    <section class="section section--center">
-      <h2 class="section__title">¡Comienza a practicar!</h2>
-      <p class="section__body">EMN es la primera escuela que prepara para Berklee de verdad. No solamente es un sistema que integra todas las pruebas con data real de alumnos, no solo te conecta con estudiantes becados para que ellos mismos te preparen, sino que también desarrolla apps para que puedas practicar y prepararte.</p>
-      <p class="section__cta">Dale click a EMN Practice Lab y selecciona qué prueba quieres comenzar a practicar.</p>
-      <div class="btn-row"><a href="/practice-lab" class="btn">EMN Practice Lab</a></div>
-      <p class="section__note">Todos los ejercicios son nivel básico-intermedio, sin embargo audicionar con un nivel avanzado incrementa la oportunidad de obtener una beca.</p>
+    <section class="section section--services">
+      <h2 class="section__title section__title--feature">Clases y mentorías especializadas</h2>
+      <p class="section__body">Brindamos clases y mentorías basadas en cada etapa del proceso de admisión a Berklee. Guiamos a nuestros estudiantes paso a paso, desarrollando las habilidades necesarias para fortalecer su perfil y prepararlos para competir por una oportunidad de beca.</p>
+
+      <div class="services">
+        <article class="service">
+          <h3>Audio &amp; Sight-Read</h3>
+          <p class="service__tag">Clase individual o grupal</p>
+          <p>Entrenamos tu oído de acuerdo con las habilidades que necesitarás para tu audición, junto con tu lectura a primera vista. Además, tendrás acceso a nuestra aplicación web para complementar y reforzar tu entrenamiento.</p>
+        </article>
+        <article class="service">
+          <h3>Piece Preparation &amp; Improvisation</h3>
+          <p class="service__tag">Clase individual</p>
+          <p>Seleccionamos contigo la pieza más adecuada considerando los criterios necesarios para potenciar tu performance. También desarrollamos tus recursos de improvisación en jazz, enseñándote a aplicarlos al estilo musical que elijas.</p>
+        </article>
+        <article class="service">
+          <h3>Interview Preparation</h3>
+          <p class="service__tag">Clase individual</p>
+          <p>A partir de nuestro banco de preguntas basado en el proceso de entrevista, te preparamos paso a paso para comunicar tu historia, objetivos y experiencia de manera auténtica, clara y sólida, demostrando tu potencial artístico.</p>
+        </article>
+        <article class="service">
+          <h3>Individual Advising</h3>
+          <p>Trabajamos en el desarrollo integral de tu perfil como artista, incluyendo aspectos como redes sociales, prensa, televisión, CV, voluntariados y otras experiencias relevantes para tu proceso de admisión. También resolvemos dudas sobre Berklee, la vida en Boston, costos, becas y otros aspectos del proceso.</p>
+        </article>
+      </div>
     </section>
 
   </main>
+
+  {% comment %} Partners: datos en _data/partners.yml, logos en assets/img/partners/<id>.png {% endcomment %}
+  <section class="partners" aria-labelledby="partners-title">
+    <h2 id="partners-title" class="partners__title">Nuestros partners</h2>
+    <ul class="partners__list">
+      {% for p in site.data.partners %}
+      {% assign logo_name = p.logo | default: p.id %}
+      {% assign logo = site.static_files | where: "basename", logo_name | where_exp: "f", "f.path contains '/assets/img/'" | first %}
+      <li class="partner">
+        {% if p.url %}<a class="partner__link" href="{{ p.url }}" target="_blank" rel="noopener" aria-label="{{ p.name }}">{% else %}<div class="partner__link">{% endif %}
+          {% if logo %}<span class="partner__logo"><img src="{{ logo.path }}" alt="" loading="lazy"></span>{% endif %}
+          <span class="partner__name">{{ p.name }}</span>
+          <span class="partner__desc">{{ p.description }}</span>
+        {% if p.url %}</a>{% else %}</div>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  {% comment %} Fondo del cierre: la imagen assets/img/boston.(avif/jpg/png/webp). Sin imagen queda el degradado. {% endcomment %}
+  {% assign boston = site.static_files | where: "basename", "boston" | first %}
+  <section class="end-cta" aria-labelledby="end-cta-title"{% if boston %} style="--end-img: url('{{ boston.path }}')"{% endif %}>
+    <div class="end-cta__inner">
+      <h2 id="end-cta-title" class="end-cta__title">La audición puede cambiar tu vida para siempre.</h2>
+      <p class="end-cta__ask">¿Estás preparado?</p>
+      <button type="button" class="end-cta__btn" data-open-apply>Postula</button>
+      <div class="end-cta__contact">
+        <a class="end-cta__mail" href="mailto:admisiones@emnperu.com">admisiones@emnperu.com</a>
+        <ul class="end-cta__social" aria-label="Redes sociales de EMN">
+          <li><a href="https://www.instagram.com/emn.latam/" target="_blank" rel="noopener" aria-label="Instagram de EMN">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+          </a></li>
+          <li><a href="https://www.linkedin.com/company/110436624/" target="_blank" rel="noopener" aria-label="LinkedIn de EMN">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.94 5a2 2 0 1 1-4-.002 2 2 0 0 1 4 .002zM7 8.48H3V21h4V8.48zm6.32 0H9.34V21h3.94v-6.57c0-3.66 4.77-4 4.77 0V21H22v-7.93c0-6.17-7.06-5.94-8.72-2.91l.04-1.68z"/></svg>
+          </a></li>
+          <li><a href="https://www.tiktok.com/@emn.latam" target="_blank" rel="noopener" aria-label="TikTok de EMN">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+          </a></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <dialog class="apply" id="apply" aria-labelledby="apply-title">
+    <form class="apply__form" id="apply-form" novalidate>
+      <button type="button" class="apply__close" data-close-apply aria-label="Cerrar">✕</button>
+      <h2 id="apply-title" class="apply__title">Postula a EMN</h2>
+      <p class="apply__lead">Completa estos datos y te contactaremos con tu evaluación gratuita.</p>
+
+      <label class="apply__field"><span>Nombre y apellido</span>
+        <input type="text" name="nombre" autocomplete="name" maxlength="120" required></label>
+      <label class="apply__field"><span>Correo</span>
+        <input type="email" name="correo" autocomplete="email" maxlength="200" required></label>
+      <label class="apply__field"><span>WhatsApp</span>
+        <input type="tel" name="whatsapp" autocomplete="tel" maxlength="40" placeholder="+51 986 658 866" required></label>
+      <label class="apply__field"><span>Video tocando</span>
+        <input type="text" name="video" maxlength="500" placeholder="Pega el link de un video tuyo tocando (YouTube, Drive…)" required></label>
+      <input type="text" name="sitio" class="apply__hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+      <p class="apply__msg" id="apply-msg" role="alert" hidden></p>
+      <button type="submit" class="apply__submit" id="apply-submit">Enviar postulación</button>
+      <p class="apply__note">Usaremos tus datos solo para contactarte.</p>
+    </form>
+
+    <div class="apply__done" id="apply-done" hidden>
+      <p class="apply__check" aria-hidden="true">✓</p>
+      <h2 class="apply__title">¡Recibimos tu postulación!</h2>
+      <p class="apply__lead">Gracias por postular. Te escribiremos pronto al WhatsApp que dejaste.</p>
+      <button type="button" class="apply__submit" data-close-apply>Cerrar</button>
+    </div>
+  </dialog>
 
   {% include emn-footer.html %}
 
@@ -131,6 +225,63 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+// The hero video is heavy (~34 MB): phones, "reduce motion" and data-saver
+// users skip it and just get the dark gradient.
+(() => {
+  const v = document.querySelector('.hero-dark__video');
+  if (!v) return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches || !matchMedia('(min-width: 760px)').matches || navigator.connection?.saveData) return;
+  v.addEventListener('playing', () => v.classList.add('is-ready'), { once: true });
+  v.src = v.dataset.src;
+  v.play().catch(() => {});
+})();
+
+// "Postula" opens a short form; each postulación is saved in Supabase
+// (table `postulaciones`, insert-only for visitors).
+(() => {
+  const dlg = document.getElementById('apply');
+  const openers = document.querySelectorAll('[data-open-apply]');
+  if (!dlg) return;
+  // Very old browsers without <dialog>: keep the old destination.
+  if (typeof dlg.showModal !== 'function') {
+    openers.forEach((b) => b.addEventListener('click', () => { location.href = '/feedback'; }));
+    return;
+  }
+  const form = document.getElementById('apply-form'), done = document.getElementById('apply-done');
+  const msg = document.getElementById('apply-msg'), submit = document.getElementById('apply-submit');
+  const fail = (t, field) => { msg.textContent = t; msg.hidden = false; if (field) form.elements[field].focus(); };
+
+  openers.forEach((b) => b.addEventListener('click', () => {
+    form.hidden = false; done.hidden = true; msg.hidden = true;
+    dlg.showModal();
+    form.elements.nombre.focus();
+  }));
+  dlg.addEventListener('click', (e) => { if (e.target === dlg || e.target.closest('[data-close-apply]')) dlg.close(); });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    msg.hidden = true;
+    const f = Object.fromEntries(new FormData(form));
+    const nombre = f.nombre.trim(), correo = f.correo.trim(), whatsapp = f.whatsapp.trim();
+    let video = f.video.trim();
+    if (!/\S+\s+\S+/.test(nombre)) return fail('Escribe tu nombre y apellido.', 'nombre');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return fail('Escribe un correo válido.', 'correo');
+    if (whatsapp.replace(/\D/g, '').length < 7) return fail('Escribe tu número de WhatsApp, con el código de tu país.', 'whatsapp');
+    if (video.length < 3) return fail('Pega el link de tu video tocando.', 'video');
+    if (!/^https?:\/\//i.test(video) && /^[\w.-]+\.[a-z]{2,}/i.test(video)) video = 'https://' + video;
+
+    if (f.sitio) { form.hidden = true; done.hidden = false; return; } // honeypot: bots get a fake success
+    submit.disabled = true; submit.textContent = 'Enviando…';
+    const { error } = await emnSupabase.from('postulaciones').insert({ nombre, correo, whatsapp, video });
+    submit.disabled = false; submit.textContent = 'Enviar postulación';
+    if (error) {
+      console.error(error);
+      return fail('No pudimos enviar tu postulación. Inténtalo de nuevo o escríbenos por WhatsApp.');
+    }
+    form.reset(); form.hidden = true; done.hidden = false;
+  });
+})();
 
 emnInit();
 </script>

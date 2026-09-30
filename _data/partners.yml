@@ -1,0 +1,25 @@
+# Partners — aparecen en el inicio, justo encima del banner final
+# ("La audición puede cambiar tu vida para siempre.").
+#
+# LOGOS: guarda el logo de cada uno en assets/img/partners/ con el nombre igual
+#   a su "id" (ejemplo: assets/img/partners/labs.png; también sirve .jpg, .webp
+#   o .svg). Si todavía no hay logo, se muestra el nombre en texto grande.
+#   logo (opcional): nombre del archivo del logo, sin extensión, si no es igual al
+#     id (ejemplo: logo: berkleeperulogo busca assets/img/berkleeperulogo.png).
+#   url (opcional): si la pones, toda la tarjeta es un enlace.
+
+- id: garcia-consulting
+  name: Garcia Consulting
+  description: Empresa especializada en asesoría migratoria y papeleos para estudiar en Boston y Estados Unidos.
+  url: https://www.instagram.com/garciaconsultingllc/
+
+- id: berklee-peru
+  name: Berklee Peru
+  logo: berkleeperulogo
+  description: Club oficial peruano de Berklee.
+  url: https://www.instagram.com/berkleeperu/
+
+- id: labs
+  name: Labs
+  description: Club oficial latino de Berklee.
+  url: https://www.instagram.com/labsberklee/

@@ -308,6 +308,7 @@ function emnInjectAdminMenu(){
       <a href="/actividad" class="emn-nav__dropdown-item">Actividad</a>
       <a href="/admin-calendar" class="emn-nav__dropdown-item">Calendario de clases</a>
       <a href="/cursos-editor" class="emn-nav__dropdown-item">Editor de cursos</a>
+      <a href="/postulaciones" class="emn-nav__dropdown-item">Postulaciones</a>
     </div>
   `;
   nav.appendChild(item);
