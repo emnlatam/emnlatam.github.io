@@ -14,14 +14,7 @@
 <body>
 <div class="wrap">
 
-<div class="home-top">
-    {% include emn-header.html variant="dark" %}
-
-    <div class="cta-bar" role="region" aria-label="Evaluación gratuita">
-      <p>Obtén una evaluación gratuita y un plan de trabajo para tu audición a Berklee.</p>
-      <a href="https://calendly.com/emnperu/30min" class="cta-bar__btn" target="_blank" rel="noopener">Agendar</a>
-    </div>
-  </div>
+{% include emn-header.html variant="dark" %}
 
   <section class="hero-dark">
     <div class="hero-dark__inner">
@@ -33,18 +26,17 @@
     {% if hero_photo %}<img class="hero-dark__photo" src="/assets/img/hero.png" alt="">{% endif %}
   </section>
 
+  <div class="cta-bar" role="region" aria-label="Evaluación gratuita">
+    <p>Obtén una evaluación gratuita y un plan de trabajo para tu audición a Berklee.</p>
+    <a href="https://calendly.com/emnperu/30min" class="cta-bar__btn" target="_blank" rel="noopener">Agendar</a>
+  </div>
+
   <main>
 
-    <section class="band">
-      <div class="band__inner">
-      <h2>La mejor forma de invertir en tu proyecto musical es <span class="caps">NO</span> gastando todo en la universidad.</h2>
-      <p>Aprende cómo ahorrar +$100k con una beca en la audición.</p>
-      <p class="disclaimer">No estamos afiliados oficialmente a Berklee.</p>
-      </div>
-    </section>
-
-    <section class="section">
-      <h2 class="section__title">El costo de no prepararse correctamente para Berklee</h2>
+    <section class="section section--wide">
+      <div class="section--wide__text">
+      <p class="section__eyebrow">Los números no mienten.</p>
+      <h2 class="section__title section__title--feature">El costo de no prepararse correctamente para Berklee</h2>
       <div class="stats">
         <div class="stat">
           <p class="stat__label">Costo de la carrera completa</p>
@@ -57,13 +49,14 @@
         </div>
       </div>
       <p class="section__body">Berklee cuesta $418,400 por toda la carrera. Pero con una preparación integral bajo un sistema probado, puedes disminuir tus costos a $76k. Observa el siguiente gráfico.</p>
+      </div>
       <figure>
         <img src="/assets/img/berkleeCost.png" alt="Comparación de costos: carrera completa en Berklee frente al costo con beca.">
       </figure>
     </section>
 
     <div class="m-bleed">
-      {% include emn-mentores.html %}
+      {% include emn-mentores.html title="Conoce a nuestros mentores, quienes te prepararán para lograr tus sueños" %}
     </div>
 
     <div class="band--gray">

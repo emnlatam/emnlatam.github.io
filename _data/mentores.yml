@@ -5,6 +5,9 @@
 #   igual a su "id" (ejemplo: assets/img/mentores/diego-herrera.jpg; también
 #   sirve .png o .webp). Si todavía no hay foto, se muestran las iniciales.
 #
+# ENCUADRE: si a alguien le cortan la cara en la foto, agrega una línea
+#   photo_position: 30% top   (primer número = horizontal, segundo = vertical)
+#
 # Para agregar un mentor, copia un bloque completo y cambia los textos:
 #   id:       nombre del archivo de la foto y enlace directo (/mentores#id)
 #   summary:  texto corto que va debajo de la foto, en la tarjeta
@@ -53,6 +56,7 @@
 - id: mauricio-felix
   name: Mauricio Félix
   role: Mentor Musical
+  photo_position: 36% top
   summary: Compositor, arreglista y bajista de Lima, radicado en Boston. Egresado de Berklee College of Music en 2025 con un doble grado.
   sections:
     - title: Formación

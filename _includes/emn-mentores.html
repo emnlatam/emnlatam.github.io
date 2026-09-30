@@ -1,10 +1,10 @@
 {% comment %}
   Sección de mentores (tarjetas + biografía desplegable). Se usa en el inicio
-  y en /mentores. Los datos están en _data/mentores.yml; la foto de cada uno
+  y en /mentores. Parámetro opcional: title (el título de la sección). Los datos están en _data/mentores.yml; la foto de cada uno
   va en assets/img/mentores/<id>.jpg (o .png / .webp).
 {% endcomment %}
 <section class="m-team" id="mentores" aria-labelledby="m-team-title">
-  <h2 id="m-team-title" class="m-team__title">Nuestros mentores</h2>
+  <h2 id="m-team-title" class="m-team__title">{{ include.title | default: "Nuestros mentores" }}</h2>
 
   <div class="m-grid" id="mentor-grid">
     {% for m in site.data.mentores %}
@@ -13,7 +13,7 @@
     {% capture initials %}{{ parts.first | slice: 0 }}{{ parts.last | slice: 0 }}{% endcapture %}
     <article class="mentor" id="{{ m.id }}">
       <div class="mentor__photo">
-        {% if photo %}<img src="{{ photo.path }}" alt="Foto de {{ m.name }}" loading="lazy">{% else %}<span class="mentor__initials" aria-hidden="true">{{ initials }}</span>{% endif %}
+        {% if photo %}<img src="{{ photo.path }}" alt="Foto de {{ m.name }}" loading="lazy"{% if m.photo_position %} style="object-position: {{ m.photo_position }}"{% endif %}>{% else %}<span class="mentor__initials" aria-hidden="true">{{ initials }}</span>{% endif %}
         <div class="mentor__caption">
           <h3>{{ m.name }}</h3>
           <p>{{ m.role }}</p>
@@ -24,7 +24,7 @@
         <button type="button" class="mentor__btn" aria-expanded="false" aria-controls="mentor-panel">Ver biografía</button>
       </div>
       <template>
-        <div class="m-panel__photo">{% if photo %}<img src="{{ photo.path }}" alt="">{% else %}<span aria-hidden="true">{{ initials }}</span>{% endif %}</div>
+        <div class="m-panel__photo">{% if photo %}<img src="{{ photo.path }}" alt=""{% if m.photo_position %} style="object-position: {{ m.photo_position }}"{% endif %}>{% else %}<span aria-hidden="true">{{ initials }}</span>{% endif %}</div>
         <div class="m-panel__body">
           <button type="button" class="m-panel__close" data-close>✕ Cerrar</button>
           <p class="m-panel__role">{{ m.role }}</p>

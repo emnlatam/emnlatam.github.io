@@ -2004,7 +2004,7 @@ function emnSetupLiveMode(){
       overlay.innerHTML = `
         <div class="emn-modal-box">
           <h3>Iniciar sesión en vivo</h3>
-          <p style="font-size:13px;color:#555;margin:0 0 16px;">Vos y quien se una van a ver y poder cambiar los mismos filtros y el mismo ejercicio en tiempo real, desde cualquiera de los dos lados. Dictation Mode es la única excepción — cada quien mantiene el suyo.</p>
+          <p style="font-size:13px;color:#555;margin:0 0 16px;">Tú y quien se una van a ver y poder cambiar los mismos filtros y el mismo ejercicio en tiempo real, desde cualquiera de los dos lados. Dictation Mode es la única excepción — cada quien mantiene el suyo.</p>
           <div class="emn-modal-actions">
             <button type="button" class="emn-modal-btn-ghost" id="live-cancel-btn">Cancelar</button>
             <button type="button" class="emn-modal-btn-primary" id="live-start-btn">Iniciar</button>
@@ -2030,7 +2030,7 @@ function emnSetupLiveMode(){
       overlay.innerHTML = `
         <div class="emn-modal-box">
           <h3>Conectado a la sesión ${liveCode}</h3>
-          <p style="font-size:13px;color:#555;margin:0 0 16px;">Vos y tu profesor comparten los mismos filtros y el mismo ejercicio en tiempo real — cualquiera de los dos puede cambiarlos y el otro lo ve al instante. Dictation Mode es solo tuyo.</p>
+          <p style="font-size:13px;color:#555;margin:0 0 16px;">Tú y tu profesor comparten los mismos filtros y el mismo ejercicio en tiempo real — cualquiera de los dos puede cambiarlos y el otro lo ve al instante. Dictation Mode es solo tuyo.</p>
           <div class="emn-modal-actions">
             <button type="button" class="emn-modal-btn-primary" id="live-leave-btn">Salir de la sesión</button>
           </div>
@@ -2059,7 +2059,7 @@ function emnSetupLiveMode(){
       overlay.querySelector('#live-join-btn').addEventListener('click', () => {
         const code = overlay.querySelector('#live-code-input').value.trim().toUpperCase();
         const msg = overlay.querySelector('#live-join-msg');
-        if(!code){ msg.textContent = 'Ingresá un código.'; msg.style.display='block'; msg.style.color='#C8102E'; return; }
+        if(!code){ msg.textContent = 'Ingresa un código.'; msg.style.display='block'; msg.style.color='#C8102E'; return; }
         liveJoinAsFollower(code);
         updateTriggerLabel();
         document.body.removeChild(overlay);
