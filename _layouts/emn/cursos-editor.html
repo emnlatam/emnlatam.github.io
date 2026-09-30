@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es" class="emn-landing">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editor de cursos — EMN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="/assets/css/emn.css?v={{ site.time | date: '%s' }}">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/assets/js/emn-auth.js?v={{ site.time | date: '%s' }}"></script>
+<style>
+  body{ background:var(--gray-100); font-family:var(--font-body); color:var(--ink); margin:0; }
+  button, input, select, textarea{ font-family:inherit; }
+  [hidden]{ display:none !important; }
+
+  .c-top{ position:sticky; top:0; z-index:20; background:var(--paper); border-bottom:1px solid var(--gray-300); display:flex; align-items:center; gap:16px; height:60px; padding:0 20px 0 0; }
+  .c-top__logo img{ height:60px; width:60px; object-fit:cover; }
+  .c-top__title{ font-family:var(--font-display); font-weight:600; font-size:18px; }
+  .c-top__spacer{ flex:1; }
+  .c-top__link{ font-size:13.5px; font-weight:600; color:var(--gray-700); padding:8px 12px; border-radius:6px; white-space:nowrap; }
+  .c-top__link:hover{ background:var(--gray-100); color:var(--ink); }
+  .c-msg{ text-align:center; padding:90px 20px; color:var(--gray-700); }
+  .c-msg a{ color:var(--red); font-weight:600; }
+
+  .ed{ display:grid; grid-template-columns:260px 1fr; gap:24px; max-width:1200px; margin:0 auto; padding:28px 24px 120px; align-items:start; }
+  .ed__list{ background:var(--paper); border:1px solid var(--gray-300); border-radius:var(--radius); padding:8px; position:sticky; top:84px; }
+  .ed__course{ all:unset; box-sizing:border-box; display:block; width:100%; cursor:pointer; padding:10px 12px; border-radius:7px; font-size:14px; line-height:1.35; }
+  .ed__course:hover{ background:var(--gray-100); }
+  .ed__course[aria-current="true"]{ background:var(--red-tint); color:var(--red); font-weight:600; }
+  .ed__course small{ display:block; font-size:11px; font-weight:600; color:var(--gray-500); }
+  .ed__list .btn{ width:100%; margin-top:8px; }
+
+  .panel{ background:var(--paper); border:1px solid var(--gray-300); border-radius:var(--radius); padding:20px 22px; margin-bottom:18px; }
+  .panel h2{ font-family:var(--font-display); font-size:19px; margin:0 0 16px; }
+  .hint{ font-size:12px; color:var(--gray-500); margin:4px 0 0; line-height:1.45; }
+  .field{ margin-bottom:14px; }
+  .field label, .lbl{ display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--gray-500); margin-bottom:5px; }
+  .field input[type=text], .field input[type=number], .field input[type=url], .field textarea, .field select, .in{ width:100%; box-sizing:border-box; background:var(--paper); border:1px solid var(--gray-300); border-radius:8px; padding:9px 11px; font-size:14px; color:var(--ink); }
+  .field textarea{ resize:vertical; min-height:70px; line-height:1.45; }
+  .field input:focus, .field textarea:focus, .field select:focus, .in:focus{ border-color:var(--red); outline:none; }
+  .row{ display:flex; flex-wrap:wrap; gap:14px; }
+  .row > .field{ flex:1; min-width:180px; }
+  .check{ display:inline-flex; align-items:center; gap:7px; font-size:13.5px; font-weight:600; cursor:pointer; }
+
+  .btn{ border:1px solid var(--gray-300); background:var(--paper); border-radius:8px; padding:9px 14px; cursor:pointer; font-weight:600; font-size:13px; color:var(--ink); box-sizing:border-box; }
+  .btn:hover{ border-color:var(--red); color:var(--red); }
+  .btn.primary{ background:var(--red); border-color:var(--red); color:#fff; }
+  .btn.primary:hover{ background:var(--red-dark); color:#fff; }
+  .btn:disabled{ opacity:.5; cursor:default; }
+  .btn.small{ padding:5px 10px; font-size:12px; }
+  .icon{ border:0; background:none; cursor:pointer; color:var(--gray-500); font-size:15px; line-height:1; padding:6px 7px; border-radius:6px; }
+  .icon:hover{ color:var(--red); background:var(--gray-100); }
+  .icon:disabled{ opacity:.3; cursor:default; }
+
+  .mod{ border:1px solid var(--gray-300); border-radius:var(--radius); margin-bottom:14px; overflow:hidden; }
+  .mod__head{ display:flex; align-items:center; gap:8px; background:var(--gray-100); padding:10px 12px; }
+  .mod__n{ font-family:var(--font-display); font-weight:600; font-size:15px; flex-shrink:0; }
+  .mod__head .in{ font-weight:600; }
+  .mod__body{ padding:10px 12px 12px; }
+  .les{ border:1px solid var(--gray-300); border-radius:8px; margin-bottom:8px; }
+  .les > summary{ list-style:none; cursor:pointer; display:flex; align-items:center; gap:8px; padding:8px 8px 8px 12px; font-size:14px; }
+  .les > summary::-webkit-details-marker{ display:none; }
+  .les__title{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; }
+  .les__tag{ font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--gray-500); background:var(--gray-100); padding:2px 8px; border-radius:999px; flex-shrink:0; }
+  .les__tag.free{ color:#1E8E5A; }
+  .les__body{ padding:6px 14px 14px; border-top:1px solid var(--gray-100); }
+  .adds{ display:flex; flex-wrap:wrap; gap:8px; }
+
+  .q{ border:1px solid var(--gray-300); border-radius:8px; padding:12px; margin-bottom:10px; background:var(--gray-100); }
+  .q__head{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .q__n{ font-size:12px; font-weight:700; color:var(--gray-500); flex-shrink:0; }
+  .opt{ display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .opt input[type=radio]{ accent-color:#1E8E5A; width:17px; height:17px; flex-shrink:0; cursor:pointer; }
+
+  .savebar{ position:fixed; left:0; right:0; bottom:0; z-index:30; background:var(--paper); border-top:1px solid var(--gray-300); padding:12px 24px; display:flex; align-items:center; justify-content:flex-end; gap:14px; }
+  .savebar__msg{ font-size:13px; color:var(--gray-700); margin-right:auto; }
+  .savebar__msg.err{ color:var(--red); font-weight:600; }
+  .danger{ color:var(--red); }
+
+  @media (max-width:820px){ .ed{ grid-template-columns:1fr; } .ed__list{ position:static; } }
+</style>
+</head>
+<body>
+
+<header class="c-top">
+  <a href="/emn" class="c-top__logo" aria-label="EMN — Inicio"><img src="/assets/img/emn-logo.png" alt="EMN logo"></a>
+  <span class="c-top__title">Editor de cursos</span>
+  <span class="c-top__spacer"></span>
+  <a href="/cursos" class="c-top__link">← Ver cursos</a>
+</header>
+
+<main id="app"><div class="c-msg">Cargando…</div></main>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const newId = () => crypto.randomUUID();
+
+// `course` is the one being edited; `modules` is its content as a tree
+// (module → lessons → quiz questions). Nothing touches Supabase until
+// "Guardar cambios".
+let courses = [], course = null, modules = [], loadedIds = [], dirty = false;
+const openLessons = new Set();
+
+const blankLesson = kind => ({ id: newId(), kind, title: '', description: '', duration_min: null, is_free: false, video_url: '', quiz: [] });
+const blankQuestion = () => ({ q: '', options: ['', ''], correct: 0 });
+
+function setDirty(v = true){
+  dirty = v;
+  if(v){ $('#msg').textContent = 'Cambios sin guardar'; $('#msg').className = 'savebar__msg'; }
+}
+addEventListener('beforeunload', e => { if(dirty) e.preventDefault(); });
+
+/* ---------- rendering ---------- */
+function renderList(){
+  $('#list').innerHTML = courses.map(c => `<button type="button" class="ed__course" data-course="${c.id}" aria-current="${c.id === course?.id}">${esc(c.title || 'Sin título')}${c.published ? '' : '<small>Borrador</small>'}</button>`).join('')
+    + (course && course.isNew ? `<button type="button" class="ed__course" aria-current="true">${esc(course.title || 'Curso nuevo')}<small>Sin guardar</small></button>` : '')
+    + '<button type="button" class="btn" id="newCourse">+ Nuevo curso</button>';
+}
+
+function questionHTML(q, m, l, k, n){
+  const at = `data-m="${m}" data-l="${l}" data-q="${k}"`;
+  const opts = q.options.map((o, j) => `<div class="opt">
+      <input type="radio" name="ok-${m}-${l}-${k}" ${at} data-o="${j}" data-f="correct"${q.correct === j ? ' checked' : ''} aria-label="Marcar opción ${j + 1} como correcta" title="Respuesta correcta">
+      <input type="text" class="in" ${at} data-o="${j}" data-f="option" value="${esc(o)}" placeholder="Opción ${j + 1}">
+      <button type="button" class="icon" ${at} data-o="${j}" data-act="delOpt" aria-label="Quitar opción ${j + 1}" title="Quitar opción"${q.options.length <= 2 ? ' disabled' : ''}>×</button>
+    </div>`).join('');
+  return `<div class="q">
+    <div class="q__head"><span class="q__n">Pregunta ${k + 1} de ${n}</span>
+      <input type="text" class="in" ${at} data-f="q" value="${esc(q.q)}" placeholder="Escribe la pregunta">
+      <button type="button" class="icon" ${at} data-act="delQ" aria-label="Eliminar pregunta ${k + 1}" title="Eliminar pregunta">×</button></div>
+    ${opts}
+    <button type="button" class="btn small" ${at} data-act="addOpt">+ Opción</button>
+  </div>`;
+}
+
+function lessonHTML(les, m, l, count){
+  const at = `data-m="${m}" data-l="${l}"`;
+  const isQuiz = les.kind === 'quiz';
+  const body = isQuiz
+    ? `<span class="lbl">Preguntas</span><p class="hint" style="margin:0 0 10px">Marca con el círculo verde la respuesta correcta de cada pregunta.</p>
+       ${les.quiz.map((q, k) => questionHTML(q, m, l, k, les.quiz.length)).join('')}
+       <button type="button" class="btn small" ${at} data-act="addQ">+ Pregunta</button>`
+    : `<div class="row">
+         <div class="field" style="flex:3"><label>Video</label><input type="text" ${at} data-f="video_url" value="${esc(les.video_url)}" placeholder="/assets/cursos/mi-video.mp4 o un link de YouTube / Vimeo"></div>
+         <div class="field"><label>Duración (min)</label><input type="number" min="0" ${at} data-f="duration_min" value="${esc(les.duration_min)}"></div>
+       </div>`;
+  return `<details class="les" data-id="${les.id}"${openLessons.has(les.id) ? ' open' : ''}>
+    <summary>
+      <span class="les__title">${esc(les.title || (isQuiz ? 'Quiz sin título' : 'Clase sin título'))}</span>
+      ${les.is_free ? '<span class="les__tag free">Gratis</span>' : ''}
+      <span class="les__tag">${isQuiz ? `Quiz · ${les.quiz.length}` : 'Video'}</span>
+      <button type="button" class="icon" ${at} data-act="upL" aria-label="Subir" title="Subir"${m === 0 && l === 0 ? ' disabled' : ''}>↑</button>
+      <button type="button" class="icon" ${at} data-act="downL" aria-label="Bajar" title="Bajar"${m === modules.length - 1 && l === count - 1 ? ' disabled' : ''}>↓</button>
+      <button type="button" class="icon" ${at} data-act="delL" aria-label="Eliminar" title="Eliminar">×</button>
+    </summary>
+    <div class="les__body">
+      <div class="field"><label>Título</label><input type="text" ${at} data-f="title" value="${esc(les.title)}"></div>
+      ${body}
+      <div class="field"><label>Descripción (opcional)</label><textarea ${at} data-f="description" rows="2">${esc(les.description)}</textarea></div>
+      <label class="check"><input type="checkbox" ${at} data-f="is_free"${les.is_free ? ' checked' : ''}> Gratis (se puede ver sin pagar)</label>
+    </div>
+  </details>`;
+}
+
+function renderContent(){
+  $('#content').innerHTML = modules.map((mod, m) => `<div class="mod">
+      <div class="mod__head">
+        <span class="mod__n">${m + 1}.</span>
+        <input type="text" class="in" data-m="${m}" data-f="modName" value="${esc(mod.name)}" placeholder="Nombre del módulo" aria-label="Nombre del módulo ${m + 1}">
+        <button type="button" class="icon" data-m="${m}" data-act="upM" aria-label="Subir módulo" title="Subir módulo"${m === 0 ? ' disabled' : ''}>↑</button>
+        <button type="button" class="icon" data-m="${m}" data-act="downM" aria-label="Bajar módulo" title="Bajar módulo"${m === modules.length - 1 ? ' disabled' : ''}>↓</button>
+        <button type="button" class="icon" data-m="${m}" data-act="delM" aria-label="Eliminar módulo" title="Eliminar módulo">×</button>
+      </div>
+      <div class="mod__body">
+        ${mod.lessons.map((les, l) => lessonHTML(les, m, l, mod.lessons.length)).join('')}
+        <div class="adds">
+          <button type="button" class="btn small" data-m="${m}" data-act="addVideo">+ Clase en video</button>
+          <button type="button" class="btn small" data-m="${m}" data-act="addQuiz">+ Quiz</button>
+        </div>
+      </div>
+    </div>`).join('') + '<button type="button" class="btn" data-act="addM">+ Módulo</button>';
+}
+
+function renderCourse(){
+  if(!course){ $('#main').innerHTML = '<div class="c-msg">Elige un curso de la lista o crea uno nuevo.</div>'; $('#savebar').hidden = true; return; }
+  $('#savebar').hidden = false;
+  $('#deleteCourse').hidden = !!course.isNew;
+  $('#main').innerHTML = `
+    <div class="panel">
+      <h2>Datos del curso</h2>
+      <div class="field"><label for="c-title">Título</label><input id="c-title" type="text" data-c="title" value="${esc(course.title)}"></div>
+      <div class="field"><label for="c-desc">Descripción</label><textarea id="c-desc" data-c="description" rows="3">${esc(course.description)}</textarea></div>
+      <div class="row">
+        <div class="field"><label for="c-cover">Portada (imagen)</label><input id="c-cover" type="text" data-c="cover_url" value="${esc(course.cover_url)}" placeholder="/assets/cursos/portada.jpg"></div>
+        <div class="field"><label for="c-pay">Link de pago (Stripe)</label><input id="c-pay" type="text" data-c="payment_url" value="${esc(course.payment_url)}" placeholder="https://buy.stripe.com/…"></div>
+        <div class="field" style="flex:0 0 90px;min-width:90px"><label for="c-pos">Orden</label><input id="c-pos" type="number" min="0" data-c="position" value="${esc(course.position)}"></div>
+      </div>
+      <label class="check"><input type="checkbox" data-c="published"${course.published ? ' checked' : ''}> Publicado (visible para todos en /cursos)</label>
+    </div>
+    <div class="panel">
+      <h2>Contenido</h2>
+      <div id="content"></div>
+    </div>`;
+  renderContent();
+}
+
+/* ---------- loading ---------- */
+async function openCourse(id){
+  if(dirty && !(await emnConfirm('Tienes cambios sin guardar. ¿Descartarlos?', { yesLabel: 'Descartar' }))) return;
+  course = { ...courses.find(c => c.id === id) };
+  const { data, error } = await emnSupabase.from('course_lessons').select('*, lesson_videos(video_url, quiz)').eq('course_id', id).order('position');
+  if(error) console.error(error);
+  modules = []; openLessons.clear();
+  (data || []).forEach(r => {
+    const v = Array.isArray(r.lesson_videos) ? r.lesson_videos[0] : r.lesson_videos;
+    const name = r.section || '';
+    if(!modules.length || modules[modules.length - 1].name !== name) modules.push({ name, lessons: [] });
+    modules[modules.length - 1].lessons.push({ id: r.id, kind: r.kind, title: r.title, description: r.description || '', duration_min: r.duration_min, is_free: r.is_free, video_url: v?.video_url || '', quiz: v?.quiz || [] });
+  });
+  loadedIds = (data || []).map(r => r.id);
+  setDirty(false); $('#msg').textContent = '';
+  history.replaceState(null, '', '/cursos-editor?c=' + id);
+  renderList(); renderCourse();
+}
+
+async function newCourse(){
+  if(dirty && !(await emnConfirm('Tienes cambios sin guardar. ¿Descartarlos?', { yesLabel: 'Descartar' }))) return;
+  course = { id: newId(), isNew: true, title: '', description: '', cover_url: '', payment_url: '', published: false, position: courses.length + 1 };
+  modules = [{ name: '', lessons: [blankLesson('video')] }];
+  loadedIds = []; openLessons.clear();
+  setDirty(); history.replaceState(null, '', '/cursos-editor');
+  renderList(); renderCourse();
+  $('#c-title').focus();
+}
+
+/* ---------- editing ---------- */
+const lessonAt = d => modules[d.m]?.lessons[d.l];
+
+function onField(el){
+  const d = el.dataset;
+  if(d.c){
+    course[d.c] = el.type === 'checkbox' ? el.checked : (el.type === 'number' ? (el.value === '' ? 0 : Number(el.value)) : el.value);
+    if(d.c === 'title' && course.isNew) renderList();
+    return setDirty();
+  }
+  if(!d.f) return;
+  if(d.f === 'modName') modules[d.m].name = el.value;
+  else {
+    const les = lessonAt(d);
+    if(d.q !== undefined){
+      const q = les.quiz[d.q];
+      if(d.f === 'q') q.q = el.value;
+      else if(d.f === 'option') q.options[d.o] = el.value;
+      else if(d.f === 'correct') q.correct = Number(d.o);
+    }
+    else if(d.f === 'is_free'){ les.is_free = el.checked; }
+    else if(d.f === 'duration_min') les.duration_min = el.value === '' ? null : Number(el.value);
+    else les[d.f] = el.value;
+    if(d.f === 'title') el.closest('.les').querySelector('.les__title').textContent = el.value || 'Sin título';
+  }
+  setDirty();
+}
+
+// Moving a lesson past the edge of its module carries it into the next one.
+function moveLesson(m, l, dir){
+  const from = modules[m].lessons, [les] = from.splice(l, 1);
+  const t = l + dir;
+  if(t >= 0 && t <= from.length) from.splice(t, 0, les);
+  else if(dir < 0) modules[m - 1].lessons.push(les);
+  else modules[m + 1].lessons.unshift(les);
+  if(!from.length) modules.splice(m, 1);
+}
+
+async function onAction(btn){
+  const d = btn.dataset, m = Number(d.m), l = Number(d.l), les = lessonAt(d);
+  switch(d.act){
+    case 'addM': modules.push({ name: '', lessons: [blankLesson('video')] }); openLessons.add(modules[modules.length - 1].lessons[0].id); break;
+    case 'delM':
+      if(!(await emnConfirm(`¿Eliminar el módulo y sus ${modules[m].lessons.length} clases?`, { yesLabel: 'Eliminar' }))) return;
+      modules.splice(m, 1); break;
+    case 'upM': modules.splice(m - 1, 0, modules.splice(m, 1)[0]); break;
+    case 'downM': modules.splice(m + 1, 0, modules.splice(m, 1)[0]); break;
+    case 'addVideo': case 'addQuiz': {
+      const n = blankLesson(d.act === 'addQuiz' ? 'quiz' : 'video');
+      if(n.kind === 'quiz') n.quiz.push(blankQuestion());
+      modules[m].lessons.push(n); openLessons.add(n.id); break;
+    }
+    case 'delL':
+      if(!(await emnConfirm('¿Eliminar esta clase?', { yesLabel: 'Eliminar' }))) return;
+      modules[m].lessons.splice(l, 1); if(!modules[m].lessons.length) modules.splice(m, 1); break;
+    case 'upL': moveLesson(m, l, -1); break;
+    case 'downL': moveLesson(m, l, 1); break;
+    case 'addQ': les.quiz.push(blankQuestion()); break;
+    case 'delQ': les.quiz.splice(d.q, 1); break;
+    case 'addOpt': les.quiz[d.q].options.push(''); break;
+    case 'delOpt': {
+      const q = les.quiz[d.q], o = Number(d.o);
+      q.options.splice(o, 1);
+      if(q.correct === o) q.correct = 0; else if(q.correct > o) q.correct--;
+      break;
+    }
+    default: return;
+  }
+  setDirty(); renderContent();
+}
+
+/* ---------- saving ---------- */
+function problem(){
+  if(!course.title.trim()) return 'El curso necesita un título.';
+  for(const [m, mod] of modules.entries()){
+    if(!mod.name.trim()) return `El módulo ${m + 1} necesita un nombre.`;
+    for(const les of mod.lessons){
+      if(!les.title.trim()) return `Hay una clase sin título en "${mod.name}".`;
+      if(les.kind !== 'quiz') continue;
+      if(!les.quiz.length) return `El quiz "${les.title}" no tiene preguntas.`;
+      for(const [k, q] of les.quiz.entries()){
+        if(!q.q.trim()) return `La pregunta ${k + 1} de "${les.title}" está vacía.`;
+        if(q.options.some(o => !o.trim())) return `La pregunta ${k + 1} de "${les.title}" tiene opciones vacías.`;
+      }
+    }
+  }
+  return null;
+}
+
+async function save(){
+  const bad = problem();
+  if(bad){ $('#msg').textContent = bad; $('#msg').className = 'savebar__msg err'; return; }
+  const btn = $('#save'); btn.disabled = true; btn.textContent = 'Guardando…';
+  try{
+    const ok = r => { if(r.error) throw r.error; };
+    const row = { id: course.id, title: course.title.trim(), description: course.description || null, cover_url: course.cover_url?.trim() || null, payment_url: course.payment_url?.trim() || null, published: !!course.published, position: course.position || 0 };
+    ok(await emnSupabase.from('courses').upsert(row));
+
+    const lessons = [], content = [];
+    modules.forEach(mod => mod.lessons.forEach(les => {
+      const isQuiz = les.kind === 'quiz';
+      lessons.push({ id: les.id, course_id: course.id, section: mod.name.trim(), title: les.title.trim(), description: les.description || null, duration_min: isQuiz ? null : les.duration_min, position: lessons.length + 1, is_free: les.is_free, kind: les.kind });
+      content.push({ lesson_id: les.id, video_url: isQuiz ? null : (les.video_url.trim() || null), quiz: isQuiz ? les.quiz.map(q => ({ q: q.q.trim(), options: q.options.map(o => o.trim()), correct: q.correct })) : null });
+    }));
+    const gone = loadedIds.filter(id => !lessons.some(x => x.id === id));
+    if(gone.length) ok(await emnSupabase.from('course_lessons').delete().in('id', gone));
+    if(lessons.length){
+      ok(await emnSupabase.from('course_lessons').upsert(lessons));
+      ok(await emnSupabase.from('lesson_videos').upsert(content));
+    }
+
+    loadedIds = lessons.map(x => x.id);
+    const i = courses.findIndex(c => c.id === row.id);
+    i < 0 ? courses.push(row) : courses[i] = row;
+    courses.sort((a, b) => a.position - b.position);
+    course = { ...row };
+    setDirty(false);
+    $('#msg').textContent = 'Guardado ✓'; $('#msg').className = 'savebar__msg';
+    history.replaceState(null, '', '/cursos-editor?c=' + row.id);
+    renderList(); $('#deleteCourse').hidden = false;
+  }catch(e){
+    console.error(e);
+    $('#msg').textContent = 'No se pudo guardar: ' + (e.message || 'error desconocido'); $('#msg').className = 'savebar__msg err';
+  }
+  btn.disabled = false; btn.textContent = 'Guardar cambios';
+}
+
+async function deleteCourse(){
+  if(!(await emnConfirm(`¿Eliminar "${course.title}" con todas sus clases y el avance de los alumnos? No se puede deshacer.`, { yesLabel: 'Eliminar' }))) return;
+  const { error } = await emnSupabase.from('courses').delete().eq('id', course.id);
+  if(error){ console.error(error); $('#msg').textContent = 'No se pudo eliminar.'; $('#msg').className = 'savebar__msg err'; return; }
+  courses = courses.filter(c => c.id !== course.id);
+  course = null; setDirty(false); $('#msg').textContent = '';
+  history.replaceState(null, '', '/cursos-editor');
+  renderList(); renderCourse();
+}
+
+/* ---------- boot ---------- */
+async function boot(){
+  if(!['admin','professor'].includes(emnStudentProfile?.role)){
+    $('#app').innerHTML = `<div class="c-msg">Esta página es solo para administradores. ${emnSession ? '' : '<a href="/emn-login">Inicia sesión</a>'}</div>`;
+    return;
+  }
+  const { data, error } = await emnSupabase.from('courses').select('*').order('position').order('created_at');
+  if(error){ console.error(error); $('#app').innerHTML = '<div class="c-msg">No se pudieron cargar los cursos.</div>'; return; }
+  courses = data || [];
+  $('#app').innerHTML = `<div class="ed"><nav class="ed__list" id="list" aria-label="Cursos"></nav><div id="main"></div></div>
+    <div class="savebar" id="savebar" hidden><span class="savebar__msg" id="msg" aria-live="polite"></span>
+      <button type="button" class="btn danger" id="deleteCourse">Eliminar curso</button>
+      <a class="btn" id="viewCourse" href="/cursos">Ver como alumno</a>
+      <button type="button" class="btn primary" id="save">Guardar cambios</button></div>`;
+
+  $('#app').addEventListener('input', e => onField(e.target));
+  $('#app').addEventListener('toggle', e => {
+    if(e.target.classList?.contains('les')) e.target.open ? openLessons.add(e.target.dataset.id) : openLessons.delete(e.target.dataset.id);
+  }, true);
+  $('#app').addEventListener('click', e => {
+    const c = e.target.closest('[data-course]');
+    if(c) return openCourse(c.dataset.course);
+    if(e.target.id === 'newCourse') return newCourse();
+    if(e.target.id === 'save') return save();
+    if(e.target.id === 'deleteCourse') return deleteCourse();
+    if(e.target.id === 'viewCourse' && course && !course.isNew) e.target.href = '/cursos?c=' + course.id + '&as=visitante';
+    const a = e.target.closest('[data-act]');
+    if(a){ e.preventDefault(); onAction(a); }
+  });
+
+  renderList(); renderCourse();
+  const asked = new URLSearchParams(location.search).get('c');
+  if(courses.some(c => c.id === asked)) openCourse(asked);
+}
+
+emnInit().then(boot);
+</script>
+</body>
+</html>

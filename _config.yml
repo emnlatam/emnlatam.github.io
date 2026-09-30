@@ -8,3 +8,10 @@ url: ""
 
 plugins:
   - jekyll-feed
+
+exclude:
+  - supabase
+  - CLAUDE.md
+  - Gemfile
+  - Gemfile.lock
+  - vendor

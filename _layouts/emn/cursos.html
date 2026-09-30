@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="es" class="emn-landing">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cursos — EMN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="/assets/css/emn.css?v={{ site.time | date: '%s' }}">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/assets/js/emn-auth.js?v={{ site.time | date: '%s' }}"></script>
+<style>
+  body{ background:var(--gray-100); font-family:var(--font-body); color:var(--ink); margin:0; }
+  button{ font-family:inherit; }
+
+  /* Own slim top bar — this dashboard deliberately doesn't use the site header */
+  .c-top{ position:sticky; top:0; z-index:20; background:var(--paper); border-bottom:1px solid var(--gray-300); display:flex; align-items:center; gap:16px; height:60px; padding:0 20px 0 0; }
+  .c-top__logo img{ height:60px; width:60px; object-fit:cover; }
+  .c-top__title{ font-family:var(--font-display); font-weight:600; font-size:18px; }
+  .c-top__spacer{ flex:1; }
+  .c-top__link{ font-size:13.5px; font-weight:600; color:var(--gray-700); padding:8px 12px; border-radius:6px; white-space:nowrap; }
+  .c-top__link:hover{ background:var(--gray-100); color:var(--ink); }
+  .c-top__user{ font-size:13px; font-weight:600; background:var(--red); color:#fff; padding:7px 14px; border-radius:999px; white-space:nowrap; max-width:180px; overflow:hidden; text-overflow:ellipsis; }
+  body.is-viewer .c-top{ display:none; }
+
+  .pbar{ height:8px; border-radius:999px; background:var(--gray-300); overflow:hidden; }
+  .pbar > span{ display:block; height:100%; width:0; border-radius:999px; background:var(--red); transition:width .3s ease; }
+  .pbar.done > span{ background:#1E8E5A; }
+
+  .c-msg{ text-align:center; padding:90px 20px; color:var(--gray-700); }
+  .c-msg a{ color:var(--red); font-weight:600; }
+
+  /* ---------- catalog ---------- */
+  .catalog{ max-width:1100px; margin:0 auto; padding:32px 24px 60px; }
+  .catalog h1{ font-family:var(--font-display); font-size:26px; margin:0 0 4px; }
+  .catalog .sub{ font-size:13.5px; color:var(--gray-700); margin:0 0 24px; }
+  .catalog .sub a{ color:var(--red); font-weight:600; }
+  .catalog h2{ font-family:var(--font-display); font-size:18px; margin:32px 0 14px; }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:18px; }
+  .card{ background:var(--paper); border:1px solid var(--gray-300); border-radius:var(--radius); overflow:hidden; display:flex; flex-direction:column; }
+  .card:hover{ border-color:var(--red); box-shadow:0 8px 22px rgba(0,0,0,.08); }
+  .card__cover{ aspect-ratio:16/9; background:var(--red) center/cover no-repeat; display:flex; align-items:center; justify-content:center; text-align:center; padding:18px; color:#fff; font-family:var(--font-display); font-weight:600; font-size:21px; line-height:1.25; position:relative; }
+  .card__badge{ position:absolute; top:10px; right:10px; background:rgba(0,0,0,.65); color:#fff; font-family:var(--font-body); font-size:11px; font-weight:700; padding:4px 9px; border-radius:999px; }
+  .card__body{ padding:14px 16px 16px; display:flex; flex-direction:column; gap:8px; flex:1; }
+  .card__title{ font-family:var(--font-display); font-weight:600; font-size:16.5px; }
+  .card__desc{ font-size:13px; color:var(--gray-700); line-height:1.45; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+  .card__foot{ margin-top:auto; padding-top:6px; font-size:12px; color:var(--gray-500); display:flex; flex-direction:column; gap:6px; }
+
+  /* ---------- viewer ---------- */
+  .viewer{ display:grid; grid-template-columns:350px 1fr; min-height:100vh; }
+  .side{ background:var(--paper); border-right:1px solid var(--gray-300); position:sticky; top:0; height:100vh; display:flex; flex-direction:column; }
+  .side__head{ background:var(--red); color:#fff; padding:18px 24px 22px; }
+  .side__back{ font-size:13.5px; font-weight:600; font-style:italic; opacity:.95; }
+  .side__back:hover{ text-decoration:underline; }
+  .side__title{ font-family:var(--font-display); font-weight:500; font-size:21px; line-height:1.35; margin:22px 0 18px; }
+  .side__prog{ display:flex; align-items:center; gap:14px; font-size:13px; font-weight:700; }
+  .side__prog .pbar{ flex:1; height:4px; background:rgba(255,255,255,.4); }
+  .side__prog .pbar > span, .side__prog .pbar.done > span{ background:#fff; }
+  .side__list{ flex:1; overflow-y:auto; padding:10px 0 20px; }
+  .sec > summary{ list-style:none; cursor:pointer; display:flex; gap:10px; align-items:baseline; padding:16px 24px; font-size:16px; line-height:1.3; }
+  .sec > summary::-webkit-details-marker{ display:none; }
+  .sec > summary::before{ content:'▾'; font-size:11px; color:var(--gray-500); flex-shrink:0; }
+  .sec[open] > summary{ color:var(--red); }
+  .sec[open] > summary::before{ content:'▴'; }
+  .sec__body{ background:var(--gray-100); margin-left:40px; padding:8px 0; }
+  .lesson{ all:unset; box-sizing:border-box; width:100%; cursor:pointer; display:flex; gap:10px; align-items:center; padding:10px 14px 10px 16px; font-size:14.5px; line-height:1.35; position:relative; }
+  .lesson:hover{ color:var(--red); }
+  .lesson[aria-current="true"]::before{ content:''; position:absolute; left:0; top:8px; bottom:8px; width:3px; background:var(--red); }
+  .lesson[aria-current="true"]{ font-weight:600; }
+  .lesson:focus-visible{ outline:2px solid var(--blue); outline-offset:-2px; }
+  .lesson svg{ flex-shrink:0; width:17px; height:17px; color:var(--gray-500); }
+  .lesson__name{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lesson__tag{ flex-shrink:0; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:#1E8E5A; }
+  .lesson__mark{ flex-shrink:0; font-size:14px; font-weight:700; color:var(--red); }
+  .lesson.locked{ color:var(--gray-500); }
+  .side__foot{ border-top:1px solid var(--gray-300); padding:14px 20px; display:flex; flex-direction:column; gap:8px; }
+  .side__preview{ font-size:12px; color:var(--gray-500); text-align:center; }
+  .side__preview a{ color:var(--red); font-weight:600; }
+
+  .stage{ min-width:0; background:var(--paper); }
+  .stage__nav{ display:flex; justify-content:space-around; align-items:center; height:58px; background:var(--gray-100); border-bottom:1px solid var(--gray-300); }
+  .stage__nav button{ all:unset; cursor:pointer; font-size:15px; padding:8px 14px; border-radius:6px; }
+  .stage__nav button:hover{ color:var(--red); }
+  .stage__nav button:disabled{ opacity:.3; cursor:default; color:inherit; }
+  .stage__nav button:focus-visible{ outline:2px solid var(--blue); }
+  .stage__body{ max-width:1180px; margin:0 auto; padding:40px 32px 60px; }
+  .stage__body h1{ font-family:var(--font-body); font-weight:700; font-size:clamp(28px,4vw,46px); line-height:1.15; letter-spacing:-.01em; margin:0 0 30px; }
+  .player{ aspect-ratio:16/9; border-radius:16px; overflow:hidden; background:#111; border:1px solid var(--gray-300); }
+  .player iframe, .player video{ width:100%; height:100%; border:0; display:block; background:#000; }
+  .player__empty{ height:100%; display:flex; align-items:center; justify-content:center; color:#aaa; font-size:14px; }
+  .player--locked{ background:var(--gray-100); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center; padding:24px; }
+  .player--locked svg{ width:44px; height:44px; color:var(--red); }
+  .player--locked h2{ font-family:var(--font-display); font-size:22px; margin:0; }
+  .player--locked p{ font-size:14px; color:var(--gray-700); margin:0 0 6px; max-width:46ch; line-height:1.5; }
+  .actions{ display:flex; flex-wrap:wrap; gap:10px; margin:22px 0 0; align-items:center; }
+  .actions .grow{ flex:1; }
+  .quiz{ border:1px solid var(--gray-300); border-radius:16px; padding:26px 28px 28px; }
+  .quiz__top{ display:flex; flex-wrap:wrap; justify-content:space-between; gap:6px 16px; font-size:13px; font-weight:700; color:var(--gray-500); margin-bottom:16px; }
+  .quiz__ok{ color:#1E8E5A; } .quiz__bad{ color:var(--red); }
+  .quiz__q{ font-family:var(--font-display); font-size:21px; line-height:1.35; margin:0 0 18px; }
+  .quiz__opt{ all:unset; box-sizing:border-box; display:block; width:100%; cursor:pointer; border:1px solid var(--gray-300); border-radius:10px; padding:13px 16px; margin-bottom:10px; font-size:15px; line-height:1.4; }
+  .quiz__opt:hover{ border-color:var(--red); }
+  .quiz__opt:focus-visible{ outline:2px solid var(--blue); outline-offset:2px; }
+  .quiz__opt:disabled{ cursor:default; border-color:var(--gray-300); }
+  .quiz__opt.ok{ border-color:#1E8E5A; background:#E8F5EE; font-weight:600; }
+  .quiz__opt.bad{ border-color:var(--red); background:var(--red-tint); }
+  .quiz__score{ font-family:var(--font-display); font-size:34px; margin:0 0 6px; }
+  .quiz__sum{ font-size:15px; font-weight:700; margin:0 0 20px; display:flex; gap:18px; }
+  .desc{ font-size:15px; line-height:1.65; color:var(--gray-700); white-space:pre-wrap; max-width:75ch; margin:22px 0 0; }
+  .btn{ display:inline-block; border:1px solid var(--gray-300); background:var(--paper); border-radius:8px; padding:10px 16px; cursor:pointer; font-weight:600; font-size:13.5px; color:var(--ink); text-align:center; }
+  .btn:hover{ border-color:var(--red); color:var(--red); }
+  .btn.primary{ background:var(--red); border-color:var(--red); color:#fff; }
+  .btn.primary:hover{ background:var(--red-dark); color:#fff; }
+  .btn.is-done{ border-color:#1E8E5A; color:#1E8E5A; }
+
+  @media (max-width:860px){
+    .viewer{ grid-template-columns:1fr; }
+    .side{ position:static; height:auto; }
+    .side__list{ max-height:45vh; }
+    .stage__body{ padding:26px 18px 50px; }
+    .c-top__user{ display:none; }
+  }
+  @media (prefers-reduced-motion: reduce){ .pbar > span{ transition:none; } }
+</style>
+</head>
+<body>
+
+<header class="c-top">
+  <a href="/emn" class="c-top__logo" aria-label="EMN — Inicio"><img src="/assets/img/emn-logo.png" alt="EMN logo"></a>
+  <span class="c-top__title">Cursos</span>
+  <span class="c-top__spacer"></span>
+  <a href="/emn" class="c-top__link">← Volver a EMN</a>
+  <span class="c-top__user" id="topUser" style="display:none"></span>
+</header>
+
+<main id="app"><div class="c-msg">Cargando…</div></main>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const WA = 'https://wa.me/51986658866?text=';
+const ICON_VIDEO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.5v5l4.5-2.5z" fill="currentColor" stroke="none"/></svg>';
+const ICON_LOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+const ICON_QUIZ = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>';
+
+let courses = [], accessIds = new Set(), doneIds = new Set(), isStaff = false, realStaff = false;
+let course = null, lessons = [], current = null, quizRun = null;
+
+// Staff can add ?as=visitante to see a course exactly as someone who hasn't
+// bought it (locks and pay button) — purely a UI preview.
+const preview = new URLSearchParams(location.search).get('as') === 'visitante';
+const url = (c, l) => '/cursos' + (c ? `?c=${c}` + (l ? `&l=${l}` : '') + (preview ? '&as=visitante' : '') : (preview ? '?as=visitante' : ''));
+
+const me = () => emnSession?.user.id;
+const hasAccess = id => isStaff || (!preview && accessIds.has(id));
+const isLocked = l => !l.is_free && !hasAccess(l.course_id);
+
+// "Desbloquear" goes to the course's Stripe Payment Link, tagged with who is
+// paying so the payment can be matched to an account; until a course has
+// one, it falls back to asking for access over WhatsApp.
+function payUrl(c){
+  if(!c.payment_url) return WA + encodeURIComponent(`Hola, quiero acceso al curso "${c.title}"`);
+  if(!emnSession) return c.payment_url;
+  const u = new URL(c.payment_url);
+  u.searchParams.set('client_reference_id', me());
+  u.searchParams.set('prefilled_email', emnSession.user.email);
+  return u.href;
+}
+
+/* ---------- video ---------- */
+// Accepts a plain share link (YouTube, Vimeo), an embed URL (Bunny Stream,
+// player.vimeo.com, …) or a direct .mp4/.webm file.
+function playerHTML(link){
+  if(!link) return '<div class="player"><div class="player__empty">Esta clase todavía no tiene video.</div></div>';
+  if(/\.(mp4|webm)(\?|$)/i.test(link)) return `<div class="player"><video src="${esc(link)}" controls controlsList="nodownload" playsinline></video></div>`;
+  let src = link, m;
+  if((m = link.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/))([\w-]{11})/))) src = 'https://www.youtube-nocookie.com/embed/' + m[1] + '?rel=0&enablejsapi=1&origin=' + encodeURIComponent(location.origin);
+  else if((m = link.match(/^https?:\/\/(?:www\.)?vimeo\.com\/(\d+)(?:\/(\w+))?/))) src = 'https://player.vimeo.com/video/' + m[1] + (m[2] ? '?h=' + m[2] : '');
+  return `<div class="player"><iframe src="${esc(src)}" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`;
+}
+const lockedHTML = () => `<div class="player player--locked">${ICON_LOCK}
+  <h2>Esta clase está bloqueada</h2>
+  <p>Desbloquea el curso completo para ver esta clase y todas las demás.</p>
+  <a class="btn primary" href="${esc(payUrl(course))}" target="_blank" rel="noopener">Desbloquear curso</a></div>`;
+
+/* ---------- catalog ---------- */
+function cardHTML(c, k = { total:0, done:0, free:0 }){
+  const open = hasAccess(c.id);
+  const cover = c.cover_url ? ` style="background-image:url('${esc(encodeURI(c.cover_url))}')"` : '';
+  const badge = open ? '' : `<span class="card__badge">${k.free ? 'Intro gratis' : 'Bloqueado'}</span>`;
+  const pct = k.total ? Math.round(k.done / k.total * 100) : 0;
+  const clases = `${k.total} ${k.total === 1 ? 'clase' : 'clases'}`;
+  const foot = !k.total ? '<span>Sin clases todavía</span>'
+    : open ? `<div class="pbar${pct === 100 ? ' done' : ''}"><span style="width:${pct}%"></span></div><span>${k.done} de ${clases} · ${pct}%</span>`
+    : `<span>${clases}${k.free ? ` · ${k.free} gratis` : ''}</span>`;
+  return `<a class="card" href="${url(c.id)}"><div class="card__cover"${cover}>${c.cover_url ? '' : esc(c.title)}${badge}</div><div class="card__body"><span class="card__title">${esc(c.title)}</span>${c.description ? `<span class="card__desc">${esc(c.description)}</span>` : ''}<div class="card__foot">${foot}</div></div></a>`;
+}
+
+async function showCatalog(){
+  document.body.classList.remove('is-viewer');
+  document.title = 'Cursos — EMN';
+  const edit = realStaff ? '<p class="sub"><a href="/cursos-editor">Editar cursos</a></p>' : '';
+  if(!courses.length){ $('#app').innerHTML = `<div class="c-msg">Todavía no hay cursos publicados.${edit}</div>`; return; }
+  const counts = {};
+  const { data } = await emnSupabase.from('course_lessons').select('id, course_id, is_free');
+  (data || []).forEach(l => {
+    const k = counts[l.course_id] ||= { total:0, done:0, free:0 };
+    k.total++; if(doneIds.has(l.id)) k.done++; if(l.is_free) k.free++;
+  });
+  const mine = courses.filter(c => hasAccess(c.id)), rest = courses.filter(c => !hasAccess(c.id));
+  const grid = list => `<div class="grid">${list.map(c => cardHTML(c, counts[c.id])).join('')}</div>`;
+  const sub = emnSession ? '' : '<p class="sub"><a href="/emn-login">Inicia sesión</a> para ver los cursos a los que tienes acceso y guardar tu avance.</p>';
+  $('#app').innerHTML = `<div class="catalog">
+    ${edit}
+    ${mine.length ? `<h1>Mis cursos</h1><p class="sub">Retoma donde lo dejaste.</p>${grid(mine)}` : ''}
+    ${rest.length ? `<${mine.length ? 'h2' : 'h1'}>${mine.length ? 'Otros cursos' : 'Cursos'}</${mine.length ? 'h2' : 'h1'}>${mine.length ? '' : sub || '<p class="sub">Empieza gratis con la primera clase.</p>'}${grid(rest)}` : ''}
+  </div>`;
+}
+
+/* ---------- viewer ---------- */
+function renderSide(){
+  const total = lessons.length, done = lessons.filter(l => doneIds.has(l.id)).length;
+  const pct = total ? Math.round(done / total * 100) : 0;
+  const open = hasAccess(course.id);
+
+  // Consecutive lessons sharing a section name become one collapsible module.
+  const secs = [];
+  lessons.forEach(l => {
+    const name = l.section || 'Clases';
+    if(!secs.length || secs[secs.length - 1].name !== name) secs.push({ name, items: [] });
+    secs[secs.length - 1].items.push(l);
+  });
+  const list = secs.map((s, i) => {
+    const items = s.items.map(l => {
+      const locked = isLocked(l), isDone = doneIds.has(l.id);
+      const mark = isDone ? '<span class="lesson__mark" aria-label="Completada">✓</span>'
+        : (l.is_free && !open ? '<span class="lesson__tag">Gratis</span>' : '');
+      return `<button type="button" class="lesson${locked ? ' locked' : ''}" data-id="${l.id}" aria-current="${l.id === current.id}">${locked ? ICON_LOCK : (l.kind === 'quiz' ? ICON_QUIZ : ICON_VIDEO)}<span class="lesson__name" title="${esc(l.title)}">${esc(l.title)}${locked ? '<span style="position:absolute;left:-9999px"> (bloqueada)</span>' : ''}</span>${mark}</button>`;
+    }).join('');
+    // Keep open whichever modules the person already opened, plus the current one.
+    const wasOpen = document.querySelector(`.sec[data-i="${i}"]`)?.open;
+    return `<details class="sec" data-i="${i}"${wasOpen || s.items.includes(current) ? ' open' : ''}><summary>${i + 1}. ${esc(s.name)}</summary><div class="sec__body">${items}</div></details>`;
+  }).join('');
+
+  const foot = (open ? '' : `<a class="btn primary" href="${esc(payUrl(course))}" target="_blank" rel="noopener">Desbloquear curso completo</a>`)
+    + (realStaff ? `<span class="side__preview"><a href="/cursos-editor?c=${course.id}">Editar curso</a> · ${preview ? 'Vista de visitante · <a href="/cursos?c=' + course.id + '">Salir</a>' : '<a href="/cursos?c=' + course.id + '&as=visitante">Ver como visitante</a>'}</span>` : '');
+  $('#side').innerHTML = `
+    <div class="side__head">
+      <a class="side__back" href="${url()}">← Volver a mis cursos</a>
+      <div class="side__title">${esc(course.title)}</div>
+      <div class="side__prog"><div class="pbar" role="progressbar" aria-label="Avance del curso" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></div><span>${pct} %</span></div>
+    </div>
+    <div class="side__list">${list}</div>
+    ${foot ? `<div class="side__foot">${foot}</div>` : ''}`;
+}
+
+function quizHTML(){
+  const qs = current.quiz || [], r = quizRun, n = qs.length;
+  if(!n) return '<div class="quiz"><p class="quiz__q">Este quiz todavía no tiene preguntas.</p></div>';
+  const good = r.answers.filter((a, i) => a === qs[i].correct).length, bad = r.answers.length - good;
+  const tally = `<span><span class="quiz__ok">✓ ${good} correctas</span> · <span class="quiz__bad">✗ ${bad} incorrectas</span></span>`;
+  if(r.i >= n) return `<div class="quiz">
+    <p class="quiz__score">${good} de ${n} correctas</p>
+    <p class="quiz__sum"><span class="quiz__ok">✓ ${good} correctas</span><span class="quiz__bad">✗ ${bad} incorrectas</span></p>
+    <button class="btn" type="button" data-quiz="retry">Volver a intentar</button></div>`;
+  const q = qs[r.i], picked = r.answers[r.i];
+  const opts = q.options.map((o, k) => {
+    const cls = picked === undefined ? '' : (k === q.correct ? ' ok' : (k === picked ? ' bad' : ''));
+    return `<button type="button" class="quiz__opt${cls}" data-opt="${k}"${picked === undefined ? '' : ' disabled'}>${esc(o)}</button>`;
+  }).join('');
+  return `<div class="quiz">
+    <div class="quiz__top"><span>Pregunta ${r.i + 1} de ${n}</span>${tally}</div>
+    <p class="quiz__q">${esc(q.q)}</p>${opts}
+    ${picked === undefined ? '' : `<button class="btn primary" type="button" data-quiz="next">${r.i === n - 1 ? 'Ver resultado' : 'Siguiente pregunta →'}</button>`}</div>`;
+}
+
+// YouTube's player API is what reports "video ended"; it's loaded only the
+// first time a YouTube lesson is opened.
+let ytWaiting = null;
+function whenYouTubeReady(fn){
+  if(window.YT?.Player) return fn();
+  if(!ytWaiting){
+    window.onYouTubeIframeAPIReady = () => ytWaiting?.();
+    document.head.appendChild(Object.assign(document.createElement('script'), { src: 'https://www.youtube.com/iframe_api' }));
+  }
+  ytWaiting = fn;
+}
+
+const canTrack = () => emnSession && !preview && !isLocked(current);
+
+function renderLesson(){
+  const i = lessons.indexOf(current), locked = isLocked(current), isDone = doneIds.has(current.id);
+  const isQuiz = current.kind === 'quiz';
+  // Video files and YouTube mark themselves complete when they finish
+  // playing; other embedded players (Vimeo, Bunny…) can't tell us, so those
+  // keep a manual button.
+  const isAuto = /\.(mp4|webm)(\?|$)|youtu\.?be/i.test(current.video_url || '');
+  const manual = canTrack() && !isQuiz && !isAuto && current.video_url;
+  const first = i === 0 ? ' disabled' : '', last = i === lessons.length - 1 ? ' disabled' : '';
+  if(isQuiz) quizRun = { i: 0, answers: [] };
+  $('#stage').innerHTML = `
+    <div class="stage__nav">
+      <button type="button" data-nav="-1"${first}>‹ anterior</button>
+      <button type="button" data-nav="1"${last}>siguiente ›</button>
+    </div>
+    <div class="stage__body">
+      <h1>${esc(current.title)}</h1>
+      ${locked ? lockedHTML() : (isQuiz ? `<div id="quiz">${quizHTML()}</div>` : playerHTML(current.video_url))}
+      <div class="actions">
+        <button class="btn" type="button" data-nav="-1"${first}>← Anterior</button>
+        ${manual ? `<button class="btn${isDone ? ' is-done' : ''}" id="toggle" type="button">${isDone ? '✓ Completada' : 'Marcar como completada'}</button>` : ''}
+        <span class="grow"></span>
+        <button class="btn primary" type="button" data-nav="1"${last}>Siguiente →</button>
+      </div>
+      ${current.description ? `<div class="desc">${esc(current.description)}</div>` : ''}
+    </div>`;
+  const lesson = current;
+  const onEnded = async () => {
+    if(lesson !== current || !canTrack() || doneIds.has(lesson.id)) return;
+    await setDone(lesson, true); renderSide();
+  };
+  $('#stage video')?.addEventListener('ended', onEnded);
+  const yt = $('#stage iframe[src*="youtube"]');
+  if(yt) whenYouTubeReady(() => new YT.Player(yt, { events: { onStateChange: e => { if(e.data === YT.PlayerState.ENDED) onEnded(); } } }));
+  renderSide();
+  document.title = current.title + ' — ' + course.title;
+}
+
+function go(lesson, push = true){
+  if(!lesson) return;
+  current = lesson;
+  if(push) history.pushState(null, '', url(course.id, lesson.id));
+  renderLesson();
+  window.scrollTo(0, 0);
+}
+
+async function setDone(lesson, done, extra = {}){
+  done ? doneIds.add(lesson.id) : doneIds.delete(lesson.id);
+  const { error } = await (done
+    ? emnSupabase.from('lesson_progress').upsert({ student_id: me(), lesson_id: lesson.id, completed_at: new Date().toISOString(), ...extra })
+    : emnSupabase.from('lesson_progress').delete().eq('student_id', me()).eq('lesson_id', lesson.id));
+  if(error) console.error(error);
+}
+
+async function showViewer(courseId, lessonId){
+  course = courses.find(c => c.id === courseId);
+  if(!course){ history.replaceState(null, '', url()); return showCatalog(); }
+  if(!lessons.length || lessons[0].course_id !== courseId){
+    // lesson_videos is protected by RLS: the link only comes back for free
+    // lessons or for people with access to the course.
+    const { data, error } = await emnSupabase.from('course_lessons').select('*, lesson_videos(video_url, quiz)').eq('course_id', courseId).order('position');
+    if(error) console.error(error);
+    lessons = (data || []).map(l => {
+      const v = Array.isArray(l.lesson_videos) ? l.lesson_videos[0] : l.lesson_videos;
+      return { ...l, video_url: v?.video_url || null, quiz: v?.quiz || [] };
+    });
+  }
+  if(!lessons.length){
+    document.body.classList.remove('is-viewer');
+    $('#app').innerHTML = `<div class="c-msg">Este curso todavía no tiene clases. <a href="${url()}">Volver a mis cursos</a></div>`;
+    return;
+  }
+  document.body.classList.add('is-viewer');
+  $('#app').innerHTML = '<div class="viewer"><nav class="side" id="side" aria-label="Clases del curso"></nav><div class="stage" id="stage"></div></div>';
+  // Open the requested lesson, else the first unlocked one not yet completed
+  // (for a newcomer that's the free intro).
+  current = lessons.find(l => l.id === lessonId) || lessons.find(l => !isLocked(l) && !doneIds.has(l.id)) || lessons[0];
+  renderLesson();
+}
+
+$('#app').addEventListener('click', async e => {
+  const item = e.target.closest('.lesson');
+  if(item){ go(lessons.find(l => l.id === item.dataset.id)); return; }
+  const nav = e.target.closest('[data-nav]');
+  if(nav){ go(lessons[lessons.indexOf(current) + Number(nav.dataset.nav)]); return; }
+  const opt = e.target.closest('[data-opt]');
+  if(opt){ quizRun.answers[quizRun.i] = Number(opt.dataset.opt); $('#quiz').innerHTML = quizHTML(); return; }
+  const qb = e.target.closest('[data-quiz]');
+  if(qb){
+    if(qb.dataset.quiz === 'retry') quizRun = { i: 0, answers: [] };
+    else quizRun.i++;
+    $('#quiz').innerHTML = quizHTML();
+    const qs = current.quiz;
+    if(quizRun.i >= qs.length && canTrack()){
+      await setDone(current, true, { score: quizRun.answers.filter((a, k) => a === qs[k].correct).length, total: qs.length });
+      renderSide();
+    }
+    return;
+  }
+  if(e.target.id === 'toggle'){ await setDone(current, !doneIds.has(current.id)); renderLesson(); }
+});
+
+function route(){
+  const p = new URLSearchParams(location.search);
+  return p.get('c') ? showViewer(p.get('c'), p.get('l')) : showCatalog();
+}
+window.addEventListener('popstate', route);
+
+async function boot(){
+  realStaff = ['admin','professor'].includes(emnStudentProfile?.role);
+  isStaff = realStaff && !preview;
+  if(emnSession){
+    $('#topUser').textContent = emnStudentProfile?.full_name || emnSession.user.email;
+    $('#topUser').style.display = '';
+  }
+  const [c, a, p] = await Promise.all([
+    emnSupabase.from('courses').select('*').order('position').order('created_at'),
+    emnSession ? emnSupabase.from('course_access').select('course_id').eq('student_id', me()) : { data: [] },
+    emnSession ? emnSupabase.from('lesson_progress').select('lesson_id').eq('student_id', me()) : { data: [] }
+  ]);
+  if(c.error){
+    console.error(c.error);
+    $('#app').innerHTML = '<div class="c-msg">No se pudieron cargar los cursos. Intenta de nuevo más tarde.</div>';
+    return;
+  }
+  courses = c.data || [];
+  accessIds = new Set((a.data || []).map(r => r.course_id));
+  doneIds = new Set((p.data || []).map(r => r.lesson_id));
+  route();
+}
+
+emnInit().then(boot);
+</script>
+</body>
+</html>

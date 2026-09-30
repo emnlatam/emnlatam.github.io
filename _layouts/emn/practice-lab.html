@@ -13,27 +13,7 @@
 <body>
 <div class="wrap">
 
-  <header class="emn-header">
-    <div class="emn-header__inner">
-      <a href="/emn" class="emn-logo">
-        <img src="/assets/img/emn-logo.png" alt="EMN logo">
-      </a>
-      <nav class="emn-nav">
-        <a href="/emn" class="emn-nav__link">Home</a>
-        <div class="emn-nav__item">
-          <a href="/practice-lab" class="emn-nav__link is-active">EMN Practice Lab</a>
-          <button class="emn-nav__caret" aria-label="Abrir submenú de EMN Practice Lab" aria-expanded="false">&#9662;</button>
-          <div class="emn-nav__dropdown">
-            <a href="/sight-melody" class="emn-nav__dropdown-item">Sight reading &amp; Audio Practice</a>
-            <a href="/interview-prep" class="emn-nav__dropdown-item">Berklee Interview Prep</a>
-            <span class="emn-nav__dropdown-item is-disabled">Berklee Improvisation Practice <span class="soon">Pronto</span></span>
-            <span class="emn-nav__dropdown-item is-disabled">Berklee Piece &amp; Impro <span class="soon">Pronto</span></span>
-          </div>
-        </div>
-        <a href="/feedback" class="emn-nav__link">Obtén Feedback</a>
-        <a href="https://www.instagram.com/emn.latam/" class="emn-nav__link emn-nav__link--external" target="_blank" rel="noopener">Nosotros</a>      </nav>
-    </div>
-  </header>
+{% include emn-header.html %}
 
   <main class="lab">
     <div class="lab__intro">

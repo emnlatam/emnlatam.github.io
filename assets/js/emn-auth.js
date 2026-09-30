@@ -51,7 +51,7 @@ function emnInjectAuthLink(){
     const authLink = document.createElement('a');
     authLink.className = 'emn-nav__link';
     authLink.href = '/emn-login';
-    authLink.textContent = 'Log in';
+    authLink.textContent = 'Iniciar sesión';
     nav.appendChild(authLink);
     return;
   }
@@ -261,7 +261,8 @@ function emnInjectAdminMenu(){
     <div class="emn-nav__dropdown">
       <a href="/usuarios" class="emn-nav__dropdown-item">Usuarios</a>
       <a href="/actividad" class="emn-nav__dropdown-item">Actividad</a>
-      <a href="/admin-calendar" class="emn-nav__dropdown-item">Calendar</a>
+      <a href="/admin-calendar" class="emn-nav__dropdown-item">Calendario de clases</a>
+      <a href="/cursos-editor" class="emn-nav__dropdown-item">Editor de cursos</a>
     </div>
   `;
   nav.appendChild(item);
@@ -283,7 +284,23 @@ function emnInjectAdminMenu(){
   });
 }
 
-// "Clases" dropdown (Calendar, Interview Prep) — any signed-in person
+// Signed-in people get "Interview Prep" in the Practice Lab dropdown split
+// into two sub-items: Practice (the public tool) and Questions (their own
+// saved answers). Signed-out visitors keep the single link from
+// _includes/emn-header.html, straight to /interview-prep.
+function emnSplitInterviewLink(){
+  if(!emnSession) return;
+  const link = document.querySelector('.emn-nav [data-emn-interview]');
+  if(!link) return;
+  const path = location.pathname.replace(/\/$/, '');
+  link.outerHTML = `
+    <span class="emn-nav__dropdown-label">Interview Prep</span>
+    <a href="/interview-prep" class="emn-nav__dropdown-item emn-nav__dropdown-item--sub ${path === '/interview-prep' ? 'is-active' : ''}">Practice</a>
+    <a href="/clases-interview-prep" class="emn-nav__dropdown-item emn-nav__dropdown-item--sub ${path === '/clases-interview-prep' ? 'is-active' : ''}">Questions</a>
+  `;
+}
+
+// "Mi Aula" dropdown (Calendario, Career Progress) — any signed-in person
 // (student, professor or admin), never shown to a signed-out visitor since
 // everything underneath it is personal, per-account data. Built by hand for
 // the same reason as emnInjectAdminMenu(): it's injected after the shared
@@ -298,11 +315,10 @@ function emnInjectCareerMenu(){
   const item = document.createElement('div');
   item.className = 'emn-nav__item';
   item.innerHTML = `
-    <a href="#" class="emn-nav__link">Clases</a>
-    <button class="emn-nav__caret" aria-label="Abrir submenú de Clases" aria-expanded="false">&#9662;</button>
+    <a href="#" class="emn-nav__link">Mi Aula</a>
+    <button class="emn-nav__caret" aria-label="Abrir submenú de Mi Aula" aria-expanded="false">&#9662;</button>
     <div class="emn-nav__dropdown">
-      <a href="/career" class="emn-nav__dropdown-item ${path === '/career' ? 'is-active' : ''}">Calendar</a>
-      <a href="/clases-interview-prep" class="emn-nav__dropdown-item ${path === '/clases-interview-prep' ? 'is-active' : ''}">Interview Prep</a>
+      <a href="/career" class="emn-nav__dropdown-item ${path === '/career' ? 'is-active' : ''}">Calendario</a>
       <a href="/career-progress" class="emn-nav__dropdown-item ${path === '/career-progress' ? 'is-active' : ''}">Career Progress</a>
     </div>
   `;
@@ -327,8 +343,13 @@ function emnInjectCareerMenu(){
 
 async function emnInit(){
   await emnLoadSession();
-  emnInjectAdminMenu();
+  emnSplitInterviewLink();
   emnInjectCareerMenu();
+  emnInjectAdminMenu();
+  // Keep the "Cursos" button right beside the account/login link, after the
+  // dropdowns injected above.
+  const cursos = document.querySelector('.emn-nav .emn-nav__link--cta');
+  if(cursos) cursos.parentElement.appendChild(cursos);
   emnInjectAuthLink();
 }
 

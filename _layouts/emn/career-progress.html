@@ -18,7 +18,9 @@
   header.top h1{ font-family:var(--font-display); font-size:26px; margin:0; }
   .who{ display:flex; flex-direction:column; gap:4px; min-width:min(280px,100%); }
   .who label{ font-size:11px; font-weight:600; color:var(--gray-700); }
-  .who input{ background:var(--paper); border:1px solid var(--gray-300); border-radius:8px; padding:9px 11px; font-size:14px; font-family:inherit; }
+  .who-name{ font-family:var(--font-display); font-weight:600; font-size:16px; }
+  .who select{ cursor:pointer; }
+  .who select{ background:var(--paper); border:1px solid var(--gray-300); border-radius:8px; padding:9px 11px; font-size:14px; font-family:inherit; }
   .save-state{ font-size:11.5px; color:var(--gray-500); min-height:1.4em; }
 
   .overall{ background:var(--paper); border:1px solid var(--gray-300); border-radius:var(--radius); padding:14px 16px 16px; margin-bottom:12px; }
@@ -95,28 +97,7 @@
 </head>
 <body>
 
-<header class="emn-header">
-  <div class="emn-header__inner">
-    <a href="/emn" class="emn-logo">
-      <img src="/assets/img/emn-logo.png" alt="EMN logo">
-    </a>
-    <nav class="emn-nav">
-      <a href="/emn" class="emn-nav__link">Home</a>
-      <div class="emn-nav__item">
-        <a href="/practice-lab" class="emn-nav__link">EMN Practice Lab</a>
-        <button class="emn-nav__caret" aria-label="Abrir submenú de EMN Practice Lab" aria-expanded="false">&#9662;</button>
-        <div class="emn-nav__dropdown">
-          <a href="/sight-melody" class="emn-nav__dropdown-item">Sight reading &amp; Audio Practice</a>
-          <a href="/interview-prep" class="emn-nav__dropdown-item">Berklee Interview Prep</a>
-          <span class="emn-nav__dropdown-item is-disabled">Berklee Improvisation Practice <span class="soon">Pronto</span></span>
-          <span class="emn-nav__dropdown-item is-disabled">Berklee Piece &amp; Impro <span class="soon">Pronto</span></span>
-        </div>
-      </div>
-      <a href="/feedback" class="emn-nav__link">Obtén Feedback</a>
-      <a href="https://www.instagram.com/emn.latam/" class="emn-nav__link emn-nav__link--external" target="_blank" rel="noopener">Nosotros</a>
-    </nav>
-  </div>
-</header>
+{% include emn-header.html %}
 
 <div id="gate-msg" style="display:none"></div>
 
@@ -125,8 +106,9 @@
   <header class="top">
     <h1>Career Progress</h1>
     <div class="who">
-      <label for="student">Nombre del alumno</label>
-      <input id="student" type="text" placeholder="Escribe tu nombre" autocomplete="name">
+      <label for="studentPick">Alumno</label>
+      <select id="studentPick" hidden></select>
+      <div class="who-name" id="studentName"></div>
       <div class="save-state" id="saveState" aria-live="polite"></div>
     </div>
   </header>
@@ -226,8 +208,14 @@ CATS.forEach(c=>{
 });
 
 const LS_KEY = 'emn-career-progress-v1';
-let state = { student:'', current:'social', rows:{} };
-let saveTimer = null, writing = Promise.resolve();
+const blankState = () => ({ student:'', current:'social', rows:{} });
+let state = blankState();
+// Whose tracker is on screen: the signed-in person by default; admin and
+// professor can switch to any student with the dropdown and edit it for them.
+let targetId = null, loadToken = 0;
+let saveTimer = null, pendingSave = null, writing = Promise.resolve();
+const isOwn = () => targetId === emnSession.user.id;
+const lsKey = () => LS_KEY + ':' + targetId;
 const uid = () => Math.random().toString(36).slice(2,10);
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -244,18 +232,25 @@ const stageField = c => c.fields.find(f=>f.t==='stage');
 /* ---------- saving (EMN Supabase, per student_id) ---------- */
 function setSaveState(t){ $('#saveState').textContent = t; }
 function scheduleSave(){
-  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
+  // The browser copy is only a backup of your own tracker — someone else's
+  // (staff editing a student) lives in Supabase alone.
+  if(isOwn()){ try{ localStorage.setItem(lsKey(), JSON.stringify(state)); }catch(e){} }
   clearTimeout(saveTimer);
-  if(!emnSession){ setSaveState('Guardado en este navegador'); return; }
   setSaveState('Guardando…');
-  saveTimer = setTimeout(()=>{
+  const id = targetId, own = isOwn();
+  pendingSave = ()=>{
+    pendingSave = null;
     const snapshot = JSON.parse(JSON.stringify(state));
     writing = writing.then(() => emnSupabase.from('career_progress')
-      .upsert({ student_id: emnSession.user.id, data: snapshot, updated_at: new Date().toISOString() }, { onConflict: 'student_id' }))
-      .then(({error}) => { if(error) throw error; setSaveState('Guardado'); })
-      .catch((e)=>{ console.error(e); setSaveState('Sin conexión: guardado en este navegador'); });
-  }, 700);
+      .upsert({ student_id: id, data: snapshot, updated_at: new Date().toISOString() }, { onConflict: 'student_id' }))
+      .then(({error}) => { if(error) throw error; if(id===targetId) setSaveState('Guardado'); })
+      .catch((e)=>{ console.error(e); if(id===targetId) setSaveState(own ? 'Sin conexión: guardado en este navegador' : 'No se pudo guardar. Revisa tu conexión.'); });
+  };
+  saveTimer = setTimeout(pendingSave, 700);
 }
+// Write any edit still waiting on the debounce right now (before switching
+// student or leaving the page), so it isn't lost.
+function flushSave(){ clearTimeout(saveTimer); if(pendingSave) pendingSave(); }
 
 /* ---------- rendering ---------- */
 // Overall progress counts every stage box across all areas, so partially
@@ -408,7 +403,11 @@ $('#cat').addEventListener('click', e=>{
     renderCat(); renderBoard(); scheduleSave(); showToast('Fila eliminada');
   }
 });
-$('#student').addEventListener('input', e=>{ state.student = e.target.value; scheduleSave(); });
+$('#studentPick').addEventListener('change', e=>{
+  const opt = e.target.selectedOptions[0];
+  loadStudent(opt.value, opt.dataset.name);
+});
+addEventListener('pagehide', flushSave);
 
 let lastDeleted = null, toastTimer = null;
 function showToast(msg){
@@ -448,25 +447,66 @@ async function emnBootTracker(){
     return;
   }
 
-  try{ const saved = JSON.parse(localStorage.getItem(LS_KEY)||'null'); if(saved && saved.rows) state = {...state, ...saved}; }catch(e){}
-  ensureRows();
-  if(!state.student && emnStudentProfile?.full_name) state.student = emnStudentProfile.full_name;
-  $('#student').value = state.student || '';
-  render();
-  setSaveState('Guardado en este navegador');
+  const myId = emnSession.user.id;
+  const myName = emnStudentProfile?.full_name || emnSession.user.email;
+  let startId = myId, startName = myName;
+
+  if(['admin','professor'].includes(emnStudentProfile?.role)){
+    const { data, error } = await emnSupabase.from('students').select('id, full_name, email').eq('role','student').order('full_name');
+    if(error) console.error(error);
+    const pick = $('#studentPick');
+    pick.innerHTML = `<option value="${myId}" data-name="${esc(myName)}">${esc(myName)} (yo)</option>`
+      + (data || []).filter(s=>s.id!==myId).map(s=>{ const n = s.full_name || s.email; return `<option value="${s.id}" data-name="${esc(n)}">${esc(n)}</option>`; }).join('');
+    pick.hidden = false;
+    $('#studentName').hidden = true;
+    // /career-progress?student=<id> opens straight on that student.
+    const asked = new URLSearchParams(location.search).get('student');
+    if(asked && [...pick.options].some(o=>o.value===asked)){
+      pick.value = asked; startId = asked; startName = pick.selectedOptions[0].dataset.name;
+    }
+  } else {
+    $('#studentName').textContent = myName;
+  }
+
   document.getElementById('tracker-body').style.display = 'block';
+  await loadStudent(startId, startName);
+}
+
+async function loadStudent(id, name){
+  flushSave();
+  const token = ++loadToken;
+  targetId = id;
+  state = blankState();
+  lastDeleted = null; $('#toast').classList.remove('show');
+
+  let hadLocal = false;
+  if(isOwn()){
+    // LS_KEY alone is where this was kept before trackers were per-person.
+    try{
+      const saved = JSON.parse(localStorage.getItem(lsKey()) || localStorage.getItem(LS_KEY) || 'null');
+      if(saved && saved.rows){ state = {...state, ...saved}; hadLocal = true; }
+    }catch(e){}
+  }
+  state.student = name;
+  ensureRows();
+  render();
+  setSaveState('Cargando…');
 
   try{
-    const { data, error } = await emnSupabase.from('career_progress').select('data').eq('student_id', emnSession.user.id).maybeSingle();
+    const { data, error } = await emnSupabase.from('career_progress').select('data').eq('student_id', id).maybeSingle();
+    if(token !== loadToken) return;
     if(error) throw error;
     if(data && data.data && data.data.rows){
-      state = {...state, ...data.data};
+      state = {...state, ...data.data, student: name};
       ensureRows();
-      $('#student').value = state.student || '';
       render();
+      setSaveState('Guardado');
+    } else if(hadLocal){
+      scheduleSave(); // only ever saved in this browser so far — push it up
+    } else {
+      setSaveState('');
     }
-    setSaveState('Guardado');
-  }catch(e){ console.error(e); }
+  }catch(e){ console.error(e); setSaveState(isOwn() ? 'Sin conexión: guardado en este navegador' : 'No se pudo cargar. Revisa tu conexión.'); }
 }
 </script>
 
