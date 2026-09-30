@@ -10,7 +10,9 @@ This repo was split off from a combined AMBRA+EMN repo (`zareenterprises.github.
 
 ## Push workflow
 
-The user pushes via **GitHub Desktop**, signed in as the `emnlatam` GitHub account (a different account than the one used for AMBRA — GitHub Desktop only supports one GitHub.com account at a time, so switching projects usually means switching signed-in accounts too). The user writes their own commit messages — don't run `git commit` on their behalf; only stage changes for review. `git push` from a sandboxed/agent shell tends to fail here — expect to hand off pushes to the user.
+The user pushes via **GitHub Desktop**, signed in as the `emnlatam` GitHub account (a different account than the one used for AMBRA — GitHub Desktop only supports one GitHub.com account at a time, so switching projects usually means switching signed-in accounts too). By default the user writes their own commit messages — don't run `git commit` on their behalf; only stage changes for review.
+
+**Exception — when the user explicitly asks you to commit and/or push** (they may do this from their phone while the computer stays on): do it. Use the message they give; if they give none, write a short lowercase Spanish one in the style of the history (`contrasena recap`, `style career`). Run `git status` first and commit only what belongs to the request. Push to `main` only, never force-push, and report the result. A terminal push needs a stored credential for the `emnlatam` account (GitHub Desktop's login isn't shared with the terminal); if `git push` fails with an auth or `/dev/tty` error, say so and hand the push to the user in GitHub Desktop rather than working around it.
 
 ## Supabase
 
