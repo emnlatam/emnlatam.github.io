@@ -1,0 +1,141 @@
+# Mentores — aparecen en el inicio (debajo de "El costo de no prepararse…") y en
+# /mentores, en este mismo orden. Textos tomados de academy.emnlatam.com/mentores.
+#
+# FOTOS: guarda la foto de cada persona en assets/img/mentores/ con el nombre
+#   igual a su "id" (ejemplo: assets/img/mentores/diego-herrera.jpg; también
+#   sirve .png o .webp). Si todavía no hay foto, se muestran las iniciales.
+#
+# Para agregar un mentor, copia un bloque completo y cambia los textos:
+#   id:       nombre del archivo de la foto y enlace directo (/mentores#id)
+#   summary:  texto corto que va debajo de la foto, en la tarjeta
+#   sections: lo que se despliega al abrir "Ver biografía". Cada sección es un
+#             bloque rojo con título y texto; deja una línea en blanco entre
+#             párrafos.
+
+- id: diego-herrera
+  name: Diego Herrera
+  role: Mentor Musical
+  summary: Saxofonista, compositor y artista peruano radicado en Boston. Estudia en Berklee College of Music y es Embajador de Berklee.
+  sections:
+    - title: Formación
+      text: |
+        Diego Herrera es un saxofonista, compositor y artista peruano radicado en Boston, reconocido por su propuesta musical que integra el jazz contemporáneo con influencias afroperuanas, ritmos latinos, smooth jazz y funk, construyendo un lenguaje sonoro propio que equilibra identidad cultural, sofisticación armónica y conexión emocional.
+
+        Actualmente cursa estudios en Berklee College of Music, donde desarrolla proyectos de composición e interpretación que fusionan sus raíces peruanas con una visión global del jazz moderno. Su formación académica ha fortalecido su enfoque creativo, permitiéndole aplicar conceptos avanzados de armonía y arreglo tanto en su música original como en contextos de ensamble y big band.
+    - title: Carrera Artística
+      text: |
+        La carrera artística de Diego Herrera se distingue por una proyección internacional temprana y una conexión directa con audiencias diversas, consolidando su presencia tanto en escenarios académicos como profesionales. Ha realizado dos giras por el Perú con localidades agotadas, confirmando la solidez de su propuesta musical y su capacidad de convocatoria.
+
+        A nivel internacional, ha sido seleccionado para participar en el campamento creativo de Donald Glover, experiencia que fortaleció su enfoque interdisciplinario y su comprensión del proceso creativo en contextos de alto nivel artístico. Asimismo, forma parte de la Fundación Cultural Latin Grammy como miembro becado, reconocimiento otorgado a músicos con excelencia artística y proyección global.
+
+        Su trayectoria incluye una destacada participación en el Ecuador Jazz Festival, uno de los encuentros más relevantes del jazz en la región, donde compartió escenario con artistas de alto nivel y presentó una propuesta que integra identidad cultural y lenguaje contemporáneo.
+
+        Diego ha sido designado Embajador de Berklee College of Music, rol desde el cual representa a la institución y contribuye activamente a la difusión de la educación musical de alto nivel, acompañando a nuevas generaciones de músicos en sus procesos formativos y vocacionales.
+
+- id: pia-ella
+  name: Pía Ella
+  role: Mentora Musical
+  summary: Bajista, compositora, arreglista y productora musical peruana. Cursa su último ciclo en Berklee College of Music y es embajadora de la Fundación Cultural Latin Grammy.
+  sections:
+    - title: Formación
+      text: |
+        Pia Ella es bajista, compositora, arreglista y productora musical peruana, reconocida por su versatilidad y creatividad en la fusión de estilos musicales. Actualmente cursa su último ciclo en Berklee College of Music, especializándose en Composición y Producción Contemporánea, donde ha desarrollado un enfoque único que combina innovación sonora con expresión emocional profunda.
+
+        Su formación incluye clases magistrales y mentorías con destacados bajistas como Luis Linares y Linda May Han Oh, así como con Alexander Clements, compositor y arreglista de espectáculos del Cirque du Soleil, experiencia que ha enriquecido su visión artística y su capacidad de transformar cada espectáculo en una propuesta musical impactante y memorable.
+    - title: Carrera Artística
+      text: |
+        Ha sido reconocida por su excelencia académica y artística, siendo becaria de Berklee College of Music y seleccionada durante dos años consecutivos por la Fundación Cultural Latin Grammy, de la cual es embajadora. Su carrera combina presentaciones en vivo y trabajo en estudio, consolidándola como un referente de profesionalismo y creatividad dentro de la escena musical contemporánea.
+
+        Comprometida con la visibilización de las mujeres en la música, forma parte de la primera banda de jazz afroperuano integrada exclusivamente por mujeres en el Perú y colabora como voluntaria y profesora en Warmi Rock Camp, impulsando a nuevas generaciones de músicas a desarrollarse con excelencia y pasión.
+
+        Con cada composición y espectáculo, Pia Ella demuestra un dominio técnico y artístico excepcional, construyendo un lenguaje musical propio que integra innovación, identidad y excelencia profesional.
+
+- id: mauricio-felix
+  name: Mauricio Félix
+  role: Mentor Musical
+  summary: Compositor, arreglista y bajista de Lima, radicado en Boston. Egresado de Berklee College of Music en 2025 con un doble grado.
+  sections:
+    - title: Formación
+      text: |
+        Mauricio Félix es un compositor, arreglista y bajista de Lima, Perú, que actualmente reside en Boston, Massachusetts. Se desenvuelve en estilos como la música afroperuana, latina, folclórica, jazz y orquestal, con el objetivo de fusionar su formación con estos géneros para crear un sonido único. Comenzó a tocar el bajo eléctrico a los 11 años y estudió con músicos destacados en Lima. En 2021 ingresó a Berklee College of Music, donde se formó en arreglos, producción y composición para cine, además de perfeccionar su técnica con reconocidos bajistas incluyendo a Oscar Stagnaro, Lincoln Goines, entre otros.
+    - title: Carrera Artística
+      text: |
+        Ha compuesto música para los videojuegos “The Oracle's Curse” (2023) y “Sprout” (2022), y se ha presentado con diversos artistas, incluyendo su participación en Lake Eola Park para Tony Succar, tocando con la cantante Isabel Iñigo. También ha participado en festivales, giras y grabaciones para músicos como Diego Herrera, Omar Valenzuela, Anticucho Studios, entre otros. Es egresado de Berklee College of Music, graduado en 2025 con un doble grado en Escritura y Producción Contemporánea y Música para Cine y Medios.
+
+- id: santiago-blanco
+  name: Santiago Blanco
+  role: Maestro de teoría
+  summary: Guitarrista argentino, compositor e intérprete entre el rock-pop, el jazz y la música clásica. Cursa la Maestría en Composición en la UCA.
+  sections:
+    - title: Formación
+      text: |
+        Santiago es guitarrista argentino, compositor e intérprete, reconocido por su sensibilidad musical y su búsqueda constante de una identidad sonora dentro del rock-pop, el jazz y la música clásica.
+
+        Comenzó a estudiar guitarra clásica a los 8 años, recorrido que ha sido fundamental en la construcción de su musicalidad, su técnica y su relación expresiva con el sonido.
+
+        Es egresado de la EMC (Escuela de Música Contemporánea) como Músico Profesional – Guitarrista, formación que consolidó su base técnica, su lenguaje estilístico y su criterio artístico dentro de la música contemporánea.
+
+        Actualmente cursa el tercer año de la Maestría en Composición en la UCA, donde profundiza en escritura musical, orquestación y el desarrollo de una voz compositiva propia, orientada a la creación artística integral.
+    - title: Carrera Artística
+      text: |
+        Su trayectoria articula interpretación en vivo, producción creativa en estudio y un desarrollo compositivo sostenido, configurando una identidad guitarrística definida por el equilibrio entre energía, refinamiento expresivo y profundidad sonora. Cuenta con más de seis años de actividad profesional como intérprete y más de cinco años de docencia ininterrumpida, experiencia que ha fortalecido tanto su práctica artística como su capacidad pedagógica.
+
+        A través de su obra y de su labor interpretativa, Santiago investiga la intersección entre el lenguaje del rock contemporáneo y la sofisticación armónica del jazz, dando lugar a propuestas musicales de fuerte carácter estético y emocional.
+
+        Comprometido con la creación artística de largo aliento, actualmente trabaja en la producción y mezcla de temas para distintos proyectos de Buenos Aires y Argentina donde orienta su trabajo hacia la concepción de obras originales que integren técnica, diseño formal y narrativa musical, consolidando una voz autoral coherente dentro del panorama de la música contemporánea.
+
+- id: nicole-la-rosa
+  name: Nicole La Rosa
+  role: Mentora Musical
+  summary: Cantante y música nacida en el Callao, Perú. Recibió la Presidential Scholarship de Berklee en 2024 y estudia Performance.
+  sections:
+    - title: Formación
+      text: |
+        Nicole La Rosa, cantante y música, nacida en la provincia constitucional del Callao, Perú. Desde los 12 años participó en competencias de canto como Perú Tiene Talento (finalista) y Yo Soy Kids (finalista), Los 4 Finalistas (Semifinalista) y finalista en La Voz Kids Perú (finalista).
+    - title: Carrera Artística
+      text: |
+        Tiene experiencia cantando jazz en big bands como Doo Bah Jazz, en ensambles corales como Coro Cantaré y colaborando con orquestas como Zaperoko. Su aparicion más reciente en televisión fue en la competencia internacional Yo Me Llamo (Caracol, Colombia), interpretando a Amy Winehouse. Tiene dos grados técnicos: uno en ejecución musical con especialidad en canto y otro en edición y grabación de audio, ambos de la escuela EMMAT (Berklee Global Partner, Bogotá, Colombia). En 2024 recibió la Presidential Scholarship de Berklee, una de sus becas más importantes, y actualmente estudia la carrera de Performance.
+
+- id: jose-nakamine
+  name: Jose Nakamine
+  role: Mentor Musical
+  summary: Guitarrista y arreglista trujillano radicado en Boston. Estudia en Berklee College of Music, en Contemporary Writing & Production y Music Production & Engineering.
+  sections:
+    - title: Formación
+      text: |
+        Jose Nakamine es guitarrista y arreglista trujillano radicado en Boston. Su propuesta artística se caracteriza por tender puentes entre la música peruana y latinoamericana y una sólida formación clásica, desarrollando un enfoque musical versátil, estructurado y expresivo.
+
+        Su formación académica combina rigurosidad técnica y exploración contemporánea. Actualmente estudia en Berklee College of Music, donde se especializa en Contemporary Writing & Production y Music Production & Engineering. Allí profundiza en escritura contemporánea, arreglos, producción musical y diseño sonoro, integrando herramientas técnicas avanzadas con una mirada estética definida.
+
+        Este recorrido formativo le ha permitido consolidar una comprensión integral del lenguaje musical, abarcando tanto la interpretación como la composición, la orquestación y la producción.
+    - title: Carrera Artística
+      text: |
+        En el ámbito profesional, Jose ha desarrollado una trayectoria que integra performance en vivo, trabajo de estudio y colaboración interdisciplinaria. Ha participado en múltiples oportunidades con la Orquesta Sinfónica de Trujillo, experiencia que fortaleció su lectura, adaptación estilística y trabajo en ensamble.
+
+        Su proyección internacional incluye presentaciones en escenarios emblemáticos como Times Square, así como la participación en grabaciones y producciones junto a diversos proyectos musicales, ampliando su experiencia dentro del circuito contemporáneo.
+
+        Su trabajo se distingue por una identidad que combina raíces latinoamericanas, sensibilidad compositiva y dominio técnico, articulando una propuesta artística que dialoga entre tradición y modernidad, tanto en el escenario como en el estudio.
+
+- id: luz-yepez
+  name: Luz Yepez
+  role: Mentora Musical
+  summary: Música y productora peruana de Cusco. Con una beca completa de Berklee, cursa Music Production & Engineering en Boston.
+  sections:
+    - title: Formación
+      text: |
+        Luz Mayin, música y productora peruana, inició su relación con la música desde muy pequeña, motivada por el apoyo de su padre y su formación en el colegio, donde comenzó con el violín. Su desarrollo musical continuó en el Instituto de Música Leandro Alviña de su ciudad natal, Cusco, donde incorporó el canto como parte de su formación artística.
+    - title: Carrera Artística
+      text: |
+        A los 15 años comenzó su preparación para Berklee College of Music. Tras no ser aceptada en su primer intento, decidió fortalecer su formación mudándose a Bogotá para estudiar en Emmat, Berklee Global Partner, donde se graduó en performance y producción musical. Luego de varios años de preparación, obtuvo una beca completa en su cuarto proceso de aplicación y se trasladó a Boston, donde actualmente cursa su quinto semestre en el programa de Music Production & Engineering (MP&E).
+
+- id: tania-garcia
+  name: Tania García
+  role: Mentora Musical
+  summary: Vocalista, compositora e intérprete nacida en Tenerife, España, con formación en España y Estados Unidos.
+  sections:
+    - title: Formación
+      text: |
+        Tania es vocalista, compositora e intérprete, cuya carrera comenzó a los cuatro años en Tenerife, España. Creció inmersa en la música, estudiando piano, percusión y canto, mientras actuaba en coros, orquestas y conjuntos clásicos. En su adolescencia, ya cantaba con la Joven Orquesta Filarmónica de Tenerife “Miguel Jaubert” y el Coro del Auditorio de Tenerife, obteniendo premios en concursos internacionales en Portugal y Gran Canaria.
+    - title: Carrera Artística
+      text: |
+        Nacida en Tenerife y formada en España y Estados Unidos, Tania ha actuado internacionalmente con conjuntos como el Barcelona World's Music Ensemble y en escenarios como el Berklee Performance Center. Combina todas sus influencias, como el jazz, el soul y la música del mundo, con el pop, creando un sonido único que trasciende fronteras. Su visión como artista es ofrecer producciones a la altura de los principales artistas pop actuales, con un mensaje profundo sobre el empoderamiento femenino y el amor en la vida, temas fundamentales.

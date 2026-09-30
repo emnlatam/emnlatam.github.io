@@ -1,0 +1,102 @@
+{% comment %}
+  Sección de mentores (tarjetas + biografía desplegable). Se usa en el inicio
+  y en /mentores. Los datos están en _data/mentores.yml; la foto de cada uno
+  va en assets/img/mentores/<id>.jpg (o .png / .webp).
+{% endcomment %}
+<section class="m-team" id="mentores" aria-labelledby="m-team-title">
+  <h2 id="m-team-title" class="m-team__title">Nuestros mentores</h2>
+
+  <div class="m-grid" id="mentor-grid">
+    {% for m in site.data.mentores %}
+    {% assign photo = site.static_files | where: "basename", m.id | where_exp: "f", "f.path contains '/assets/img/mentores/'" | first %}
+    {% assign parts = m.name | split: " " %}
+    {% capture initials %}{{ parts.first | slice: 0 }}{{ parts.last | slice: 0 }}{% endcapture %}
+    <article class="mentor" id="{{ m.id }}">
+      <div class="mentor__photo">
+        {% if photo %}<img src="{{ photo.path }}" alt="Foto de {{ m.name }}" loading="lazy">{% else %}<span class="mentor__initials" aria-hidden="true">{{ initials }}</span>{% endif %}
+        <div class="mentor__caption">
+          <h3>{{ m.name }}</h3>
+          <p>{{ m.role }}</p>
+        </div>
+      </div>
+      <div class="mentor__body">
+        <p>{{ m.summary }}</p>
+        <button type="button" class="mentor__btn" aria-expanded="false" aria-controls="mentor-panel">Ver biografía</button>
+      </div>
+      <template>
+        <div class="m-panel__photo">{% if photo %}<img src="{{ photo.path }}" alt="">{% else %}<span aria-hidden="true">{{ initials }}</span>{% endif %}</div>
+        <div class="m-panel__body">
+          <button type="button" class="m-panel__close" data-close>✕ Cerrar</button>
+          <p class="m-panel__role">{{ m.role }}</p>
+          <h3 class="m-panel__name">{{ m.name }}</h3>
+          {% for s in m.sections %}
+          <details class="m-sec" open>
+            <summary>{{ s.title }}</summary>
+            <div class="m-sec__text">{{ s.text | markdownify }}</div>
+          </details>
+          {% endfor %}
+        </div>
+      </template>
+    </article>
+    {% endfor %}
+
+    <div class="m-panel" id="mentor-panel" role="region" aria-label="Biografía del mentor" tabindex="-1" hidden></div>
+  </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // One shared panel. Opening a mentor drops it in right under the row that
+  // mentor sits in (the cards that share its top edge), whatever the screen
+  // width and however many cards fit per row.
+  const grid = document.getElementById('mentor-grid');
+  const panel = document.getElementById('mentor-panel');
+  const cards = [...grid.querySelectorAll('.mentor')];
+  let current = null;
+
+  const toggleBtn = (card) => card.querySelector('.mentor__btn');
+
+  function place(card){
+    const rowTop = card.offsetTop;
+    const rowCards = cards.filter((c) => c.offsetTop === rowTop);
+    rowCards[rowCards.length - 1].after(panel);
+  }
+
+  function close(returnFocus){
+    if (!current) return;
+    const card = current; current = null;
+    card.classList.remove('is-open');
+    toggleBtn(card).setAttribute('aria-expanded', 'false');
+    toggleBtn(card).textContent = 'Ver biografía';
+    panel.hidden = true; panel.replaceChildren();
+    if (returnFocus) toggleBtn(card).focus();
+  }
+
+  function open(card){
+    if (current === card) return close(true);
+    close(false);
+    current = card;
+    card.classList.add('is-open');
+    toggleBtn(card).setAttribute('aria-expanded', 'true');
+    toggleBtn(card).textContent = 'Ocultar biografía';
+    panel.replaceChildren(card.querySelector('template').content.cloneNode(true));
+    panel.setAttribute('aria-label', 'Biografía de ' + card.querySelector('h3').textContent);
+    place(card);
+    panel.hidden = false;
+    panel.focus({ preventScroll: true });
+    panel.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
+  }
+
+  grid.addEventListener('click', (e) => {
+    if (e.target.closest('[data-close]')) return close(true);
+    const card = e.target.closest('.mentor');
+    if (card) open(card);
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(true); });
+  addEventListener('resize', () => { if (current) place(current); });
+
+  // #diego-herrera (etc.) in the URL opens that biography straight away.
+  const linked = cards.find((c) => '#' + c.id === location.hash);
+  if (linked) open(linked);
+});
+</script>
