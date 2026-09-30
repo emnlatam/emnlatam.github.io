@@ -1101,6 +1101,29 @@
   font-size: clamp(28px, 3.4vw, 40px);
 }
 
+/* Home: "Mentores" in the shared big-title style, with a sentence under it. */
+.emn-landing .m-team__title--feature {
+  margin-bottom: 16px;
+  font-family: 'Bricolage Grotesque', var(--font-body);
+  font-weight: 800;
+  font-size: var(--title-feature);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+}
+
+.emn-landing .m-team__sub {
+  max-width: 1100px;
+  margin: 0 auto 48px;
+  text-align: center;
+  text-wrap: balance;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(16px, 1.4vw, 20px);
+  line-height: 1.4;
+  color: var(--gray-700);
+}
+
 .emn-landing .m-grid {
   display: flex;
   flex-wrap: wrap;

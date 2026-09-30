@@ -4,7 +4,8 @@
   va en assets/img/mentores/<id>.jpg (o .png / .webp).
 {% endcomment %}
 <section class="m-team" id="mentores" aria-labelledby="m-team-title">
-  <h2 id="m-team-title" class="m-team__title">{{ include.title | default: "Nuestros mentores" }}</h2>
+  <h2 id="m-team-title" class="m-team__title{% if include.subtitle %} m-team__title--feature{% endif %}">{{ include.title | default: "Nuestros mentores" }}</h2>
+  {% if include.subtitle %}<p class="m-team__sub">{{ include.subtitle }}</p>{% endif %}
 
   <div class="m-grid" id="mentor-grid">
     {% for m in site.data.mentores %}
