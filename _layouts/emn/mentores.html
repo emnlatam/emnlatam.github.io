@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 {% include emn-favicon.html %}
 <title>Mentores — EMN</title>
-<meta name="description" content="Conoce a los mentores de EMN: estudiantes y graduados de Berklee que te preparan para tu audición.">
+<meta name="description" content="Conoce a los mentores de EMN: estudiantes y graduados de Berklee que te prepararán en tu proceso.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="/assets/css/emn.css?v={{ site.time | date: '%s' }}">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -19,8 +19,7 @@
   <div class="m-hero"{% if hero %} style="--m-hero-img: url('{{ hero.path }}')"{% endif %}>
     {% include emn-header.html variant="dark" %}
     <div class="m-hero__inner">
-      <p class="m-hero__lead">Conoce a los mentores que te preparan para entrar a</p>
-      <h1>Berklee</h1>
+      <h1 class="m-hero__title">Conoce a los mentores que te prepararán en tu proceso</h1>
       <a href="#mentores" class="m-hero__btn">Conocer a todos los mentores</a>
     </div>
   </div>

@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="es" class="emn-landing">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{% include emn-favicon.html %}
+<title>Nosotros — EMN</title>
+<meta name="description" content="La historia de Daniel Dávila, fundador de Berklee Perú y de EMN: cómo se crearon las alianzas con Berklee, MIT y Harvard, y por qué queremos que más latinos entren a Berklee con beca.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="/assets/css/emn.css?v={{ site.time | date: '%s' }}">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/assets/js/emn-auth.js?v={{ site.time | date: '%s' }}"></script>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="m-hero m-hero--story">
+    {% include emn-header.html variant="dark" %}
+    <div class="m-hero__inner">
+      <p class="m-hero__lead">Nosotros</p>
+      <h1>Conoce a Daniel Dávila</h1>
+      <a href="#presentacion" class="m-hero__btn">Conocer al fundador</a>
+    </div>
+  </div>
+
+  <main class="m-main n-main">
+
+    {% comment %} Foto: guarda assets/img/danyfoto2.png (o .jpg / .jpeg / .png / .webp). Sin foto se muestran las iniciales. {% endcomment %}
+    {% assign foto = site.static_files | where: "basename", "danyfoto2" | first %}
+    <section class="n-intro" id="presentacion">
+      <div class="n-intro__photo">
+        {% if foto %}<img src="{{ foto.path }}" alt="Daniel Dávila, fundador de EMN">{% else %}<span aria-hidden="true">DD</span>{% endif %}
+      </div>
+      <div class="n-intro__text">
+        <p class="n-kicker">Presentación</p>
+        <h2 class="n-title">Daniel Dávila</h2>
+        <p class="n-intro__role">Fundador y CEO de EMN · Fundador de Berklee Perú</p>
+        <div class="n-prose">
+          <p>Soy peruano, egresado de Berklee College of Music en Boston, donde estudié Music Business Management y XR Electronic Production &amp; Sound Design. Hoy lidero la Escuela de Música y Negocios (EMN) y AMBRA Live Productions, y soy mentor en E for All del MIT.</p>
+          <p>Mi misión es simple: que más músicos latinos puedan entrar a Berklee con beca y crecer como profesionales.</p>
+        </div>
+        <ul class="n-intro__tags">
+          <li>Berklee College of Music</li>
+          <li>MIT · E for All</li>
+          <li>Harvard XR</li>
+          <li>AMBRA Live</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="n-story" id="historia">
+      <p class="n-kicker">Nuestra historia</p>
+      <h2 class="n-title">Todo empezó con una pregunta: ¿por qué hay tan pocos latinos en Berklee?</h2>
+      <div class="n-prose">
+        <p>Soy Daniel Dávila, fundador de EMN. Llegué a Berklee College of Music, en Boston, a estudiar Music Business Management y XR Electronic Production &amp; Sound Design, y muy pronto me di cuenta de algo: había talento latino enorme, pero estaba disperso. Cada uno había llegado por su cuenta, sin una comunidad que lo conectara con las oportunidades que Boston ofrece.</p>
+        <p>Por eso, en 2022, fundé Berklee Perú. Lo que empezó como un grupo de amigos se convirtió, con un equipo de 12 personas, en el club latinoamericano más grande de Berklee. Con él organizamos eventos, construimos una estrategia de marketing propia y llegamos incluso a la televisión nacional en el Perú.</p>
+      </div>
+    </section>
+
+    <section class="n-block n-block--alt">
+      <div class="n-block__inner">
+        <img class="n-block__logo" src="/assets/img/berkleeperulogo.png" alt="Logo de Berklee Perú" loading="lazy">
+        <div>
+          <p class="n-kicker">2022 – 2024</p>
+          <h2 class="n-title n-title--sm">Berklee Perú y los clubes latinos</h2>
+          <div class="n-prose">
+            <p>Estar cerca de los clubes latinos de Berklee me enseñó que una comunidad unida abre puertas que ningún estudiante abre solo. Aprendimos a trabajar en conjunto, a compartir contactos y a apoyarnos entre países.</p>
+            <p>Ese mismo camino me llevó a tender puentes fuera de Berklee: construimos alianzas con Harvard y con MIT, dos universidades que están a pocos minutos y que casi nunca se conectaban con la comunidad latina de la música.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="n-story">
+      <p class="n-kicker">Trayectoria en Boston</p>
+      <h2 class="n-title n-title--sm">Colaboraciones con Berklee, Harvard y MIT</h2>
+      <div class="n-cards">
+        <article class="n-card">
+          <h3>MIT</h3>
+          <p>Mentor en E for All, apoyando a startups lideradas por latinos en estrategia de producto, ventas y crecimiento. También fui juez y mentor en MIT Reality Hack, junto a líderes de Apple, Meta y STYLY.</p>
+        </article>
+        <article class="n-card">
+          <h3>Harvard</h3>
+          <p>Co-organizador del evento Harvard XR: contacto con speakers, alianzas con universidades y programación en torno a IA, XR y tecnologías emergentes.</p>
+        </article>
+        <article class="n-card">
+          <h3>Berklee</h3>
+          <p>Trabajé en la oficina de Music Business de Berklee, en estrategia de PR y campañas de marketing para artistas, y hoy dirijo AMBRA Live Productions, con ensambles de talento de Berklee para eventos corporativos y culturales.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="n-block n-block--dark">
+      <div class="n-block__inner n-block__inner--center">
+        <p class="n-kicker n-kicker--light">Hoy</p>
+        <h2 class="n-title n-title--sm n-title--light">Que más latinos entren a Berklee, con beca</h2>
+        <div class="n-prose n-prose--light">
+          <p>Esas alianzas me mostraron que el problema no es el talento, sino el acceso. Por eso, en 2026, fundé la Escuela de Música y Negocios (EMN): un sistema de preparación para postular a Berklee, con mentoría personalizada y online, creado por estudiantes y graduados de Berklee.</p>
+          <p>Queremos que más músicos latinos puedan entrar a Berklee con beca, crezcan como profesionales y, juntos, mejoren la industria latina. Cada estudiante que entra abre el camino al siguiente.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="n-cta">
+      <h2 class="n-title n-title--sm">¿Quieres ser el siguiente?</h2>
+      <p>Conversemos sobre tu proceso. La primera evaluación es gratuita.</p>
+      <div class="n-cta__btns">
+        <a class="n-btn n-btn--red" href="https://calendly.com/emnperu/30min" target="_blank" rel="noopener">Agendar evaluación gratuita</a>
+        <a class="n-btn" href="/mentores">Conocer a los mentores</a>
+      </div>
+    </section>
+
+  </main>
+
+  {% include emn-footer.html %}
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const items = document.querySelectorAll('.emn-nav__item');
+  items.forEach((item) => {
+    const caret = item.querySelector('.emn-nav__caret');
+    if (!caret) return;
+    caret.addEventListener('click', (e) => {
+      e.preventDefault();
+      const isOpen = item.classList.contains('is-open');
+      items.forEach((i) => i.classList.remove('is-open'));
+      item.classList.toggle('is-open', !isOpen);
+      caret.setAttribute('aria-expanded', String(!isOpen));
+    });
+  });
+  document.addEventListener('click', (e) => {
+    items.forEach((item) => { if (!item.contains(e.target)) item.classList.remove('is-open'); });
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') items.forEach((i) => i.classList.remove('is-open'));
+  });
+});
+
+emnInit();
+</script>
+</body>
+</html>

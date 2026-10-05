@@ -77,12 +77,13 @@ emnSupabase.auth.onAuthStateChange((_event, session) => {
 // `.emn-tool` pages. Built by hand for the same reason as the other
 // dropdowns in this file: it's injected after the shared caret-toggle
 // script has already wired up whatever `.emn-nav__item`s existed at load.
-function emnInjectAuthLink(){
+function emnInjectAuthLink(st){
   const nav = document.querySelector('.emn-nav');
   if(!nav) return;
 
-  if(!emnSession){
+  if(!st.in){
     const authLink = document.createElement('a');
+    authLink.setAttribute('data-emn-inj', '');
     authLink.className = 'emn-nav__link';
     authLink.href = '/emn-login';
     authLink.textContent = 'Iniciar sesión';
@@ -92,7 +93,8 @@ function emnInjectAuthLink(){
 
   const item = document.createElement('div');
   item.className = 'emn-nav__item';
-  const displayName = emnStudentProfile?.full_name || emnSession.user.email;
+  item.setAttribute('data-emn-inj', '');
+  const displayName = emnEsc(st.name);
   item.innerHTML = `
     <a href="#" class="emn-nav__link emn-nav__link--user">${displayName}</a>
     <button class="emn-nav__caret" aria-label="Abrir menú de cuenta" aria-expanded="false">&#9662;</button>
@@ -107,6 +109,7 @@ function emnInjectAuthLink(){
   const label = item.querySelector('.emn-nav__link');
   const toggle = (e) => {
     e.preventDefault();
+    e.stopImmediatePropagation();
     const isOpen = item.classList.contains('is-open');
     document.querySelectorAll('.emn-nav__item').forEach((i) => i.classList.remove('is-open'));
     item.classList.toggle('is-open', !isOpen);
@@ -313,12 +316,13 @@ function emnOpenAccountModal(){
 // caret-toggle script those other dropdowns use) because it's injected
 // after that script has already wired up whatever `.emn-nav__item`s
 // existed at page load.
-function emnInjectAdminMenu(){
-  if(!emnStudentProfile || (emnStudentProfile.role !== 'admin' && emnStudentProfile.role !== 'professor')) return;
+function emnInjectAdminMenu(st){
+  if(st.role !== 'admin' && st.role !== 'professor') return;
   const nav = document.querySelector('.emn-nav');
   if(!nav) return;
   // A plain link (no dropdown): /administrar has the buttons for everything.
   const link = document.createElement('a');
+  link.setAttribute('data-emn-inj', '');
   link.className = 'emn-nav__link';
   link.href = '/administrar';
   link.textContent = 'Administrar';
@@ -330,8 +334,8 @@ function emnInjectAdminMenu(){
 // into two sub-items: Practice (the public tool) and Questions (their own
 // saved answers). Signed-out visitors keep the single link from
 // _includes/emn-header.html, straight to /interview-prep.
-function emnSplitInterviewLink(){
-  if(!emnSession) return;
+function emnSplitInterviewLink(st){
+  if(!st.in) return;
   const link = document.querySelector('.emn-nav [data-emn-interview]');
   if(!link) return;
   const path = location.pathname.replace(/\/$/, '');
@@ -348,14 +352,15 @@ function emnSplitInterviewLink(){
 // the same reason as emnInjectAdminMenu(): it's injected after the shared
 // caret-toggle script has already wired up whatever `.emn-nav__item`s
 // existed at page load.
-function emnInjectCareerMenu(){
-  if(!emnSession) return;
+function emnInjectCareerMenu(st){
+  if(!st.in) return;
   const nav = document.querySelector('.emn-nav');
   if(!nav) return;
 
   const path = location.pathname.replace(/\/$/, '');
   const item = document.createElement('div');
   item.className = 'emn-nav__item';
+  item.setAttribute('data-emn-inj', '');
   item.innerHTML = `
     <a href="#" class="emn-nav__link">Mi Aula</a>
     <button class="emn-nav__caret" aria-label="Abrir submenú de Mi Aula" aria-expanded="false">&#9662;</button>
@@ -370,6 +375,7 @@ function emnInjectCareerMenu(){
   const label = item.querySelector('.emn-nav__link');
   const toggle = (e) => {
     e.preventDefault();
+    e.stopImmediatePropagation();
     const isOpen = item.classList.contains('is-open');
     document.querySelectorAll('.emn-nav__item').forEach((i) => i.classList.remove('is-open'));
     item.classList.toggle('is-open', !isOpen);
@@ -398,16 +404,56 @@ document.addEventListener('click', (e) => {
   }
 });
 
-async function emnInit(){
-  await emnLoadSession();
-  emnSplitInterviewLink();
-  emnInjectCareerMenu();
-  emnInjectAdminMenu();
+// The injected tabs (Mi Aula, Administrar, account/login link) depend on the session,
+// which loads asynchronously — drawing them only then made the tabs vanish and pop back
+// on every page change. So the last-known state is cached in localStorage and the tabs
+// are drawn from it as soon as the page's DOM exists; once the real session loads the
+// nav is only touched if something actually differs.
+const EMN_NAV_KEY = 'emn.nav';
+let emnNavDrawn = null;   // JSON of the state currently drawn
+
+function emnNavFromLive(){ return { in: !!emnSession, role: emnStudentProfile?.role || null, name: emnStudentProfile?.full_name || emnSession?.user?.email || '' }; }
+function emnNavFromCache(){
+  try{
+    const v = JSON.parse(localStorage.getItem(EMN_NAV_KEY));
+    if(v && typeof v === 'object') return { in: !!v.in, role: v.role || null, name: String(v.name || '') };
+  }catch(e){}
+  return null;
+}
+function emnNavSave(st){ try{ localStorage.setItem(EMN_NAV_KEY, JSON.stringify(st)); }catch(e){} }
+
+function emnRenderNav(st){
+  const key = JSON.stringify(st);
+  if(key === emnNavDrawn) return;
+  const nav = document.querySelector('.emn-nav');
+  if(!nav) return;
+  nav.querySelectorAll('[data-emn-inj]').forEach((n) => n.remove());
+  emnSplitInterviewLink(st);
+  emnInjectCareerMenu(st);
+  emnInjectAdminMenu(st);
   // Keep the "Cursos" button right beside the account/login link, after the
   // dropdowns injected above.
-  const cursos = document.querySelector('.emn-nav .emn-nav__link--cta');
+  const cursos = nav.querySelector('.emn-nav__link--cta');
   if(cursos) cursos.parentElement.appendChild(cursos);
-  emnInjectAuthLink();
+  emnInjectAuthLink(st);
+  emnNavDrawn = key;
+}
+
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', () => {
+    if(!emnNavDrawn) emnRenderNav(emnNavFromCache() || { in: false, role: null, name: '' });
+  });
+}
+
+async function emnInit(){
+  await emnLoadSession();
+  const live = emnNavFromLive();
+  const cached = emnNavFromCache();
+  // Drawn as signed-in from the cache but the session is gone: the split Interview Prep
+  // links can't be un-split in place, so reload once with the corrected cache.
+  if(emnNavDrawn && cached && cached.in && !live.in){ emnNavSave(live); location.reload(); return; }
+  emnRenderNav(live);
+  emnNavSave(live);
 }
 
 /* ============================= PRACTICE TIME HEARTBEAT =============================
