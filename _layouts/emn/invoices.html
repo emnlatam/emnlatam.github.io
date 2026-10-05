@@ -14,7 +14,7 @@
   body{ background:var(--gray-100); font-family:var(--font-body); color:var(--ink); margin:0; }
   button, input, select, textarea{ font-family:inherit; }
   [hidden]{ display:none !important; }
-  .wrap-i{ max-width:1000px; margin:0 auto; padding:32px 24px 70px; }
+  .wrap-i{ max-width:1500px; margin:0 auto; padding:32px 24px 70px; }
   .head-i{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:8px; }
   .head-i h1{ font-family:var(--font-display); font-size:26px; margin:0; }
   .head-i a.back{ font-size:13px; color:var(--gray-700); }
@@ -30,6 +30,19 @@
   .btn.primary:hover{ background:var(--red-dark); color:#fff; }
   .btn:disabled{ opacity:.55; cursor:default; }
 
+  .gen-layout{ display:grid; grid-template-columns:minmax(0,1fr); gap:20px; align-items:start; }
+  .pv{ background:var(--paper); border:1px solid var(--gray-300); border-radius:var(--radius); padding:14px; }
+  .pv-head{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:10px; }
+  .pv-head h2{ font-family:var(--font-display); font-size:16px; margin:0 auto 0 0; }
+  .pv-tab{ border:1px solid var(--gray-300); background:var(--paper); border-radius:999px; padding:5px 14px; font:600 12.5px var(--font-body); color:var(--gray-700); cursor:pointer; }
+  .pv-tab[aria-pressed="true"]{ background:var(--red); border-color:var(--red); color:#fff; }
+  #pv-frame{ width:100%; height:780px; border:1px solid var(--gray-300); border-radius:8px; background:#e5e5e5; display:block; }
+  #pv-msg{ padding:60px 20px; text-align:center; color:var(--gray-500); font-size:14px; }
+  @media (min-width:1150px){
+    .gen-layout{ grid-template-columns:minmax(0,1fr) minmax(0,540px); }
+    .pv{ position:sticky; top:12px; }
+    #pv-frame{ height:calc(100vh - 130px); min-height:520px; }
+  }
   .card{ background:var(--paper); border:1px solid var(--gray-300); border-radius:var(--radius); padding:20px 22px; margin-bottom:16px; }
   .card h2{ font-family:var(--font-display); font-size:17px; margin:0 0 14px; }
   .row{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:0 16px; }
@@ -102,6 +115,7 @@
 
     <!-- ===================== GENERAR ===================== -->
     <section id="v-gen">
+      <div class="gen-layout"><div class="gen-form">
       <div class="card">
         <h2>Alumno</h2>
         <div class="row">
@@ -156,6 +170,17 @@
       <p class="msg" id="g-err" role="alert" hidden style="color:var(--red);font-weight:600;font-size:13.5px"></p>
       <button type="button" class="btn primary" id="g-create">Crear invoice</button>
       <div id="g-result"></div>
+      </div>
+      <aside class="pv" aria-label="Vista previa del invoice">
+        <div class="pv-head">
+          <h2>Vista previa</h2>
+          <button type="button" class="pv-tab" id="pv-tab1" data-pv="1" aria-pressed="true">Pago 1</button>
+          <button type="button" class="pv-tab" id="pv-tab2" data-pv="2" aria-pressed="false" hidden>Pago 2</button>
+        </div>
+        <div id="pv-msg">Elige un alumno para ver la vista previa del invoice.</div>
+        <iframe id="pv-frame" title="Vista previa del invoice en PDF" hidden></iframe>
+      </aside>
+      </div>
     </section>
 
     <!-- ===================== FINANZAS ===================== -->
@@ -192,12 +217,14 @@ const safeUrl = u => /^https?:\/\//i.test(u || '') ? u : null;
 /* ======================= PDF ======================= */
 const BRAND = [200, 16, 46], INK = [26, 26, 26], GRAY = [110, 115, 122], LIGHT = [244, 245, 246], LINE = [216, 219, 223];
 
+let _logo = null;
 async function logoData(){
+  if (_logo) return _logo;
   const img = new Image(); img.src = '/assets/img/emn-logo.png';
   await img.decode();
   const c = document.createElement('canvas'); c.width = c.height = 240;
   c.getContext('2d').drawImage(img, 0, 0, 240, 240);
-  return c.toDataURL('image/png');
+  return (_logo = c.toDataURL('image/png'));
 }
 
 // Builds one invoice (one payment) + the terms and conditions. Returns the jsPDF doc.
@@ -426,6 +453,7 @@ async function fillFromAlumno(){
   }catch(e){ console.error(e); }
   $('#g-online-box').hidden = !onlineCourses.length;
   $('#g-online').innerHTML = onlineCourses.map(c => `<label class="ck"><input type="checkbox" value="${esc(c.title)}"${ids.has(c.id) ? ' checked' : ''}> ${esc(c.title)}</label>`).join('');
+  schedulePreview();
 }
 
 $('#g-al').addEventListener('change', fillFromAlumno);
@@ -438,25 +466,33 @@ $('#g-v1').addEventListener('change', recalcPago);
 
 function showErr(t){ const e = $('#g-err'); e.textContent = t || ''; e.hidden = !t; }
 
-$('#g-create').addEventListener('click', async () => {
-  showErr('');
-  const a = alumno(); if (!a) return showErr('Elige un alumno.');
-  const dur = parseFloat($('#g-dur').value); if (!(dur > 0)) return showErr('Escribe la duración del programa en meses.');
-  const cursos = [...document.querySelectorAll('#g-cursos tr[data-c]')].map(tr => ({ nombre: tr.dataset.c, porMes: parseInt(tr.querySelector('select').value, 10) }));
-  if (cursos.some(c => !c.porMes)) return showErr('Elige las clases por mes de cada curso.');
+// Lee el formulario. strict=true (al crear) devuelve { error } si falta algo; strict=false (vista previa) es tolerante.
+function readForm(strict){
+  const a = alumno(); if (!a) return { error: 'Elige un alumno.' };
+  const dur = parseFloat($('#g-dur').value) || 0;
+  if (strict && !(dur > 0)) return { error: 'Escribe la duración del programa en meses.' };
+  const cursos = [...document.querySelectorAll('#g-cursos tr[data-c]')].map(tr => ({ nombre: tr.dataset.c, porMes: parseInt(tr.querySelector('select').value, 10) || 0 }));
+  if (strict && cursos.some(c => !c.porMes)) return { error: 'Elige las clases por mes de cada curso.' };
   const online = [...document.querySelectorAll('#g-online input:checked')].map(i => i.value);
-  if (!cursos.length && !online.length) return showErr('El invoice necesita al menos un curso.');
-  const total = parseFloat($('#g-total').value); if (!(total > 0)) return showErr('Escribe el total del programa.');
+  if (strict && !cursos.length && !online.length) return { error: 'El invoice necesita al menos un curso.' };
+  const total = parseFloat($('#g-total').value) || 0;
+  if (strict && !(total > 0)) return { error: 'Escribe el total del programa.' };
   const moneda = $('#g-mon').value, split = $('#g-split').checked;
-  const m1 = split ? parseFloat($('#g-m1').value) : total;
-  if (!(m1 > 0)) return showErr('Escribe el monto del Pago 1.');
-  if (split && !(m1 < total)) return showErr('El Pago 1 debe ser menor que el total para que quede un Pago 2.');
+  const m1 = split ? (parseFloat($('#g-m1').value) || 0) : total;
+  if (strict && !(m1 > 0)) return { error: 'Escribe el monto del Pago 1.' };
+  if (strict && split && !(m1 < total)) return { error: 'El Pago 1 debe ser menor que el total para que quede un Pago 2.' };
   const plan = [{ pago: 1, monto: Math.round(m1 * 100) / 100, vence: $('#g-v1').value || null, link: $('#g-l1').value.trim() || null }];
-  if (split) plan.push({ pago: 2, monto: Math.round((total - m1) * 100) / 100, vence: $('#g-v2').value || null, link: $('#g-l2').value.trim() || null });
-  for (const p of plan) if (p.link && !safeUrl(p.link)) return showErr(`El link del Pago ${p.pago} debe empezar con https://`);
-
+  if (split) plan.push({ pago: 2, monto: Math.max(0, Math.round((total - m1) * 100) / 100), vence: $('#g-v2').value || null, link: $('#g-l2').value.trim() || null });
+  if (strict) for (const p of plan) if (p.link && !safeUrl(p.link)) return { error: `El link del Pago ${p.pago} debe empezar con https://` };
   const base = { fecha: $('#g-fecha').value || ymd(new Date()), alumno: { nombre: a.nombre, correo: a.correo || '', whatsapp: a.whatsapp || '' },
     duracion: dur, inicio: $('#g-ini').value || null, fin: $('#g-fin').value || null, cursos, online, total, moneda, notas: $('#g-notas').value.trim(), plan };
+  return { a, base, plan };
+}
+
+$('#g-create').addEventListener('click', async () => {
+  showErr('');
+  const r = readForm(true); if (r.error) return showErr(r.error);
+  const { a, base, plan } = r, moneda = base.moneda;
   const grupo = crypto.randomUUID(), prog = resumen(base);
   const rows = plan.map(p => ({ grupo, alumno_id: a.id, alumno_nombre: a.nombre, programa: prog, pago: p.pago, pagos: plan.length,
     monto: p.monto, moneda, vence: p.vence, link: p.link, datos: base }));
@@ -533,6 +569,36 @@ $('#f-csv').addEventListener('click', () => {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 });
 
+/* ======================= vista previa en vivo ======================= */
+// Genera el PDF real con los datos del formulario (mismo código que la descarga) y lo muestra al lado.
+let pvPago = 1, pvTimer = null, pvTok = 0, pvUrl = null;
+function schedulePreview(){ clearTimeout(pvTimer); pvTimer = setTimeout(renderPreview, 450); }
+async function renderPreview(){
+  const tok = ++pvTok, frame = $('#pv-frame'), msg = $('#pv-msg');
+  const r = readForm(false);
+  if (r.error){ frame.hidden = true; msg.hidden = false; msg.textContent = 'Elige un alumno para ver la vista previa del invoice.'; return; }
+  const { base, plan } = r;
+  $('#pv-tab2').hidden = plan.length < 2;
+  if (pvPago > plan.length) pvPago = 1;
+  $('#pv-tab1').setAttribute('aria-pressed', String(pvPago === 1)); $('#pv-tab2').setAttribute('aria-pressed', String(pvPago === 2));
+  const p = plan[pvPago - 1];
+  const row = { seq: 'XXXX', alumno_nombre: base.alumno.nombre, pago: p.pago, pagos: plan.length, monto: p.monto, moneda: base.moneda, vence: p.vence, link: p.link, datos: base };
+  try{
+    const doc = await buildPdf(row);
+    if (tok !== pvTok) return;   // llegó otra edición más reciente
+    const url = URL.createObjectURL(doc.output('blob'));
+    if (pvUrl) URL.revokeObjectURL(pvUrl);
+    pvUrl = url; frame.src = url + '#toolbar=0&navpanes=0&view=FitH';
+    frame.hidden = false; msg.hidden = true;
+  }catch(e){ console.error(e); frame.hidden = true; msg.hidden = false; msg.textContent = 'No se pudo generar la vista previa.'; }
+}
+$('#v-gen').addEventListener('input', schedulePreview);
+$('#v-gen').addEventListener('change', schedulePreview);
+document.querySelector('.pv-head').addEventListener('click', e => {
+  const b = e.target.closest('.pv-tab'); if (!b) return;
+  pvPago = parseInt(b.dataset.pv, 10); renderPreview();
+});
+
 /* ======================= pestañas y arranque ======================= */
 document.querySelector('.tabs').addEventListener('click', e => {
   const b = e.target.closest('.tab'); if (!b) return;
@@ -554,7 +620,9 @@ async function boot(){
   ]);
   if (a.error || i.error){ console.error(a.error || i.error); gate.textContent = 'No se pudieron cargar los datos.'; gate.style.display = 'block'; return; }
   alumnos = a.data || []; invoices = i.data || []; onlineCourses = c.data || [];
-  $('#g-al').innerHTML = '<option value="">Elige un alumno…</option>' + alumnos.map(x => `<option value="${x.id}">${esc(x.nombre)}</option>`).join('');
+  const opt = x => `<option value="${x.id}">${esc(x.nombre)}</option>`;
+  $('#g-al').innerHTML = '<option value="">Elige un alumno…</option>' + alumnos.filter(x => x.activo !== false).map(opt).join('')
+    + (alumnos.some(x => x.activo === false) ? '<optgroup label="Archivados">' + alumnos.filter(x => x.activo === false).map(opt).join('') + '</optgroup>' : '');
   $('#g-fecha').value = ymd(new Date());
   $('#g-v1').value = addDays(ymd(new Date()), 7);
   $('#body-i').style.display = 'block';

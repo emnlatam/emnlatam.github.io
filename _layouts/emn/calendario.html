@@ -244,7 +244,7 @@ async function boot(){
     emnSupabase.from('cursos_meet').select('*'),
   ]);
   if(a.error || c.error || m.error){ console.error(a.error || c.error || m.error); gate.textContent = 'No se pudo cargar el calendario.'; gate.style.display = 'block'; return; }
-  alumnos = a.data; clases = c.data.map(x => ({ ...x, hora: x.hora.slice(0, 8) })); (m.data || []).forEach(x => meet[x.curso] = x.link);
+  alumnos = a.data.filter(x => x.activo !== false);   // los archivados no salen clases = c.data.map(x => ({ ...x, hora: x.hora.slice(0, 8) })); (m.data || []).forEach(x => meet[x.curso] = x.link);
   const asked = new URLSearchParams(location.search).get('alumno');
   cur = alumnos.find(x => x.id === asked)?.id || alumnos[0]?.id || null;
   $('#body-c').style.display = 'block';

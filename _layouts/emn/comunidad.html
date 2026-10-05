@@ -43,6 +43,14 @@
   .al__acts{ display:flex; gap:8px; flex-shrink:0; }
   .empty{ text-align:center; padding:50px 20px; color:var(--gray-500); }
   [hidden]{ display:none !important; }
+  .sep{ margin:22px 0 2px; font-size:11.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--gray-500); }
+  .al.off{ background:#EDEEF0; border-color:#D5D8DC; border-left-color:#B6BBC2; color:var(--gray-500); }
+  .al.off .al__name, .al.off .al__meta{ color:var(--gray-500); }
+  .al.off .chip{ background:#E1E3E6; color:var(--gray-500); }
+  .tag-off{ font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; background:#D5D8DC; color:#6B7280; padding:2px 8px; border-radius:999px; margin-left:6px; vertical-align:middle; }
+  .active-row{ grid-column:1 / -1; margin-bottom:16px; padding:12px 14px; background:var(--gray-100); border-radius:10px; }
+  .active-row .ck{ display:flex; align-items:center; gap:10px; font-size:14px; font-weight:700; cursor:pointer; text-transform:none; letter-spacing:0; color:var(--ink); margin:0; }
+  .active-row input{ width:18px; height:18px; accent-color:var(--red); }
   .filters{ display:flex; gap:8px; flex-wrap:wrap; margin:16px 0; }
   .chipf{ border:1px solid var(--gray-300); background:var(--paper); border-radius:999px; padding:7px 14px; font:600 12.5px var(--font-body); color:var(--gray-700); cursor:pointer; }
   .chipf:hover{ border-color:var(--red); color:var(--red); }
@@ -297,20 +305,29 @@ async function syncAll(silent){
 /* ---------- listas ---------- */
 const nextColor = () => PALETA.find(c => !alumnos.some(a => a.color === c)) || PALETA[alumnos.length % PALETA.length];
 
-function renderAlumnos(){
-  $('#list').innerHTML = alumnos.length ? alumnos.map(a => `
-    <div class="al" style="--c:${esc(a.color)}" data-id="${a.id}">
+function alumnoCard(a){
+  const off = a.activo === false;
+  return `
+    <div class="al${off ? ' off' : ''}" style="--c:${esc(a.color)}" data-id="${a.id}">
       <div class="al__main">
-        <div class="al__name">${esc(a.nombre)}</div>
+        <div class="al__name">${esc(a.nombre)}${off ? ' <span class="tag-off">Archivado</span>' : ''}</div>
         <div class="al__meta">${[a.correo, a.whatsapp, a.datos?.instrumento].filter(Boolean).map(esc).join(' · ') || '—'}</div>
-        <div class="chips">${a.cursos.map(c => `<span class="chip">${esc(c)}${a.profes_curso?.[c] ? ' · ' + esc(a.profes_curso[c]) : ''}${a.clases_mes?.[c] ? ' · ' + a.clases_mes[c] + '/mes' : ''}</span>`).join('')}<span class="chip auto">Mock Audition (automático)</span></div>
+        <div class="chips">${a.cursos.map(c => `<span class="chip">${esc(c)}${a.profes_curso?.[c] ? ' · ' + esc(a.profes_curso[c]) : ''}${a.clases_mes?.[c] ? ' · ' + a.clases_mes[c] + '/mes' : ''}</span>`).join('')}${off ? '' : '<span class="chip auto">Mock Audition (automático)</span>'}</div>
       </div>
       <div class="al__acts">
-        <a class="btn" href="/calendario?alumno=${a.id}">Calendario</a>
+        ${off ? '' : `<a class="btn" href="/calendario?alumno=${a.id}">Calendario</a>`}
         <button type="button" class="btn" data-edit>Editar</button>
+        <button type="button" class="btn" data-toggle>${off ? 'Reactivar' : 'Archivar'}</button>
         <button type="button" class="btn" data-del aria-label="Eliminar a ${esc(a.nombre)}">✕</button>
       </div>
-    </div>`).join('') : '<div class="empty">Todavía no hay alumnos. Agrega el primero o sincroniza con Airtable.</div>';
+    </div>`;
+}
+
+// Activos primero; los no activos se archivan abajo, en gris.
+function renderAlumnos(){
+  const act = alumnos.filter(a => a.activo !== false), off = alumnos.filter(a => a.activo === false);
+  $('#list').innerHTML = (act.length ? act.map(alumnoCard).join('') : (off.length ? '<div class="empty">No hay alumnos activos.</div>' : '<div class="empty">Todavía no hay alumnos. Agrega el primero o sincroniza con Airtable.</div>'))
+    + (off.length ? `<div class="sep">Archivados (${off.length})</div>` + off.map(alumnoCard).join('') : '');
 }
 
 function renderProfes(){
@@ -373,7 +390,9 @@ function courseRows(a){
 function openForm(a){
   editing = a || null;
   $('#dlg-title').textContent = a ? 'Editar alumno' : 'Agregar alumno';
-  $('#fields').innerHTML = CAMPOS.map(c => fieldHTML(c, a ? (CORE.includes(c.key) ? a[c.key] : a.datos?.[c.key]) : '', c.key)).join('');
+  $('#fields').innerHTML = `<div class="active-row"><label class="ck"><input type="checkbox" name="activo"${a && a.activo === false ? '' : ' checked'}> Alumno activo</label>
+    <p class="hint">Si lo desmarcas, el alumno se archiva: pasa al final de la lista, en gris, y deja de salir en el Calendario.</p></div>`
+    + CAMPOS.map(c => fieldHTML(c, a ? (CORE.includes(c.key) ? a[c.key] : a.datos?.[c.key]) : '', c.key)).join('');
   $('#courses').innerHTML = courseRows(a);
   $('#msg').hidden = true;
   $('#dlg').showModal();
@@ -396,7 +415,7 @@ $('#form').addEventListener('submit', async e => {
   if(editing?.datos?._extras) datos._extras = editing.datos._extras;   // lo automático que ya tenía en Airtable
   const profes_curso = {}; cursos.forEach(c => { const p = (fd.get('prof::' + c) || '').toString(); if(p) profes_curso[c] = p; });
   const clases_mes = {}; cursos.forEach(c => { const n = parseInt(fd.get('cpm::' + c), 10); if(n >= 1 && n <= 8) clases_mes[c] = n; });
-  const row = { nombre: v.nombre, correo: v.correo || null, whatsapp: v.whatsapp || null, datos, cursos, profes_curso, clases_mes, updated_at: new Date().toISOString() };
+  const row = { nombre: v.nombre, correo: v.correo || null, whatsapp: v.whatsapp || null, datos, cursos, profes_curso, clases_mes, activo: fd.has('activo'), updated_at: new Date().toISOString() };
 
   btn.disabled = true; btn.textContent = 'Guardando…';
   let saved;
@@ -491,7 +510,15 @@ async function removeRow(kind, row){
 $('#list').addEventListener('click', e => {
   const r = e.target.closest('.al'); if(!r) return;
   const a = alumnos.find(x => x.id === r.dataset.id);
-  if(e.target.closest('[data-edit]')) openForm(a); else if(e.target.closest('[data-del]')) removeRow('al', a);
+  if(e.target.closest('[data-edit]')) return openForm(a);
+  if(e.target.closest('[data-del]')) return removeRow('al', a);
+  if(e.target.closest('[data-toggle]')){
+    const activo = a.activo === false;   // si estaba archivado, se reactiva
+    emnSupabase.from('alumnos').update({ activo }).eq('id', a.id).then(({ error }) => {
+      if(error){ console.error(error); return emnAlert('No se pudo cambiar el estado: ' + error.message); }
+      a.activo = activo; renderAlumnos();
+    });
+  }
 });
 $('#plist').addEventListener('click', e => {
   const r = e.target.closest('.al'); if(!r) return;

@@ -89,3 +89,6 @@ create table if not exists public.invoices (
 alter table public.invoices enable row level security;
 create policy "invoices_staff" on public.invoices for all to authenticated
   using (public.emn_is_staff()) with check (public.emn_is_staff());
+
+-- Alumno activo o archivado (los no activos van al final de la lista, en gris). Solo de la página.
+alter table public.alumnos add column if not exists activo boolean not null default true;
