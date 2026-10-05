@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="es" class="emn-landing">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% include emn-favicon.html %}
+<title>EMN — Invoices</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="/assets/css/emn.css?v={{ site.time | date: '%s' }}">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="/assets/js/emn-auth.js?v={{ site.time | date: '%s' }}"></script>
+<style>
+  body{ background:var(--gray-100); font-family:var(--font-body); color:var(--ink); margin:0; }
+  button, input, select, textarea{ font-family:inherit; }
+  [hidden]{ display:none !important; }
+  .wrap-i{ max-width:1000px; margin:0 auto; padding:32px 24px 70px; }
+  .head-i{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:8px; }
+  .head-i h1{ font-family:var(--font-display); font-size:26px; margin:0; }
+  .head-i a.back{ font-size:13px; color:var(--gray-700); }
+  #gate-msg{ text-align:center; padding:80px 20px; color:var(--gray-700); }
+  #gate-msg a{ color:var(--red); font-weight:600; }
+  .tabs{ display:flex; gap:8px; margin:14px 0 18px; }
+  .tab{ border:1px solid var(--gray-300); background:var(--paper); border-radius:999px; padding:8px 20px; font-weight:700; font-size:14px; color:var(--gray-700); cursor:pointer; }
+  .tab:hover{ border-color:var(--red); color:var(--red); }
+  .tab[aria-pressed="true"]{ background:var(--red); border-color:var(--red); color:#fff; }
+  .btn{ display:inline-block; border:1px solid var(--gray-300); background:var(--paper); border-radius:8px; padding:9px 16px; font-weight:600; font-size:13.5px; cursor:pointer; color:var(--ink); }
+  .btn:hover{ border-color:var(--red); color:var(--red); }
+  .btn.primary{ background:var(--red); border-color:var(--red); color:#fff; }
+  .btn.primary:hover{ background:var(--red-dark); color:#fff; }
+  .btn:disabled{ opacity:.55; cursor:default; }
+
+  .card{ background:var(--paper); border:1px solid var(--gray-300); border-radius:var(--radius); padding:20px 22px; margin-bottom:16px; }
+  .card h2{ font-family:var(--font-display); font-size:17px; margin:0 0 14px; }
+  .row{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:0 16px; }
+  .f{ margin-bottom:14px; }
+  .f label, .lbl{ display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--gray-500); margin-bottom:5px; }
+  .f input, .f select, .f textarea{ width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid var(--gray-300); border-radius:8px; font-size:14px; background:#fff; color:var(--ink); }
+  .f input:focus, .f select:focus, .f textarea:focus{ border-color:var(--red); outline:none; }
+  .f textarea{ min-height:64px; resize:vertical; }
+  .with-suffix{ display:flex; align-items:center; gap:10px; }
+  .with-suffix input{ flex:0 1 130px; }
+  .with-suffix span{ font-size:14px; color:var(--gray-700); }
+  .hint{ font-size:12.5px; color:var(--gray-500); line-height:1.45; margin:4px 0 0; }
+  .warn{ font-size:13px; color:#B24E0B; background:#FDEBDD; border-radius:8px; padding:9px 12px; margin:0 0 12px; }
+  .ck{ display:flex; align-items:center; gap:9px; font-size:14px; font-weight:600; cursor:pointer; text-transform:none; letter-spacing:0; color:var(--ink); }
+  .ck input{ width:17px; height:17px; accent-color:var(--red); }
+  .checks{ display:flex; flex-wrap:wrap; gap:8px 22px; }
+
+  table.t{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  table.t th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--gray-500); padding:8px 10px; border-bottom:1px solid var(--gray-300); white-space:nowrap; }
+  table.t td{ padding:9px 10px; border-bottom:1px solid var(--gray-100); vertical-align:middle; }
+  table.t tr:last-child td{ border-bottom:0; }
+  table.t select{ padding:7px 9px; border:1px solid var(--gray-300); border-radius:7px; font-size:13px; background:#fff; }
+  .num{ text-align:right; white-space:nowrap; }
+
+  .result{ background:#E8F5EE; border:1px solid #1E8E5A; border-radius:var(--radius); padding:18px 20px; margin-top:16px; }
+  .result h3{ margin:0 0 12px; font-family:var(--font-display); font-size:16px; color:#0B7A43; }
+  .res-row{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; padding:8px 0; border-top:1px solid rgba(30,142,90,.25); }
+  .res-row:first-of-type{ border-top:0; }
+  .res-row .grow{ flex:1; min-width:200px; font-size:14px; }
+
+  .sum{ display:flex; flex-wrap:wrap; gap:12px; margin-bottom:16px; }
+  .sum div{ flex:1; min-width:180px; background:var(--paper); border:1px solid var(--gray-300); border-radius:var(--radius); padding:14px 16px; }
+  .sum small{ display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--gray-500); margin-bottom:4px; }
+  .sum strong{ font-family:var(--font-display); font-size:21px; }
+  .sum .ok strong{ color:#1E8E5A; }
+  .bar{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:14px; }
+  .bar .grow{ flex:1; }
+  .chipf{ border:1px solid var(--gray-300); background:var(--paper); border-radius:999px; padding:7px 14px; font:600 12.5px var(--font-body); color:var(--gray-700); cursor:pointer; }
+  .chipf:hover{ border-color:var(--red); color:var(--red); }
+  .chipf[aria-pressed="true"]{ background:var(--red); border-color:var(--red); color:#fff; }
+  .box{ background:var(--paper); border:1px solid var(--gray-300); border-radius:var(--radius); overflow-x:auto; }
+  .box table{ min-width:900px; }
+  .badge{ font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; background:var(--gray-100); color:var(--gray-700); }
+  .badge.pagado{ background:#E8F5EE; color:#1E8E5A; }
+  .badge.pendiente{ background:#FDEBDD; color:#B24E0B; }
+  .prog{ font-size:12.5px; color:var(--gray-700); max-width:340px; line-height:1.4; }
+  input.paid{ padding:6px 8px; border:1px solid var(--gray-300); border-radius:7px; font-size:13px; }
+  .xbtn{ border:0; background:none; cursor:pointer; color:var(--gray-500); font-size:18px; line-height:1; padding:4px 8px; border-radius:6px; }
+  .xbtn:hover{ color:var(--red); background:var(--gray-100); }
+  .empty{ text-align:center; padding:40px 20px; color:var(--gray-500); }
+</style>
+</head>
+<body>
+
+{% include emn-header.html %}
+
+<div class="wrap-i">
+  <div class="head-i">
+    <h1>Invoices</h1>
+    <a class="back" href="/administrar">&larr; Volver a Administrar</a>
+  </div>
+
+  <div id="gate-msg" style="display:none"></div>
+
+  <div id="body-i" style="display:none">
+    <div class="tabs" role="group" aria-label="Ver">
+      <button type="button" class="tab" id="tab-gen" data-tab="gen" aria-pressed="true">Generar invoice</button>
+      <button type="button" class="tab" id="tab-fin" data-tab="fin" aria-pressed="false">Finanzas</button>
+    </div>
+
+    <!-- ===================== GENERAR ===================== -->
+    <section id="v-gen">
+      <div class="card">
+        <h2>Alumno</h2>
+        <div class="row">
+          <div class="f"><label for="g-al">Alumno</label><select id="g-al"><option value="">Elige un alumno…</option></select></div>
+          <div class="f"><label for="g-fecha">Fecha del invoice</label><input type="date" id="g-fecha"></div>
+        </div>
+        <div id="g-warn"></div>
+      </div>
+
+      <div class="card">
+        <h2>Programa</h2>
+        <div class="row">
+          <div class="f"><label for="g-dur">Duración</label><div class="with-suffix"><input type="number" id="g-dur" min="0" step="any"><span>meses</span></div></div>
+          <div class="f"><label for="g-ini">Inicio</label><input type="date" id="g-ini"></div>
+          <div class="f"><label for="g-fin">Fin</label><input type="date" id="g-fin"></div>
+        </div>
+        <span class="lbl">Cursos del alumno</span>
+        <table class="t"><thead><tr><th>Curso</th><th>Clases por mes</th><th class="num">Total de clases</th></tr></thead><tbody id="g-cursos"></tbody></table>
+        <p class="hint">Se llenan con lo guardado en Comunidad; puedes ajustarlos aquí solo para este invoice. Los nombres de los profesores no aparecen en el invoice.</p>
+        <div id="g-online-box" hidden style="margin-top:16px">
+          <span class="lbl">Cursos online de EMN (plataforma)</span>
+          <div class="checks" id="g-online"></div>
+          <p class="hint">Se marcan solos los cursos online a los que el alumno ya tiene acceso. Los marcados se agregan al invoice como "Incluido".</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Pago</h2>
+        <div class="row">
+          <div class="f"><label for="g-total">Total del programa</label><input type="number" id="g-total" min="0" step="0.01"></div>
+          <div class="f"><label for="g-mon">Moneda</label><select id="g-mon"><option>USD</option><option>PEN</option><option>EUR</option></select></div>
+        </div>
+        <label class="ck" style="margin-bottom:14px"><input type="checkbox" id="g-split"> Dividir el pago en 2 cuotas</label>
+
+        <div class="row">
+          <div class="f"><label for="g-m1" id="l-m1">Monto</label><input type="number" id="g-m1" min="0" step="0.01" readonly></div>
+          <div class="f"><label for="g-v1">Vence</label><input type="date" id="g-v1"></div>
+          <div class="f" style="grid-column:span 2"><label for="g-l1">Link de pago (Stripe)</label><input type="url" id="g-l1" placeholder="https://buy.stripe.com/…"></div>
+        </div>
+        <div class="row" id="g-pago2" hidden>
+          <div class="f"><label for="g-m2">Monto del Pago 2</label><input type="number" id="g-m2" readonly></div>
+          <div class="f"><label for="g-v2">Vence</label><input type="date" id="g-v2"></div>
+          <div class="f" style="grid-column:span 2"><label for="g-l2">Link de pago del Pago 2 (Stripe)</label><input type="url" id="g-l2" placeholder="https://buy.stripe.com/…"></div>
+        </div>
+        <p class="hint" id="g-hint2" hidden>Escribe el monto del Pago 1; el Pago 2 es lo que falta para el total.</p>
+      </div>
+
+      <div class="card">
+        <div class="f" style="margin:0"><label for="g-notas">Notas (opcional)</label><textarea id="g-notas" placeholder="Aparecen en el invoice, debajo del resumen."></textarea></div>
+      </div>
+
+      <p class="msg" id="g-err" role="alert" hidden style="color:var(--red);font-weight:600;font-size:13.5px"></p>
+      <button type="button" class="btn primary" id="g-create">Crear invoice</button>
+      <div id="g-result"></div>
+    </section>
+
+    <!-- ===================== FINANZAS ===================== -->
+    <section id="v-fin" hidden>
+      <div class="sum" id="f-sum"></div>
+      <div class="bar">
+        <button type="button" class="chipf" data-f="" aria-pressed="true">Todos</button>
+        <button type="button" class="chipf" data-f="pendiente" aria-pressed="false">Pendientes</button>
+        <button type="button" class="chipf" data-f="pagado" aria-pressed="false">Pagados</button>
+        <span class="grow"></span>
+        <button type="button" class="btn" id="f-csv">Descargar Excel (CSV)</button>
+      </div>
+      <div class="box"><table class="t">
+        <thead><tr><th>Fecha de pago</th><th>Alumno</th><th>Programa</th><th>Invoice</th><th class="num">Monto</th><th>Estado</th><th></th></tr></thead>
+        <tbody id="f-body"></tbody>
+      </table></div>
+      <p class="hint" style="margin-top:10px">Cuando entre el dinero, escribe la <strong>fecha de pago</strong> en la fila: el invoice pasa a "Pagado". Si la borras, vuelve a "Pendiente".</p>
+    </section>
+  </div>
+</div>
+
+<script>
+const TERMS = {{ site.data.terminos.texto | jsonify }};
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const addDays = (k, n) => { const d = new Date(k + 'T12:00:00'); d.setDate(d.getDate() + n); return ymd(d); };
+const dmy = k => /^\d{4}-\d{2}-\d{2}/.test(k || '') ? `${k.slice(8, 10)}/${k.slice(5, 7)}/${k.slice(0, 4)}` : '-';
+const money = (n, cur) => new Intl.NumberFormat('en-US', { style: 'currency', currency: cur || 'USD', currencyDisplay: 'code' }).format(Number(n) || 0).replace(/ /g, ' ');
+const numero = row => 'EMN-' + String(row.seq).padStart(4, '0');
+const safeUrl = u => /^https?:\/\//i.test(u || '') ? u : null;
+
+/* ======================= PDF ======================= */
+const BRAND = [200, 16, 46], INK = [26, 26, 26], GRAY = [110, 115, 122], LIGHT = [244, 245, 246], LINE = [216, 219, 223];
+
+async function logoData(){
+  const img = new Image(); img.src = '/assets/img/emn-logo.png';
+  await img.decode();
+  const c = document.createElement('canvas'); c.width = c.height = 240;
+  c.getContext('2d').drawImage(img, 0, 0, 240, 240);
+  return c.toDataURL('image/png');
+}
+
+// Builds one invoice (one payment) + the terms and conditions. Returns the jsPDF doc.
+async function buildPdf(row){
+  const d = row.datos, { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const W = 210, H = 297, M = 18, R = W - M;
+  const txt = (s, x, y, o) => doc.text(String(s), x, y, o);
+  const font = (st, size, color) => { doc.setFont('helvetica', st).setFontSize(size).setTextColor(...color); };
+  let y = 0;
+  const ensure = h => { if (y + h > H - 24){ doc.addPage(); y = 22; } };
+  const split = row.pagos > 1;
+
+  /* ---- header ---- */
+  doc.addImage(await logoData(), 'PNG', M, 14, 22, 22);
+  font('bold', 16, INK); txt('EMN', M + 27, 22);
+  font('normal', 9, GRAY); txt('Escuela de Música y Negocios', M + 27, 27.5); txt('admisiones@emnperu.com  |  +51 986 658 866', M + 27, 32.5);
+  font('bold', 27, BRAND); txt('INVOICE', R, 24, { align: 'right' });
+  font('normal', 10, GRAY); txt('No. ' + numero(row), R, 31, { align: 'right' });
+  if (split){
+    doc.setFillColor(...BRAND); doc.roundedRect(R - 36, 34, 36, 7, 3.5, 3.5, 'F');
+    font('bold', 8.5, [255, 255, 255]); txt(`PAGO ${row.pago} DE ${row.pagos}`, R - 18, 38.7, { align: 'center' });
+  }
+  doc.setDrawColor(...BRAND); doc.setLineWidth(0.8); doc.line(M, 46, R, 46);
+
+  /* ---- bill to / dates ---- */
+  font('bold', 8, GRAY); txt('FACTURADO A', M, 55);
+  font('bold', 13, INK); txt(d.alumno.nombre, M, 62);
+  font('normal', 9.5, GRAY);
+  let by = 67.5; for (const l of [d.alumno.correo, d.alumno.whatsapp].filter(Boolean)){ txt(l, M, by); by += 5; }
+  const rx = R - 62;
+  [['Fecha de emisión', dmy(d.fecha)], ['Vencimiento', dmy(row.vence)], ['Moneda', row.moneda]].forEach(([k, v], i) => {
+    font('normal', 9, GRAY); txt(k, rx, 55 + i * 6.5);
+    font('bold', 9.5, INK); txt(v, R, 55 + i * 6.5, { align: 'right' });
+  });
+
+  /* ---- program ---- */
+  y = 88;
+  font('bold', 11, BRAND); txt('PROGRAMA', M, y);
+  doc.setDrawColor(...LINE); doc.setLineWidth(0.3); doc.line(M, y + 2, R, y + 2);
+  y += 9;
+  font('normal', 10, INK);
+  const range = d.inicio && d.fin ? `  (${dmy(d.inicio)} al ${dmy(d.fin)})` : '';
+  txt(`Duración del programa: ${d.duracion} ${Number(d.duracion) === 1 ? 'mes' : 'meses'}${range}`, M, y);
+  y += 7;
+
+  // table header
+  const cx = { cpm: M + 100, dur: M + 130, tot: R - 3 };
+  doc.setFillColor(...BRAND); doc.rect(M, y, R - M, 9, 'F');
+  font('bold', 8.5, [255, 255, 255]);
+  txt('CURSO', M + 3, y + 6); txt('CLASES POR MES', cx.cpm, y + 6, { align: 'center' }); txt('DURACIÓN', cx.dur, y + 6, { align: 'center' }); txt('TOTAL DE CLASES', cx.tot, y + 6, { align: 'right' });
+  y += 9;
+  let zebra = false, totalClases = 0;
+  for (const c of d.cursos){
+    ensure(10);
+    if (zebra){ doc.setFillColor(...LIGHT); doc.rect(M, y, R - M, 9, 'F'); }
+    zebra = !zebra;
+    const tot = Math.round(c.porMes * d.duracion); totalClases += tot;
+    font('bold', 10, INK); txt(c.nombre, M + 3, y + 6);
+    font('normal', 10, INK);
+    txt(String(c.porMes), cx.cpm, y + 6, { align: 'center' });
+    txt(`${d.duracion} ${Number(d.duracion) === 1 ? 'mes' : 'meses'}`, cx.dur, y + 6, { align: 'center' });
+    font('bold', 10, INK); txt(String(tot), cx.tot, y + 6, { align: 'right' });
+    y += 9;
+  }
+  if (d.cursos.length > 1){
+    ensure(10);
+    doc.setDrawColor(...LINE); doc.line(M, y, R, y);
+    font('bold', 9.5, GRAY); txt('Total de clases del programa', M + 3, y + 6); font('bold', 10, INK); txt(String(totalClases), cx.tot, y + 6, { align: 'right' });
+    y += 9;
+  }
+  if (d.online?.length){
+    ensure(12 + d.online.length * 9);
+    y += 3;
+    doc.setFillColor(...INK); doc.rect(M, y, R - M, 8, 'F');
+    font('bold', 8.5, [255, 255, 255]); txt('CURSOS ONLINE EMN (PLATAFORMA)', M + 3, y + 5.5); txt('ACCESO', cx.tot, y + 5.5, { align: 'right' });
+    y += 8; zebra = false;
+    for (const t of d.online){
+      if (zebra){ doc.setFillColor(...LIGHT); doc.rect(M, y, R - M, 9, 'F'); }
+      zebra = !zebra;
+      font('bold', 10, INK); txt(t, M + 3, y + 6); font('normal', 10, [30, 142, 90]); txt('Incluido', cx.tot, y + 6, { align: 'right' });
+      y += 9;
+    }
+  }
+
+  /* ---- totals ---- */
+  y += 8; ensure(34);
+  const tx = R - 86;
+  font('normal', 10, GRAY); txt('Total del programa', tx, y); font('bold', 11, INK); txt(money(d.total, row.moneda), R, y, { align: 'right' });
+  y += 7;
+  if (split){
+    d.plan.forEach(p => {
+      font('normal', 9.5, GRAY); txt(`Pago ${p.pago} de ${d.plan.length}  (vence ${dmy(p.vence)})`, tx, y);
+      font(p.pago === row.pago ? 'bold' : 'normal', 10, INK); txt(money(p.monto, row.moneda), R, y, { align: 'right' });
+      y += 6;
+    });
+  }
+
+  /* ---- payment box ---- */
+  y += 6; ensure(46);
+  doc.setFillColor(...LIGHT); doc.roundedRect(M, y, R - M, 38, 2, 2, 'F');
+  doc.setFillColor(...BRAND); doc.rect(M, y, 2.2, 38, 'F');
+  font('bold', 8.5, GRAY); txt(split ? `PAGO ${row.pago} DE ${row.pagos}  -  MONTO A PAGAR` : 'MONTO A PAGAR', M + 8, y + 9);
+  font('bold', 24, INK); txt(money(row.monto, row.moneda), M + 8, y + 21);
+  font('normal', 9.5, GRAY); txt(`Vence el ${dmy(row.vence)}`, M + 8, y + 29);
+  const link = safeUrl(row.link);
+  if (link){
+    doc.setFillColor(...BRAND); doc.roundedRect(R - 62, y + 9, 54, 13, 2, 2, 'F');
+    font('bold', 11, [255, 255, 255]); txt('PAGAR AHORA', R - 35, y + 17.2, { align: 'center' });
+    doc.link(R - 62, y + 9, 54, 13, { url: link });
+    font('normal', 7, GRAY);
+    const shown = doc.splitTextToSize(link, 80)[0];
+    doc.textWithLink(shown + (shown.length < link.length ? '...' : ''), R - 8, y + 28, { url: link, align: 'right' });
+  } else {
+    font('normal', 9, GRAY); txt('EMN te enviará el enlace de pago.', R - 8, y + 17, { align: 'right' });
+  }
+  y += 44;
+
+  if (d.notas){
+    ensure(20);
+    font('bold', 8.5, GRAY); txt('NOTAS', M, y); y += 5;
+    font('normal', 9.5, INK);
+    for (const l of doc.splitTextToSize(d.notas, R - M)){ ensure(6); txt(l, M, y); y += 5; }
+    y += 3;
+  }
+  ensure(10);
+  font('normal', 8.5, GRAY);
+  for (const l of doc.splitTextToSize('Al realizar el pago, el alumno acepta los términos y condiciones adjuntos a este invoice. La reserva del cupo se confirma únicamente con el pago.', R - M)){ txt(l, M, y); y += 4.3; }
+
+  /* ---- terms and conditions ---- */
+  doc.addPage(); y = 22;
+  let first = true;
+  for (const raw of TERMS.split('\n')){
+    const line = raw.replace(/\s+$/, '');
+    if (!line.trim()){ y += 2.2; continue; }
+    if (first){ first = false; font('bold', 15, BRAND); txt(line.trim(), M, y); y += 5; doc.setDrawColor(...BRAND); doc.setLineWidth(0.6); doc.line(M, y, R, y); y += 7; continue; }
+    const bullet = line.match(/^(\s*)-\s+(.*)$/);
+    if (/^\d+\.\s/.test(line.trim()) && !bullet){
+      y += 3; ensure(14); font('bold', 11, INK); txt(line.trim(), M, y); y += 6.2; continue;
+    }
+    if (bullet){
+      const ind = bullet[1].length >= 2 ? 11 : 5;
+      font('normal', 9.6, INK);
+      const ls = doc.splitTextToSize(bullet[2], R - M - ind - 2);
+      ls.forEach((l, i) => { ensure(6); if (i === 0){ doc.setFillColor(...BRAND); doc.circle(M + ind - 3, y - 1.2, 0.55, 'F'); } txt(l, M + ind, y); y += 4.7; });
+      y += 0.8; continue;
+    }
+    font('normal', 9.8, INK);
+    for (const l of doc.splitTextToSize(line.trim(), R - M)){ ensure(6); txt(l, M, y); y += 4.8; }
+    y += 0.8;
+  }
+
+  /* ---- footer on every page ---- */
+  const n = doc.getNumberOfPages();
+  for (let i = 1; i <= n; i++){
+    doc.setPage(i);
+    doc.setDrawColor(...LINE); doc.setLineWidth(0.3); doc.line(M, H - 16, R, H - 16);
+    font('normal', 8, GRAY);
+    txt('Escuela de Música y Negocios (EMN)  |  admisiones@emnperu.com  |  +51 986 658 866', M, H - 11);
+    txt(`${numero(row)}  |  Página ${i} de ${n}`, R, H - 11, { align: 'right' });
+  }
+  return doc;
+}
+
+async function downloadPdf(row){
+  const doc = await buildPdf(row);
+  const slug = row.alumno_nombre.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  doc.save(`Invoice-${numero(row)}${row.pagos > 1 ? '-Pago-' + row.pago : ''}-${slug}.pdf`);
+}
+
+/* ======================= datos ======================= */
+let alumnos = [], onlineCourses = [], invoices = [], finFilter = '';
+const alumno = () => alumnos.find(a => a.id === $('#g-al').value);
+
+const resumen = d => [
+  d.cursos.map(c => `${c.nombre} (${c.porMes}/mes)`).join(', '),
+  d.online?.length ? 'Online: ' + d.online.join(', ') : '',
+].filter(Boolean).join(' + ') + ` · ${d.duracion} ${Number(d.duracion) === 1 ? 'mes' : 'meses'}`;
+
+/* ======================= generar ======================= */
+function recalcCursos(){
+  document.querySelectorAll('#g-cursos tr').forEach(tr => {
+    const n = parseInt(tr.querySelector('select').value, 10), dur = parseFloat($('#g-dur').value);
+    tr.querySelector('.num').textContent = n && dur ? Math.round(n * dur) : '-';
+  });
+}
+
+function recalcPago(){
+  const total = parseFloat($('#g-total').value) || 0, split = $('#g-split').checked;
+  $('#g-pago2').hidden = !split; $('#g-hint2').hidden = !split;
+  $('#l-m1').textContent = split ? 'Monto del Pago 1' : 'Monto';
+  const m1 = $('#g-m1');
+  m1.readOnly = !split;
+  if (!split){ m1.value = total ? total.toFixed(2) : ''; return; }
+  if (m1.dataset.auto !== '0') m1.value = total ? (Math.round(total * 50) / 100).toFixed(2) : '';
+  const rest = total - (parseFloat(m1.value) || 0);
+  $('#g-m2').value = total ? Math.max(0, rest).toFixed(2) : '';
+  if (!$('#g-v2').value && $('#g-v1').value) $('#g-v2').value = addDays($('#g-v1').value, 30);
+}
+
+async function fillFromAlumno(){
+  const a = alumno(), warn = [];
+  if (!a){ $('#g-cursos').innerHTML = ''; $('#g-online-box').hidden = true; $('#g-warn').innerHTML = ''; return; }
+  const dt = a.datos || {};
+  $('#g-dur').value = dt.duracion || '';
+  $('#g-ini').value = /^\d{4}-/.test(dt.inicio || '') ? dt.inicio : '';
+  $('#g-fin').value = /^\d{4}-/.test(dt.fin || '') ? dt.fin : '';
+  $('#g-total').value = dt.costo_total ? parseFloat(dt.costo_total) : '';
+  $('#g-m1').dataset.auto = '1';
+  $('#g-cursos').innerHTML = a.cursos.map(c => `<tr data-c="${esc(c)}"><td><strong>${esc(c)}</strong></td>
+    <td><select>${['<option value="">—</option>', ...[1,2,3,4,5,6,7,8].map(n => `<option value="${n}"${String(a.clases_mes?.[c]) === String(n) ? ' selected' : ''}>${n} por mes</option>`)].join('')}</select></td>
+    <td class="num">-</td></tr>`).join('') || '<tr><td colspan="3" class="empty">Este alumno no tiene cursos asignados.</td></tr>';
+  if (!a.cursos.length) warn.push('Este alumno no tiene cursos asignados (se agregan en Comunidad). Aun así puedes crear el invoice con cursos online.');
+  if (a.cursos.some(c => !a.clases_mes?.[c])) warn.push('Faltan las clases por mes de algún curso: elígelas en la tabla.');
+  if (!dt.duracion) warn.push('El alumno no tiene duración: escríbela arriba.');
+  if (!dt.costo_total) warn.push('El alumno no tiene costo total: escríbelo en Pago.');
+  $('#g-warn').innerHTML = warn.map(w => `<p class="warn">${esc(w)}</p>`).join('');
+  recalcCursos(); recalcPago();
+
+  // online courses: tick the ones this student already has access to
+  const ids = new Set();
+  try{
+    let sid = a.student_id;
+    if (!sid && a.correo){ const { data } = await emnSupabase.from('students').select('id').ilike('email', a.correo).maybeSingle(); sid = data?.id; }
+    if (sid){ const { data } = await emnSupabase.from('course_access').select('course_id').eq('student_id', sid); (data || []).forEach(r => ids.add(r.course_id)); }
+  }catch(e){ console.error(e); }
+  $('#g-online-box').hidden = !onlineCourses.length;
+  $('#g-online').innerHTML = onlineCourses.map(c => `<label class="ck"><input type="checkbox" value="${esc(c.title)}"${ids.has(c.id) ? ' checked' : ''}> ${esc(c.title)}</label>`).join('');
+}
+
+$('#g-al').addEventListener('change', fillFromAlumno);
+$('#g-dur').addEventListener('input', recalcCursos);
+$('#g-cursos').addEventListener('change', recalcCursos);
+$('#g-total').addEventListener('input', () => { $('#g-m1').dataset.auto = '1'; recalcPago(); });
+$('#g-split').addEventListener('change', () => { $('#g-m1').dataset.auto = '1'; recalcPago(); });
+$('#g-m1').addEventListener('input', () => { $('#g-m1').dataset.auto = '0'; recalcPago(); });
+$('#g-v1').addEventListener('change', recalcPago);
+
+function showErr(t){ const e = $('#g-err'); e.textContent = t || ''; e.hidden = !t; }
+
+$('#g-create').addEventListener('click', async () => {
+  showErr('');
+  const a = alumno(); if (!a) return showErr('Elige un alumno.');
+  const dur = parseFloat($('#g-dur').value); if (!(dur > 0)) return showErr('Escribe la duración del programa en meses.');
+  const cursos = [...document.querySelectorAll('#g-cursos tr[data-c]')].map(tr => ({ nombre: tr.dataset.c, porMes: parseInt(tr.querySelector('select').value, 10) }));
+  if (cursos.some(c => !c.porMes)) return showErr('Elige las clases por mes de cada curso.');
+  const online = [...document.querySelectorAll('#g-online input:checked')].map(i => i.value);
+  if (!cursos.length && !online.length) return showErr('El invoice necesita al menos un curso.');
+  const total = parseFloat($('#g-total').value); if (!(total > 0)) return showErr('Escribe el total del programa.');
+  const moneda = $('#g-mon').value, split = $('#g-split').checked;
+  const m1 = split ? parseFloat($('#g-m1').value) : total;
+  if (!(m1 > 0)) return showErr('Escribe el monto del Pago 1.');
+  if (split && !(m1 < total)) return showErr('El Pago 1 debe ser menor que el total para que quede un Pago 2.');
+  const plan = [{ pago: 1, monto: Math.round(m1 * 100) / 100, vence: $('#g-v1').value || null, link: $('#g-l1').value.trim() || null }];
+  if (split) plan.push({ pago: 2, monto: Math.round((total - m1) * 100) / 100, vence: $('#g-v2').value || null, link: $('#g-l2').value.trim() || null });
+  for (const p of plan) if (p.link && !safeUrl(p.link)) return showErr(`El link del Pago ${p.pago} debe empezar con https://`);
+
+  const base = { fecha: $('#g-fecha').value || ymd(new Date()), alumno: { nombre: a.nombre, correo: a.correo || '', whatsapp: a.whatsapp || '' },
+    duracion: dur, inicio: $('#g-ini').value || null, fin: $('#g-fin').value || null, cursos, online, total, moneda, notas: $('#g-notas').value.trim(), plan };
+  const grupo = crypto.randomUUID(), prog = resumen(base);
+  const rows = plan.map(p => ({ grupo, alumno_id: a.id, alumno_nombre: a.nombre, programa: prog, pago: p.pago, pagos: plan.length,
+    monto: p.monto, moneda, vence: p.vence, link: p.link, datos: base }));
+
+  const btn = $('#g-create'); btn.disabled = true; btn.textContent = 'Creando…';
+  const { data, error } = await emnSupabase.from('invoices').insert(rows).select();
+  btn.disabled = false; btn.textContent = 'Crear invoice';
+  if (error){ console.error(error); return showErr('No se pudo guardar el invoice: ' + error.message); }
+  data.sort((x, y) => x.pago - y.pago);
+  invoices = [...data, ...invoices]; renderFin();
+
+  $('#g-result').innerHTML = `<div class="result"><h3>✓ Invoice creado${data.length > 1 ? ' en 2 pagos' : ''}</h3>
+    ${data.map(r => `<div class="res-row"><div class="grow"><strong>${numero(r)}</strong>${r.pagos > 1 ? ` · Pago ${r.pago} de ${r.pagos}` : ''} · ${esc(money(r.monto, r.moneda))}${r.vence ? ' · vence ' + dmy(r.vence) : ''}</div>
+      <button type="button" class="btn primary" data-pdf="${r.id}">Descargar PDF</button></div>`).join('')}
+    <p class="hint" style="margin-top:10px">Queda registrado en Finanzas.</p></div>`;
+  $('#g-result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+});
+
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-pdf]'); if (!b) return;
+  const row = invoices.find(r => r.id === b.dataset.pdf); if (!row) return;
+  const old = b.textContent; b.disabled = true; b.textContent = 'Generando…';
+  try{ await downloadPdf(row); }catch(err){ console.error(err); emnAlert('No se pudo generar el PDF: ' + err.message); }
+  b.disabled = false; b.textContent = old;
+});
+
+/* ======================= finanzas ======================= */
+function renderFin(){
+  const byCur = {};
+  invoices.forEach(r => { const c = byCur[r.moneda] ||= { cobrado: 0, pendiente: 0 }; c[r.estado === 'pagado' ? 'cobrado' : 'pendiente'] += Number(r.monto); });
+  const cur = Object.keys(byCur);
+  $('#f-sum').innerHTML = cur.length ? cur.map(c => `<div class="ok"><small>Cobrado (${c})</small><strong>${esc(money(byCur[c].cobrado, c))}</strong></div><div><small>Por cobrar (${c})</small><strong>${esc(money(byCur[c].pendiente, c))}</strong></div>`).join('') : '';
+  const list = finFilter ? invoices.filter(r => r.estado === finFilter) : invoices;
+  $('#f-body').innerHTML = list.length ? list.map(r => `<tr data-id="${r.id}">
+    <td><input type="date" class="paid" value="${esc(r.pagado_el || '')}" aria-label="Fecha de pago de ${esc(r.alumno_nombre)}"></td>
+    <td><strong>${esc(r.alumno_nombre)}</strong></td>
+    <td class="prog">${esc(r.programa)}</td>
+    <td>${numero(r)}${r.pagos > 1 ? `<br><small style="color:var(--gray-500)">Pago ${r.pago} de ${r.pagos}</small>` : ''}</td>
+    <td class="num"><strong>${esc(money(r.monto, r.moneda))}</strong>${r.vence ? `<br><small style="color:var(--gray-500)">vence ${dmy(r.vence)}</small>` : ''}</td>
+    <td><span class="badge ${r.estado}">${r.estado === 'pagado' ? 'Pagado' : 'Pendiente'}</span></td>
+    <td class="num"><button type="button" class="btn" data-pdf="${r.id}">PDF</button> <button type="button" class="xbtn" data-del aria-label="Eliminar invoice ${numero(r)}" title="Eliminar">×</button></td>
+  </tr>`).join('') : `<tr><td colspan="7" class="empty">${invoices.length ? 'No hay invoices con ese estado.' : 'Todavía no hay invoices. Crea el primero en "Generar invoice".'}</td></tr>`;
+}
+
+$('#f-body').addEventListener('change', async e => {
+  if (!e.target.classList.contains('paid')) return;
+  const row = invoices.find(r => r.id === e.target.closest('tr').dataset.id), v = e.target.value || null;
+  const upd = { pagado_el: v, estado: v ? 'pagado' : 'pendiente' };
+  const { error } = await emnSupabase.from('invoices').update(upd).eq('id', row.id);
+  if (error){ console.error(error); emnAlert('No se pudo guardar la fecha de pago.'); renderFin(); return; }
+  Object.assign(row, upd); renderFin();
+});
+$('#f-body').addEventListener('click', async e => {
+  const b = e.target.closest('[data-del]'); if (!b) return;
+  const row = invoices.find(r => r.id === b.closest('tr').dataset.id);
+  if (!(await emnConfirm(`¿Eliminar el invoice ${numero(row)} de ${row.alumno_nombre}? No se puede deshacer.`, { yesLabel: 'Eliminar' }))) return;
+  const { error } = await emnSupabase.from('invoices').delete().eq('id', row.id);
+  if (error){ console.error(error); emnAlert('No se pudo eliminar.'); return; }
+  invoices = invoices.filter(r => r.id !== row.id); renderFin();
+});
+document.querySelector('.bar').addEventListener('click', e => {
+  const b = e.target.closest('.chipf'); if (!b) return;
+  finFilter = b.dataset.f;
+  document.querySelectorAll('.chipf').forEach(c => c.setAttribute('aria-pressed', String(c === b)));
+  renderFin();
+});
+$('#f-csv').addEventListener('click', () => {
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const head = ['Fecha de pago', 'Alumno', 'Programa', 'Invoice', 'Pago', 'Monto', 'Moneda', 'Estado', 'Vence'];
+  const rows = invoices.map(r => [r.pagado_el ? dmy(r.pagado_el) : '', r.alumno_nombre, r.programa, numero(r), `${r.pago} de ${r.pagos}`, r.monto, r.moneda, r.estado, r.vence ? dmy(r.vence) : '']);
+  const csv = '﻿' + [head, ...rows].map(r => r.map(q).join(',')).join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = `EMN-finanzas-${ymd(new Date())}.csv`; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+
+/* ======================= pestañas y arranque ======================= */
+document.querySelector('.tabs').addEventListener('click', e => {
+  const b = e.target.closest('.tab'); if (!b) return;
+  const t = b.dataset.tab;
+  $('#tab-gen').setAttribute('aria-pressed', String(t === 'gen')); $('#tab-fin').setAttribute('aria-pressed', String(t === 'fin'));
+  $('#v-gen').hidden = t !== 'gen'; $('#v-fin').hidden = t !== 'fin';
+});
+
+async function boot(){
+  const gate = $('#gate-msg');
+  if (!['admin', 'professor'].includes(emnStudentProfile?.role)){
+    gate.innerHTML = emnSession ? 'Esta página es solo para administradores.' : 'Inicia sesión para continuar. <a href="/emn-login">Inicia sesión</a>';
+    gate.style.display = 'block'; return;
+  }
+  const [a, i, c] = await Promise.all([
+    emnSupabase.from('alumnos').select('*').order('nombre'),
+    emnSupabase.from('invoices').select('*').order('seq', { ascending: false }),
+    emnSupabase.from('courses').select('id,title').order('position'),
+  ]);
+  if (a.error || i.error){ console.error(a.error || i.error); gate.textContent = 'No se pudieron cargar los datos.'; gate.style.display = 'block'; return; }
+  alumnos = a.data || []; invoices = i.data || []; onlineCourses = c.data || [];
+  $('#g-al').innerHTML = '<option value="">Elige un alumno…</option>' + alumnos.map(x => `<option value="${x.id}">${esc(x.nombre)}</option>`).join('');
+  $('#g-fecha').value = ymd(new Date());
+  $('#g-v1').value = addDays(ymd(new Date()), 7);
+  $('#body-i').style.display = 'block';
+  recalcPago(); renderFin();
+}
+emnInit().then(boot);
+</script>
+</body>
+</html>

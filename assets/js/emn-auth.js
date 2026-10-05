@@ -27,6 +27,26 @@ const emnForwardToLogin = ['recovery', 'invite'].includes(emnAuthHash.get('type'
   && !location.pathname.startsWith('/emn-login');
 if(emnForwardToLogin) location.replace('/emn-login' + location.hash);
 
+// Embedded mode: /administrar shows the admin pages inside itself (as views, no
+// page change). In an iframe with ?embed=1 the site header and "volver" links
+// are hidden, and internal links ask the parent page to switch view instead.
+const emnEmbedded = window.top !== window && new URLSearchParams(location.search).get('embed') === '1';
+if(emnEmbedded){
+  document.documentElement.classList.add('is-embed');
+  const st = document.createElement('style');
+  st.textContent = '.is-embed .emn-header, .is-embed a.back{ display:none !important; } .is-embed body{ min-height:0; }';
+  document.head.appendChild(st);
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href]');
+    if(!a || a.target === '_blank' || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    const u = new URL(a.href, location.href);
+    if(u.origin !== location.origin) return;
+    e.preventDefault();
+    u.searchParams.delete('embed');
+    window.parent.postMessage({ emnGo: u.pathname + u.search }, location.origin);
+  });
+}
+
 const emnSupabase = window.supabase.createClient(
   EMN_SUPABASE_URL, EMN_SUPABASE_ANON_KEY,
   emnForwardToLogin ? { auth: { detectSessionInUrl: false } } : undefined
@@ -297,37 +317,13 @@ function emnInjectAdminMenu(){
   if(!emnStudentProfile || (emnStudentProfile.role !== 'admin' && emnStudentProfile.role !== 'professor')) return;
   const nav = document.querySelector('.emn-nav');
   if(!nav) return;
-
-  const item = document.createElement('div');
-  item.className = 'emn-nav__item';
-  item.innerHTML = `
-    <a href="#" class="emn-nav__link">Administrar</a>
-    <button class="emn-nav__caret" aria-label="Abrir submenú de Administrar" aria-expanded="false">&#9662;</button>
-    <div class="emn-nav__dropdown">
-      <a href="/usuarios" class="emn-nav__dropdown-item">Usuarios</a>
-      <a href="/actividad" class="emn-nav__dropdown-item">Actividad</a>
-      <a href="/admin-calendar" class="emn-nav__dropdown-item">Calendario de clases</a>
-      <a href="/cursos-editor" class="emn-nav__dropdown-item">Editor de cursos</a>
-      <a href="/postulaciones" class="emn-nav__dropdown-item">Postulaciones</a>
-    </div>
-  `;
-  nav.appendChild(item);
-
-  const caret = item.querySelector('.emn-nav__caret');
-  const label = item.querySelector('.emn-nav__link');
-  const toggle = (e) => {
-    e.preventDefault();
-    const isOpen = item.classList.contains('is-open');
-    document.querySelectorAll('.emn-nav__item').forEach((i) => i.classList.remove('is-open'));
-    item.classList.toggle('is-open', !isOpen);
-    caret.setAttribute('aria-expanded', String(!isOpen));
-  };
-  caret.addEventListener('click', toggle);
-  label.addEventListener('click', toggle);
-
-  document.addEventListener('click', (e) => {
-    if(!item.contains(e.target)) item.classList.remove('is-open');
-  });
+  // A plain link (no dropdown): /administrar has the buttons for everything.
+  const link = document.createElement('a');
+  link.className = 'emn-nav__link';
+  link.href = '/administrar';
+  link.textContent = 'Administrar';
+  if(['/administrar', '/comunidad', '/calendario', '/actividad', '/usuarios', '/postulaciones'].includes(location.pathname.replace(/\/$/, ''))) link.classList.add('is-active');
+  nav.appendChild(link);
 }
 
 // Signed-in people get "Interview Prep" in the Practice Lab dropdown split
@@ -386,6 +382,21 @@ function emnInjectCareerMenu(){
     if(!item.contains(e.target)) item.classList.remove('is-open');
   });
 }
+
+// Click outside a floating panel closes it — everywhere on the site:
+//  - native <dialog> panels (clicking the dimmed backdrop, i.e. outside the box), and
+//  - the page-made overlays that use `.overlay.open` (clicking the dimmed area).
+// (emnConfirm / emnAlert / the account modal already do this themselves.)
+document.addEventListener('click', (e) => {
+  const t = e.target;
+  if(t instanceof HTMLDialogElement && t.open){
+    const r = t.getBoundingClientRect();
+    const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+    if(!inside) t.close();
+  } else if(t.classList?.contains('overlay') && t.classList.contains('open')){
+    t.classList.remove('open');
+  }
+});
 
 async function emnInit(){
   await emnLoadSession();

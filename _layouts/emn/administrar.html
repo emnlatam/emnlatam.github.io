@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es" class="emn-landing">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% include emn-favicon.html %}
+<title>EMN — Administrar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="/assets/css/emn.css?v={{ site.time | date: '%s' }}">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/assets/js/emn-auth.js?v={{ site.time | date: '%s' }}"></script>
+<style>
+  body{ background:var(--gray-100); font-family:var(--font-body); color:var(--ink); margin:0; }
+  button{ font-family:inherit; }
+  .adm{ max-width:1100px; margin:0 auto; padding:64px 24px 80px; text-align:center; transition:padding .2s; }
+  .adm h1{ font-family:'Bricolage Grotesque', var(--font-body); font-weight:800; font-size:clamp(34px,5vw,52px); letter-spacing:-.02em; margin:0 0 8px; }
+  .adm p.lead{ margin:0 0 40px; color:var(--gray-700); font-size:15.5px; }
+  #gate-msg{ padding:60px 20px; color:var(--gray-700); }
+  #gate-msg a{ color:var(--red); font-weight:600; }
+
+  .grid-a{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; max-width:900px; margin:0 auto; }
+  .btn-a{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; min-height:150px; padding:24px; background:var(--paper); border:2px solid var(--gray-300); border-radius:var(--radius); cursor:pointer; color:inherit; transition:border-color .15s, transform .15s, box-shadow .15s; }
+  .btn-a:hover{ border-color:var(--red); transform:translateY(-2px); box-shadow:0 10px 26px rgba(0,0,0,.08); }
+  .btn-a strong{ font-family:'Bricolage Grotesque', var(--font-body); font-size:28px; letter-spacing:-.01em; }
+  .btn-a span{ font-size:13.5px; color:var(--gray-700); max-width:30ch; line-height:1.4; }
+  .more{ margin-top:30px; font-size:14px; }
+  .more button{ border:0; background:none; color:var(--red); font-weight:600; font-size:14px; cursor:pointer; }
+  .more button:hover{ text-decoration:underline; }
+
+  /* Con una vista abierta, los botones pasan a ser una barra compacta arriba. */
+  .adm.in-view{ padding:14px 24px 0; text-align:left; max-width:none; }
+  .in-view h1, .in-view p.lead, .in-view .btn-a span, .in-view .more{ display:none; }
+  .in-view .grid-a{ display:flex; flex-wrap:wrap; gap:8px; max-width:none; margin:0 0 12px; align-items:center; }
+  .in-view .btn-a{ min-height:0; padding:9px 20px; border-width:1px; border-radius:999px; background:var(--paper); }
+  .in-view .btn-a:hover{ transform:none; box-shadow:none; }
+  .in-view .btn-a strong{ font-size:15px; font-family:var(--font-body); font-weight:700; }
+  .in-view .btn-a[aria-pressed="true"]{ background:var(--red); border-color:var(--red); color:#fff; }
+  .in-view .btn-a.small{ background:none; border-color:transparent; color:var(--gray-700); }
+  .in-view .btn-a.small[aria-pressed="true"]{ background:var(--red); color:#fff; }
+  .btn-a.small{ display:none; }
+  .in-view .btn-a.small{ display:flex; }
+
+  #frame{ display:none; width:100%; border:0; background:transparent; }
+  .in-view #frame{ display:block; }
+  @media (max-width:560px){ .grid-a{ grid-template-columns:minmax(0,1fr); } }
+</style>
+</head>
+<body>
+
+{% include emn-header.html %}
+
+<main class="adm" id="adm">
+  <h1>Administrar</h1>
+  <p class="lead">Todo lo de la escuela en un solo lugar.</p>
+  <div id="gate-msg" style="display:none"></div>
+
+  <div id="adm-body" style="display:none">
+    <div class="grid-a" role="group" aria-label="Secciones">
+      <button type="button" class="btn-a" data-v="comunidad" aria-pressed="false"><strong>Comunidad</strong><span>Alumnos y profesores: agrégalos, asígnales cursos y sincronízalos con Airtable.</span></button>
+      <button type="button" class="btn-a" data-v="calendario" aria-pressed="false"><strong>Calendario</strong><span>Agenda las clases de cada alumno, con su horario y su link de Meet.</span></button>
+      <button type="button" class="btn-a" data-v="actividad" aria-pressed="false"><strong>Actividad</strong><span>Horas de práctica de cada alumno.</span></button>
+      <button type="button" class="btn-a" data-v="usuarios" aria-pressed="false"><strong>Usuarios</strong><span>Cuentas, roles e invitaciones.</span></button>
+      <button type="button" class="btn-a" data-v="invoices" aria-pressed="false"><strong>Invoices</strong><span>Crea invoices en PDF para tus alumnos y lleva el control de los pagos.</span></button>
+    </div>
+    <iframe id="frame" title="Sección de administración"></iframe>
+  </div>
+</main>
+
+<script>
+// Cada botón cambia la vista aquí mismo: la sección se carga en un marco dentro de
+// esta página (las pantallas siguen existiendo como /comunidad, /calendario, etc.).
+// Siempre se abre en Comunidad; no se recuerda la última sección.
+const VIEWS = ['comunidad', 'calendario', 'actividad', 'usuarios', 'invoices'];
+const $ = s => document.querySelector(s);
+const frame = $('#frame'), adm = $('#adm');
+let current = null;
+
+function fit(){
+  if(!current) return;
+  const top = frame.getBoundingClientRect().top + scrollY;
+  frame.style.height = Math.max(420, innerHeight - (top - scrollY) - 6) + 'px';
+}
+
+function setView(v, query){
+  if(!VIEWS.includes(v)){ v = null; }
+  current = v;
+  adm.classList.toggle('in-view', !!v);
+  document.querySelectorAll('[data-v]').forEach(b => { if(b.classList.contains('btn-a')) b.setAttribute('aria-pressed', String(b.dataset.v === v)); });
+  if(v){
+    const q = new URLSearchParams(query || ''); q.set('embed', '1');
+    const src = `/${v}?${q}`;
+    if(!frame.src.endsWith(src)) frame.src = src;
+    scrollTo(0, 0); fit();
+  } else {
+    frame.removeAttribute('src');
+  }
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-v]'); if(b) setView(b.dataset.v);
+});
+addEventListener('resize', fit);
+document.querySelector('.emn-nav')?.addEventListener('click', e => {
+  const a = e.target.closest('a[href="/administrar"]');
+  if(a && current){ e.preventDefault(); setView('comunidad'); }
+});
+// Enlaces internos dentro de una sección (p. ej. "Calendario" desde un alumno) piden cambiar de vista.
+addEventListener('message', e => {
+  if(e.origin !== location.origin || !e.data?.emnGo) return;
+  const u = new URL(e.data.emnGo, location.origin);
+  const v = u.pathname.replace(/^\//, '');
+  if(VIEWS.includes(v)) setView(v, u.search); else location.href = u.pathname + u.search;
+});
+
+emnInit().then(() => {
+  const gate = $('#gate-msg');
+  if(['admin','professor'].includes(emnStudentProfile?.role)){
+    $('#adm-body').style.display = 'block';
+    setView('comunidad');   // al entrar se abre Comunidad, con la barra de botones arriba
+    if(location.hash) history.replaceState(null, '', location.pathname);
+  } else {
+    gate.innerHTML = emnSession ? 'Esta página es solo para administradores.' : 'Inicia sesión para continuar. <a href="/emn-login">Inicia sesión</a>';
+    gate.style.display = 'block';
+  }
+});
+</script>
+</body>
+</html>

@@ -2,3 +2,4 @@ _site
 .sass-cache
 .jekyll-metadata
 .claude/settings.local.json
+supabase/.temp/

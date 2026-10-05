@@ -1,0 +1,65 @@
+# Campos del alumno = columnas de la tabla "Students Info" de Airtable.
+# Solo se copian estas; las demás columnas de Airtable se ignoran.
+#
+# Para cada campo:
+#   key:      nombre interno (sin espacios ni tildes), único.
+#             OJO: nombre, correo y whatsapp deben llamarse exactamente así
+#             (tienen lugar propio en la base de datos); los demás pueden ser cualquiera.
+#   label:    lo que se muestra en el formulario
+#   airtable: nombre EXACTO de la columna en Airtable (mayúsculas, espacios y
+#             ortografía incluidos — si en Airtable dice "Sigh-Reading", va igual)
+#   type:     text | email | tel | textarea | number | date   (por defecto: text)
+#   required: true para obligatorio
+#   multi:    true si la columna admite varias opciones o personas (se escribe
+#             separado por comas)
+#   wide:     true para que ocupe todo el ancho del formulario
+#   local:    true -> campo solo de la página: NO se envía ni se trae de Airtable (no lleva "airtable")
+#   suffix:   texto fijo después del campo (ej. meses)
+#   options:  lista -> se muestra como desplegable con esas opciones (deben coincidir con las de Airtable)
+
+# Columna de Airtable con los cursos del alumno, y los cursos que se pueden
+# marcar. Los nombres deben coincidir con las opciones de esa columna en Airtable.
+# (Mock Audition y Tutoring son automáticos para todos y no van aquí.)
+# Cada curso marcado tiene su propio desplegable para elegir su profesor.
+cursos_airtable: Classes Enroll
+profesores_airtable: Assigned Teachers   # se llena solo con los profesores elegidos en cada curso
+cursos:
+  - Piece Preparation
+  - Audio & Read
+  - Interview Preparation
+
+campos:
+  - { key: nombre,        label: Nombre,                       airtable: Name,                       required: true, wide: true }
+  - { key: correo,        label: Correo del alumno,            airtable: Students Email,             type: email }
+  - { key: whatsapp,      label: Celular / WhatsApp,           airtable: Cell number,                type: tel }
+  - { key: instrumento,   label: Instrumento,                  airtable: Instrument }
+  - { key: edad,          label: Edad,                         airtable: Age,                        type: number }
+  - { key: pais,          label: País,                         airtable: Country }
+  - { key: anos_musica,   label: Años tocando música,          airtable: Number of years playing music, type: number }
+  - { key: academia,      label: Academia de educación musical, airtable: Music Education Academy }
+  - { key: teoria,        label: Nivel de teoría musical,      airtable: Music Theory Level }
+  - { key: lectura,       label: Nivel de lectura a primera vista, airtable: Sigh-Reading Level }
+  - { key: improvisacion, label: Nivel de improvisación,       airtable: Improvisation Level }
+  - { key: ingles,        label: Nivel de inglés,              airtable: English Level }
+  - { key: fecha_aplicacion, label: Fecha de aplicación a Berklee, airtable: Berklee Application Date, type: date }
+  - { key: comodidad_costo,  label: Comodidad con el costo de Berklee, airtable: Comfortability with Berklee Tuition }
+  - { key: bgp,           label: BGP,                          airtable: BGP }
+  - { key: video,         label: Video de performance,         airtable: Video Performance,          wide: true }
+  - { key: inicio,        label: Fecha de inicio,              airtable: Start Date,                 type: date }
+  - { key: fin,           label: Fecha de fin,                 airtable: End Date,                   type: date }
+  - { key: duracion,      label: Duración,                     local: true, type: number, suffix: meses }
+  - { key: costo_total,   label: Costo total,                  airtable: Total Cost,                 type: number }
+  - { key: estado_pago,   label: Estado de pago,               airtable: payment status,             options: [Paid, Pending, Late, Unpaid, Partial] }
+  - { key: comentarios,   label: Comments,                     local: true, type: textarea, wide: true }
+
+# Pestaña "Profesores" = tabla "Professors info" de Airtable. Mismos atributos que
+# arriba; aquí todos los key son columnas propias de la base de datos
+# (nombre, especializacion, tipo, pais, calendly, celular) y no deben cambiarse.
+# En Airtable las mayúsculas importan: si una columna se llama distinto, corrige "airtable".
+profesores_campos:
+  - { key: nombre,          label: Nombre,         airtable: name,                    required: true, wide: true }
+  - { key: especializacion, label: Especialización, airtable: specialization }
+  - { key: tipo,            label: Tipo,           airtable: type }
+  - { key: pais,            label: País,           airtable: professors country }
+  - { key: calendly,        label: Calendly,       airtable: professors calendly,     type: url }
+  - { key: celular,         label: Celular,        airtable: Professors cell phone,   type: tel }

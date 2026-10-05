@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="es" class="emn-landing">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% include emn-favicon.html %}
+<title>EMN — Comunidad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="/assets/css/emn.css?v={{ site.time | date: '%s' }}">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/assets/js/emn-auth.js?v={{ site.time | date: '%s' }}"></script>
+<style>
+  body{ background:var(--gray-100); font-family:var(--font-body); color:var(--ink); margin:0; }
+  button, input, select, textarea{ font-family:inherit; }
+  .wrap-a{ max-width:1000px; margin:0 auto; padding:32px 24px 70px; }
+  .head-a{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:8px; }
+  .head-a h1{ font-family:var(--font-display); font-size:26px; margin:0; }
+  .head-a a.back{ font-size:13px; color:var(--gray-700); }
+  .tabs{ display:flex; gap:8px; margin:14px 0 0; }
+  .tab{ border:1px solid var(--gray-300); background:var(--paper); border-radius:999px; padding:8px 20px; font-weight:700; font-size:14px; color:var(--gray-700); cursor:pointer; }
+  .tab:hover{ border-color:var(--red); color:var(--red); }
+  .tab[aria-pressed="true"]{ background:var(--red); border-color:var(--red); color:#fff; }
+  .bar{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:16px 0 18px; }
+  .bar .grow{ flex:1; }
+  .sync-state{ font-size:12.5px; color:var(--gray-500); }
+  .sync-state.err{ color:var(--red); }
+  .btn{ display:inline-block; border:1px solid var(--gray-300); background:var(--paper); border-radius:8px; padding:9px 16px; font-weight:600; font-size:13.5px; cursor:pointer; color:var(--ink); }
+  .btn:hover{ border-color:var(--red); color:var(--red); }
+  .btn.primary{ background:var(--red); border-color:var(--red); color:#fff; }
+  .btn.primary:hover{ background:var(--red-dark); color:#fff; }
+  .btn:disabled{ opacity:.55; cursor:default; }
+  #gate-msg{ text-align:center; padding:80px 20px; color:var(--gray-700); }
+  #gate-msg a{ color:var(--red); font-weight:600; }
+  .list{ display:flex; flex-direction:column; gap:10px; }
+  .al{ display:flex; align-items:center; gap:14px; background:var(--paper); border:1px solid var(--gray-300); border-left:6px solid var(--c, var(--gray-300)); border-radius:var(--radius); padding:14px 16px; }
+  .al__main{ flex:1; min-width:0; }
+  .al__name{ font-weight:700; font-size:15.5px; }
+  .al__meta{ font-size:13px; color:var(--gray-700); margin-top:2px; overflow-wrap:anywhere; }
+  .al__meta a{ color:var(--red); font-weight:600; }
+  .chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .chip{ font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:999px; background:var(--gray-100); color:var(--gray-700); }
+  .chip.auto{ background:#E8F5EE; color:#1E8E5A; }
+  .al__acts{ display:flex; gap:8px; flex-shrink:0; }
+  .empty{ text-align:center; padding:50px 20px; color:var(--gray-500); }
+  [hidden]{ display:none !important; }
+  .filters{ display:flex; gap:8px; flex-wrap:wrap; margin:16px 0; }
+  .chipf{ border:1px solid var(--gray-300); background:var(--paper); border-radius:999px; padding:7px 14px; font:600 12.5px var(--font-body); color:var(--gray-700); cursor:pointer; }
+  .chipf:hover{ border-color:var(--red); color:var(--red); }
+  .chipf[aria-pressed="true"]{ background:var(--red); border-color:var(--red); color:#fff; }
+  .box{ background:var(--paper); border:1px solid var(--gray-300); border-radius:var(--radius); overflow-x:auto; }
+  .box table{ width:100%; min-width:860px; border-collapse:collapse; font-size:13.5px; }
+  .box th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--gray-500); padding:11px 12px 9px; border-bottom:1px solid var(--gray-300); white-space:nowrap; }
+  .box td{ padding:11px 12px; border-bottom:1px solid var(--gray-100); vertical-align:top; }
+  .box tr:last-child td{ border-bottom:0; }
+  .box td a{ color:var(--red); font-weight:600; word-break:break-all; }
+  .box td.name{ font-weight:600; }
+  .box td.date{ white-space:nowrap; color:var(--gray-700); }
+  select.estado{ font:600 12.5px var(--font-body); padding:6px 8px; border:1px solid var(--gray-300); border-radius:6px; background:var(--paper); cursor:pointer; }
+  select.estado.nuevo{ border-color:var(--red); color:var(--red); }
+  select.estado.contactado{ border-color:#1E8E5A; color:#1E8E5A; }
+  select.estado.descartado{ color:var(--gray-500); }
+  .xbtn{ border:0; background:none; cursor:pointer; color:var(--gray-500); font-size:18px; line-height:1; padding:4px 8px; border-radius:6px; }
+  .xbtn:hover{ color:var(--red); background:var(--gray-100); }
+
+  dialog.m{ width:min(94vw,680px); max-height:92vh; padding:0; border:0; border-radius:14px; box-shadow:0 30px 80px rgba(0,0,0,.35); overflow-y:auto; }
+  dialog.m::backdrop{ background:rgba(20,18,16,.55); }
+  .m form{ padding:26px 28px 24px; }
+  .m h2{ font-family:var(--font-display); font-size:20px; margin:0 0 18px; }
+  .fields{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 14px; }
+  .fields .wide{ grid-column:1 / -1; }
+  @media (max-width:520px){ .fields{ grid-template-columns:minmax(0,1fr); } }
+  .f{ margin-bottom:14px; }
+  .f label, .lbl{ display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--gray-500); margin-bottom:5px; }
+  .f input, .f textarea, .f select{ width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid var(--gray-300); border-radius:8px; font-size:14px; background:#fff; color:var(--ink); }
+  .f textarea{ min-height:70px; resize:vertical; }
+  .with-suffix{ display:flex; align-items:center; gap:10px; }
+  .with-suffix input{ flex:0 1 120px; }
+  .with-suffix span{ font-size:14px; color:var(--gray-700); }
+  .f input:focus, .f textarea:focus{ border-color:var(--red); outline:none; }
+  .checks{ display:flex; flex-wrap:wrap; gap:8px 18px; margin-bottom:6px; }
+  .checks label.ck{ display:flex; align-items:center; gap:9px; font-size:14px; font-weight:500; text-transform:none; letter-spacing:0; color:var(--ink); cursor:pointer; margin:0; }
+  .checks input{ accent-color:var(--red); width:17px; height:17px; }
+  .courses{ display:flex; flex-direction:column; gap:10px; margin-bottom:6px; }
+  .course-row{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; min-height:36px; }
+  .course-row label.ck{ flex:0 0 210px; display:flex; align-items:center; gap:9px; font-size:14px; font-weight:600; text-transform:none; letter-spacing:0; color:var(--ink); cursor:pointer; margin:0; }
+  .course-row input{ accent-color:var(--red); width:17px; height:17px; }
+  .course-row select.prof{ flex:1; min-width:170px; padding:8px 10px; border:1px solid var(--gray-300); border-radius:8px; font-size:13.5px; background:#fff; }
+  .course-row select.cpm{ flex:0 0 150px; padding:8px 10px; border:1px solid var(--gray-300); border-radius:8px; font-size:13.5px; background:#fff; }
+  .hint{ font-size:12.5px; color:var(--gray-500); margin:6px 0 0; line-height:1.45; }
+  .msg{ font-size:13px; font-weight:600; color:var(--red); margin:10px 0 0; }
+  .m .acts{ display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+</style>
+</head>
+<body>
+
+{% include emn-header.html %}
+
+<div class="wrap-a">
+  <div class="head-a">
+    <h1>Comunidad</h1>
+    <a class="back" href="/administrar">&larr; Volver a Administrar</a>
+  </div>
+
+  <div id="gate-msg" style="display:none"></div>
+
+  <div id="body-a" style="display:none">
+    <div class="tabs" role="group" aria-label="Ver">
+      <button type="button" class="tab" id="tab-al" aria-pressed="true" data-tab="al">Alumnos</button>
+      <button type="button" class="tab" id="tab-pr" aria-pressed="false" data-tab="pr">Profesores</button>
+      <button type="button" class="tab" id="tab-po" aria-pressed="false" data-tab="po">Postulaciones</button>
+    </div>
+    <div class="bar" id="mainbar">
+      <button type="button" class="btn primary" id="add">+ Agregar alumno</button>
+      <button type="button" class="btn" id="sync">Sincronizar con Airtable</button>
+      <span class="grow"></span>
+      <span class="sync-state" id="sync-state" aria-live="polite"></span>
+    </div>
+    <div class="list" id="list"></div>
+    <div class="list" id="plist" hidden></div>
+    <div id="popanel" hidden>
+      <div class="filters" id="pofilters" role="group" aria-label="Filtrar por estado">
+        <button type="button" class="chipf" data-f="" aria-pressed="true">Todas</button>
+        <button type="button" class="chipf" data-f="nuevo" aria-pressed="false">Nuevas</button>
+        <button type="button" class="chipf" data-f="contactado" aria-pressed="false">Contactadas</button>
+        <button type="button" class="chipf" data-f="descartado" aria-pressed="false">Descartadas</button>
+      </div>
+      <div class="box"><table>
+        <thead><tr><th>Fecha</th><th>Nombre</th><th>Correo</th><th>WhatsApp</th><th>Video tocando</th><th>Estado</th><th></th></tr></thead>
+        <tbody id="potbody"></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+<dialog class="m" id="dlg" aria-labelledby="dlg-title">
+  <form id="form" novalidate>
+    <h2 id="dlg-title">Agregar alumno</h2>
+    <div class="fields" id="fields"></div>
+    <span class="lbl">Cursos y profesores</span>
+    <div class="courses" id="courses"></div>
+    <p class="hint">Marca los cursos del alumno, elige el profesor de cada uno (puede repetirse) y cuántas clases por mes (de 1 a 8). El <strong>Mock Audition</strong> (último domingo de cada mes) y el <strong>Tutoring</strong> son automáticos para todos.</p>
+    <p class="msg" id="msg" role="alert" hidden></p>
+    <div class="acts">
+      <button type="button" class="btn" data-cancel>Cancelar</button>
+      <button type="submit" class="btn primary" id="save">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="m" id="pdlg" aria-labelledby="pdlg-title">
+  <form id="pform" novalidate>
+    <h2 id="pdlg-title">Agregar profesor</h2>
+    <div class="fields" id="pfields"></div>
+    <p class="msg" id="pmsg" role="alert" hidden></p>
+    <div class="acts">
+      <button type="button" class="btn" data-cancel>Cancelar</button>
+      <button type="submit" class="btn primary" id="psave">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+const CONFIG = {{ site.data.alumnos_campos | jsonify }};
+const CAMPOS = CONFIG.campos;
+const PCAMPOS = CONFIG.profesores_campos;
+const CURSOS = CONFIG.cursos;
+const PALETA = ['#3358C4', '#00A857', '#F2711C', '#B45BD6', '#E0245E', '#0EA5B7', '#C79A00', '#7A4DFF', '#D94F2B', '#2E8B57', '#8C5A3C', '#5B6B7A'];
+const CORE = ['nombre', 'correo', 'whatsapp'];
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const safeUrl = u => /^https?:\/\//i.test(u || '') ? u : null;
+
+let alumnos = [], profesores = [], postulaciones = [], poFilter = '', editing = null, editingP = null, airtableOk = null, tab = 'al';
+
+/* ---------- Airtable (a través de la Edge Function) ---------- */
+async function at(body, table){
+  const { data, error } = await emnSupabase.functions.invoke('airtable-sync', { body: { ...body, table } });
+  if(error){
+    let detail = error.message;
+    try { const j = await error.context.json(); if(j.error) detail = j.error; } catch {}
+    throw new Error(detail);
+  }
+  if(data?.error) throw new Error(data.error);
+  return data;
+}
+// Airtable distingue mayúsculas: al LEER buscamos la columna sin importar cómo esté escrita.
+const AUTO = /^(mock audition|tutoring)$/i;
+const splitText = t => String(t || '').split(',').map(x => x.trim()).filter(Boolean);
+const isRec = x => /^rec[A-Za-z0-9]{10,}$/.test(x);
+const pick = (fields, name) => { const k = Object.keys(fields).find(x => x.toLowerCase() === name.toLowerCase()); return k === undefined ? undefined : fields[k]; };
+const asText = v => Array.isArray(v) ? v.join(', ') : String(v);
+
+const toAirtable = a => {
+  const f = {};
+  for(const c of CAMPOS){
+    if(c.local) continue;   // campos solo de la página
+    const v = CORE.includes(c.key) ? a[c.key] : a.datos?.[c.key];
+    if(v === undefined || v === null || v === '') continue;
+    f[c.airtable] = c.type === 'number' ? Number(v) : c.multi ? String(v).split(',').map(x => x.trim()).filter(Boolean) : v;
+  }
+  // Cursos + los automáticos (Mock Audition / Tutoring) que Airtable ya tuviera, para no desvincularlos.
+  if(CONFIG.cursos_airtable) f[CONFIG.cursos_airtable] = [...a.cursos, ...(a.datos?._extras || [])];
+  // Assigned Teachers = los profesores distintos elegidos en los cursos (si no hay ninguno, no se toca lo de Airtable).
+  const teachers = [...new Set(Object.values(a.profes_curso || {}).filter(Boolean))];
+  if(CONFIG.profesores_airtable && teachers.length) f[CONFIG.profesores_airtable] = teachers;
+  return f;
+};
+const fromAirtable = rec => {
+  const a = { airtable_id: rec.id, datos: {} };
+  for(const c of CAMPOS){
+    if(c.local) continue;
+    const v = pick(rec.fields, c.airtable);
+    if(v === undefined) continue;
+    const txt = asText(v);
+    if(CORE.includes(c.key)) a[c.key] = txt; else a.datos[c.key] = txt;
+  }
+  if(CONFIG.cursos_airtable){
+    const t = pick(rec.text || {}, CONFIG.cursos_airtable);
+    const v = t !== undefined ? splitText(t) : pick(rec.fields, CONFIG.cursos_airtable);
+    // Nunca guardamos ids internos (rec…). Mock Audition y Tutoring son automáticos: no se guardan como curso,
+    // pero se recuerdan para devolverlos a Airtable tal cual.
+    const all = (Array.isArray(v) ? v : v ? [v] : []).filter(x => !isRec(x));
+    a.cursos = all.filter(x => !AUTO.test(x));
+    a.extras = all.filter(x => AUTO.test(x));
+  }
+  return a;
+};
+const pToAirtable = p => { const f = {}; for(const c of PCAMPOS) if(p[c.key]) f[c.airtable] = p[c.key]; return f; };
+const pFromAirtable = rec => { const p = { airtable_id: rec.id }; for(const c of PCAMPOS){ const v = pick(rec.fields, c.airtable); if(v !== undefined) p[c.key] = asText(v); } return p; };
+
+function setSync(t, err){ const e = $('#sync-state'); e.textContent = t; e.className = 'sync-state' + (err ? ' err' : ''); }
+
+async function syncProfesores(){
+  const { records } = await at({ action: 'list' }, 'profesores');
+  for(const rec of records){
+    const inc = pFromAirtable(rec);
+    if(!inc.nombre) continue;
+    const local = profesores.find(p => p.airtable_id === rec.id) || profesores.find(p => !p.airtable_id && p.nombre.toLowerCase() === inc.nombre.toLowerCase());
+    if(local){
+      const { error } = await emnSupabase.from('profesores').update(inc).eq('id', local.id);
+      if(error) throw error; Object.assign(local, inc);
+    } else {
+      const { data, error } = await emnSupabase.from('profesores').insert(inc).select().single();
+      if(error) throw error; profesores.push(data);
+    }
+  }
+  for(const p of profesores.filter(x => !x.airtable_id)){
+    const { id } = await at({ action: 'upsert', fields: pToAirtable(p) }, 'profesores');
+    await emnSupabase.from('profesores').update({ airtable_id: id }).eq('id', p.id); p.airtable_id = id;
+  }
+}
+
+async function syncAlumnos(){
+  const linked = [CONFIG.cursos_airtable].filter(Boolean);
+  const { records } = await at({ action: 'list', textFields: linked }, 'alumnos');
+  for(const rec of records){
+    const inc = fromAirtable(rec);
+    if(!inc.nombre) continue;
+    const local = alumnos.find(a => a.airtable_id === rec.id)
+      || (inc.correo && alumnos.find(a => !a.airtable_id && a.correo && a.correo.toLowerCase() === inc.correo.toLowerCase()));
+    if(local){
+      // Airtable → app: en lo que existe en los dos lados gana Airtable.
+      const cursos = inc.cursos ?? local.cursos;
+      const pc = Object.fromEntries(Object.entries(local.profes_curso || {}).filter(([c]) => cursos.includes(c)));  // sin cursos que ya no tiene
+      const cm = Object.fromEntries(Object.entries(local.clases_mes || {}).filter(([c]) => cursos.includes(c)));
+      const upd = { clases_mes: cm, airtable_id: rec.id, nombre: inc.nombre, correo: inc.correo ?? local.correo, whatsapp: inc.whatsapp ?? local.whatsapp,
+        datos: { ...local.datos, ...inc.datos, ...(inc.extras ? { _extras: inc.extras } : {}) }, cursos, profes_curso: pc, updated_at: new Date().toISOString() };
+      const { error } = await emnSupabase.from('alumnos').update(upd).eq('id', local.id);
+      if(error) throw error; Object.assign(local, upd);
+    } else {
+      const row = { nombre: inc.nombre, correo: inc.correo || null, whatsapp: inc.whatsapp || null, datos: { ...inc.datos, ...(inc.extras?.length ? { _extras: inc.extras } : {}) }, cursos: inc.cursos || [], airtable_id: rec.id, color: nextColor() };
+      const { data, error } = await emnSupabase.from('alumnos').insert(row).select().single();
+      if(error) throw error; alumnos.push(data);
+    }
+  }
+  // app → Airtable: lo que solo existe aquí se sube.
+  for(const a of alumnos.filter(x => !x.airtable_id)){
+    const { id } = await at({ action: 'upsert', fields: toAirtable(a) }, 'alumnos');
+    await emnSupabase.from('alumnos').update({ airtable_id: id }).eq('id', a.id); a.airtable_id = id;
+  }
+}
+
+async function syncAll(silent){
+  const btn = $('#sync'); btn.disabled = true; setSync('Sincronizando con Airtable…');
+  try{
+    await syncProfesores();   // primero los profesores, para traducir "Assigned Teachers"
+    await syncAlumnos();
+    airtableOk = true; renderAll();
+    setSync('Sincronizado con Airtable ✓');
+  }catch(e){
+    console.error(e); airtableOk = false;
+    setSync(silent ? 'Airtable sin conectar' : 'No se pudo sincronizar: ' + e.message, true);
+  }
+  btn.disabled = false;
+}
+
+/* ---------- listas ---------- */
+const nextColor = () => PALETA.find(c => !alumnos.some(a => a.color === c)) || PALETA[alumnos.length % PALETA.length];
+
+function renderAlumnos(){
+  $('#list').innerHTML = alumnos.length ? alumnos.map(a => `
+    <div class="al" style="--c:${esc(a.color)}" data-id="${a.id}">
+      <div class="al__main">
+        <div class="al__name">${esc(a.nombre)}</div>
+        <div class="al__meta">${[a.correo, a.whatsapp, a.datos?.instrumento].filter(Boolean).map(esc).join(' · ') || '—'}</div>
+        <div class="chips">${a.cursos.map(c => `<span class="chip">${esc(c)}${a.profes_curso?.[c] ? ' · ' + esc(a.profes_curso[c]) : ''}${a.clases_mes?.[c] ? ' · ' + a.clases_mes[c] + '/mes' : ''}</span>`).join('')}<span class="chip auto">Mock Audition (automático)</span></div>
+      </div>
+      <div class="al__acts">
+        <a class="btn" href="/calendario?alumno=${a.id}">Calendario</a>
+        <button type="button" class="btn" data-edit>Editar</button>
+        <button type="button" class="btn" data-del aria-label="Eliminar a ${esc(a.nombre)}">✕</button>
+      </div>
+    </div>`).join('') : '<div class="empty">Todavía no hay alumnos. Agrega el primero o sincroniza con Airtable.</div>';
+}
+
+function renderProfes(){
+  $('#plist').innerHTML = profesores.length ? profesores.map(p => {
+    const cal = safeUrl(p.calendly);
+    return `<div class="al" data-id="${p.id}">
+      <div class="al__main">
+        <div class="al__name">${esc(p.nombre)}</div>
+        <div class="al__meta">${[p.especializacion, p.tipo, p.pais, p.celular].filter(Boolean).map(esc).join(' · ') || '—'}</div>
+        ${cal ? `<div class="al__meta"><a href="${esc(cal)}" target="_blank" rel="noopener">Calendly →</a></div>` : ''}
+      </div>
+      <div class="al__acts">
+        <button type="button" class="btn" data-edit>Editar</button>
+        <button type="button" class="btn" data-del aria-label="Eliminar a ${esc(p.nombre)}">✕</button>
+      </div>
+    </div>`;
+  }).join('') : '<div class="empty">Todavía no hay profesores. Agrega el primero o sincroniza con Airtable.</div>';
+}
+function renderAll(){ renderAlumnos(); renderProfes(); if(typeof renderPost === 'function') renderPost(); }
+
+function setTab(t){
+  tab = t;
+  for(const k of ['al', 'pr', 'po']) $('#tab-' + k).setAttribute('aria-pressed', String(t === k));
+  $('#list').hidden = t !== 'al'; $('#plist').hidden = t !== 'pr'; $('#popanel').hidden = t !== 'po';
+  $('#mainbar').hidden = t === 'po';
+  $('#add').textContent = t === 'al' ? '+ Agregar alumno' : '+ Agregar profesor';
+}
+document.querySelector('.tabs').addEventListener('click', e => { const b = e.target.closest('.tab'); if(b) setTab(b.dataset.tab); });
+document.querySelectorAll('[data-cancel]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
+$('#sync').addEventListener('click', () => syncAll(false));
+$('#add').addEventListener('click', () => tab === 'al' ? openForm(null) : openPForm(null));
+
+/* ---------- formulario de alumno ---------- */
+function fieldHTML(c, v, name){
+  const attrs = `name="${esc(name)}" ${c.required ? 'required' : ''}`;
+  const wide = c.wide || c.type === 'textarea' ? ' wide' : '';
+  if(c.options){
+    const opts = [...c.options, ...(v && !c.options.includes(v) ? [v] : [])];
+    return `<div class="f${wide}"><label>${esc(c.label)}</label><select ${attrs}><option value="">—</option>${opts.map(o => `<option${o === v ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select></div>`;
+  }
+  const input = c.type === 'textarea' ? `<textarea ${attrs}>${esc(v ?? '')}</textarea>`
+    : `<input type="${esc(c.type || 'text')}" ${attrs} value="${esc(v ?? '')}"${c.type === 'number' ? ' min="0" step="any"' : ''}>`;
+  if(c.suffix) return `<div class="f${wide}"><label>${esc(c.label)}</label><div class="with-suffix">${input}<span>${esc(c.suffix)}</span></div></div>`;
+  return `<div class="f${wide}"><label>${esc(c.label)}</label>${input}</div>`;
+}
+
+// Un curso por fila: casilla + desplegable con los profesores (se puede repetir profesor entre cursos).
+function courseRows(a){
+  const names = [...CURSOS, ...(a?.cursos || []).filter(c => !CURSOS.includes(c))];
+  const profs = [...profesores.map(p => p.nombre)];
+  return names.map(c => {
+    const on = !!a?.cursos.includes(c), cur = a?.profes_curso?.[c] || '';
+    const opts = [...profs, ...(cur && !profs.includes(cur) ? [cur] : [])];
+    return `<div class="course-row"><label class="ck"><input type="checkbox" name="curso" value="${esc(c)}"${on ? ' checked' : ''}> ${esc(c)}</label>
+      <select class="prof" name="prof::${esc(c)}" aria-label="Profesor de ${esc(c)}"${on ? '' : ' hidden'}><option value="">Profesor…</option>${opts.map(n => `<option${n === cur ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select>
+      <select class="cpm" name="cpm::${esc(c)}" aria-label="Clases por mes de ${esc(c)}"${on ? '' : ' hidden'}><option value="">Clases por mes…</option>${[1,2,3,4,5,6,7,8].map(n => `<option value="${n}"${String(a?.clases_mes?.[c]) === String(n) ? ' selected' : ''}>${n} por mes</option>`).join('')}</select></div>`;
+  }).join('');
+}
+
+function openForm(a){
+  editing = a || null;
+  $('#dlg-title').textContent = a ? 'Editar alumno' : 'Agregar alumno';
+  $('#fields').innerHTML = CAMPOS.map(c => fieldHTML(c, a ? (CORE.includes(c.key) ? a[c.key] : a.datos?.[c.key]) : '', c.key)).join('');
+  $('#courses').innerHTML = courseRows(a);
+  $('#msg').hidden = true;
+  $('#dlg').showModal();
+  $('#fields input, #fields textarea')?.focus();
+}
+
+$('#courses').addEventListener('change', e => {   // mostrar el desplegable del profesor solo en los cursos marcados
+  const cb = e.target.closest('input[name="curso"]'); if(!cb) return;
+  cb.closest('.course-row').querySelectorAll('select').forEach(s => s.hidden = !cb.checked);
+});
+
+$('#form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const msg = $('#msg'), btn = $('#save'); msg.hidden = true;
+  const fd = new FormData(e.target);
+  const v = {}; CAMPOS.forEach(c => v[c.key] = (fd.get(c.key) || '').toString().trim());
+  const cursos = fd.getAll('curso');
+  if(v.nombre.length < 2){ msg.textContent = 'Escribe el nombre del alumno.'; msg.hidden = false; return; }
+  const datos = {}; CAMPOS.filter(c => !CORE.includes(c.key)).forEach(c => { if(v[c.key] !== '') datos[c.key] = v[c.key]; });
+  if(editing?.datos?._extras) datos._extras = editing.datos._extras;   // lo automático que ya tenía en Airtable
+  const profes_curso = {}; cursos.forEach(c => { const p = (fd.get('prof::' + c) || '').toString(); if(p) profes_curso[c] = p; });
+  const clases_mes = {}; cursos.forEach(c => { const n = parseInt(fd.get('cpm::' + c), 10); if(n >= 1 && n <= 8) clases_mes[c] = n; });
+  const row = { nombre: v.nombre, correo: v.correo || null, whatsapp: v.whatsapp || null, datos, cursos, profes_curso, clases_mes, updated_at: new Date().toISOString() };
+
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  let saved;
+  try{
+    if(editing){
+      const { data, error } = await emnSupabase.from('alumnos').update(row).eq('id', editing.id).select().single();
+      if(error) throw error; saved = data; Object.assign(editing, data);
+    } else {
+      const { data, error } = await emnSupabase.from('alumnos').insert({ ...row, color: nextColor() }).select().single();
+      if(error) throw error; saved = data; alumnos.push(data);
+    }
+  }catch(err){
+    console.error(err); msg.textContent = 'No se pudo guardar: ' + err.message; msg.hidden = false;
+    btn.disabled = false; btn.textContent = 'Guardar'; return;
+  }
+  btn.disabled = false; btn.textContent = 'Guardar';
+  $('#dlg').close(); renderAll();
+
+  try{   // app → Airtable
+    const { id } = await at({ action: 'upsert', id: saved.airtable_id || undefined, fields: toAirtable(saved) }, 'alumnos');
+    if(id !== saved.airtable_id){
+      await emnSupabase.from('alumnos').update({ airtable_id: id }).eq('id', saved.id);
+      const l = alumnos.find(x => x.id === saved.id); if(l) l.airtable_id = id;
+    }
+    setSync('Guardado y enviado a Airtable ✓');
+  }catch(err){
+    console.error(err);
+    setSync('Guardado aquí, pero no se pudo enviar a Airtable', true);
+    emnAlert('El alumno se guardó en la app, pero no se pudo enviar a Airtable: ' + err.message);
+  }
+});
+
+/* ---------- formulario de profesor ---------- */
+function openPForm(p){
+  editingP = p || null;
+  $('#pdlg-title').textContent = p ? 'Editar profesor' : 'Agregar profesor';
+  $('#pfields').innerHTML = PCAMPOS.map(c => fieldHTML(c, p?.[c.key], c.key)).join('');
+  $('#pmsg').hidden = true;
+  $('#pdlg').showModal();
+  $('#pfields input')?.focus();
+}
+
+$('#pform').addEventListener('submit', async e => {
+  e.preventDefault();
+  const msg = $('#pmsg'), btn = $('#psave'); msg.hidden = true;
+  const fd = new FormData(e.target), row = {};
+  PCAMPOS.forEach(c => row[c.key] = (fd.get(c.key) || '').toString().trim() || null);
+  if(!row.nombre || row.nombre.length < 2){ msg.textContent = 'Escribe el nombre del profesor.'; msg.hidden = false; return; }
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  let saved;
+  try{
+    if(editingP){
+      const { data, error } = await emnSupabase.from('profesores').update(row).eq('id', editingP.id).select().single();
+      if(error) throw error; saved = data; Object.assign(editingP, data);
+    } else {
+      const { data, error } = await emnSupabase.from('profesores').insert(row).select().single();
+      if(error) throw error; saved = data; profesores.push(data);
+    }
+  }catch(err){
+    console.error(err); msg.textContent = 'No se pudo guardar: ' + err.message; msg.hidden = false;
+    btn.disabled = false; btn.textContent = 'Guardar'; return;
+  }
+  btn.disabled = false; btn.textContent = 'Guardar';
+  $('#pdlg').close(); renderAll();
+  try{
+    const { id } = await at({ action: 'upsert', id: saved.airtable_id || undefined, fields: pToAirtable(saved) }, 'profesores');
+    if(id !== saved.airtable_id){
+      await emnSupabase.from('profesores').update({ airtable_id: id }).eq('id', saved.id);
+      const l = profesores.find(x => x.id === saved.id); if(l) l.airtable_id = id;
+    }
+    setSync('Guardado y enviado a Airtable ✓');
+  }catch(err){
+    console.error(err);
+    setSync('Guardado aquí, pero no se pudo enviar a Airtable', true);
+    emnAlert('El profesor se guardó en la app, pero no se pudo enviar a Airtable: ' + err.message);
+  }
+});
+
+/* ---------- editar / eliminar ---------- */
+async function removeRow(kind, row){
+  const isA = kind === 'al', table = isA ? 'alumnos' : 'profesores';
+  const msg = `¿Eliminar a ${row.nombre}?${isA ? ' Se borran también sus clases agendadas.' : ''}${row.airtable_id ? ' También se borra su registro en Airtable.' : ''} No se puede deshacer.`;
+  if(!(await emnConfirm(msg, { yesLabel: 'Eliminar' }))) return;
+  try{
+    if(row.airtable_id && airtableOk !== false) await at({ action: 'delete', id: row.airtable_id }, table);
+    const { error } = await emnSupabase.from(table).delete().eq('id', row.id);
+    if(error) throw error;
+    if(isA) alumnos = alumnos.filter(x => x.id !== row.id); else profesores = profesores.filter(x => x.id !== row.id);
+    renderAll();
+  }catch(err){ console.error(err); emnAlert('No se pudo eliminar: ' + err.message); }
+}
+$('#list').addEventListener('click', e => {
+  const r = e.target.closest('.al'); if(!r) return;
+  const a = alumnos.find(x => x.id === r.dataset.id);
+  if(e.target.closest('[data-edit]')) openForm(a); else if(e.target.closest('[data-del]')) removeRow('al', a);
+});
+$('#plist').addEventListener('click', e => {
+  const r = e.target.closest('.al'); if(!r) return;
+  const p = profesores.find(x => x.id === r.dataset.id);
+  if(e.target.closest('[data-edit]')) openPForm(p); else if(e.target.closest('[data-del]')) removeRow('pr', p);
+});
+
+/* ---------- postulaciones ---------- */
+const waUrl = n => 'https://wa.me/' + String(n).replace(/\D/g, '');
+const fmtDate = iso => new Date(iso).toLocaleString('es-PE', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+function renderPost(){
+  const list = poFilter ? postulaciones.filter(r => r.estado === poFilter) : postulaciones;
+  $('#potbody').innerHTML = list.length ? list.map(r => {
+    const v = safeUrl(r.video);
+    return `<tr data-id="${r.id}">
+      <td class="date">${esc(fmtDate(r.created_at))}</td>
+      <td class="name">${esc(r.nombre)}</td>
+      <td><a href="mailto:${esc(r.correo)}">${esc(r.correo)}</a></td>
+      <td><a href="${esc(waUrl(r.whatsapp))}" target="_blank" rel="noopener">${esc(r.whatsapp)}</a></td>
+      <td>${v ? `<a href="${esc(v)}" target="_blank" rel="noopener noreferrer">${esc(v)}</a>` : esc(r.video)}</td>
+      <td><select class="estado ${r.estado}" aria-label="Estado de ${esc(r.nombre)}">${['nuevo','contactado','descartado'].map(e => `<option value="${e}"${e === r.estado ? ' selected' : ''}>${e[0].toUpperCase() + e.slice(1)}</option>`).join('')}</select></td>
+      <td><button class="xbtn" data-del aria-label="Eliminar postulación de ${esc(r.nombre)}" title="Eliminar">×</button></td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="7" class="empty">${postulaciones.length ? 'No hay postulaciones con ese estado.' : 'Todavía no hay postulaciones.'}</td></tr>`;
+  const n = postulaciones.filter(r => r.estado === 'nuevo').length;
+  $('#tab-po').textContent = n ? `Postulaciones (${n})` : 'Postulaciones';
+}
+$('#pofilters').addEventListener('click', e => {
+  const b = e.target.closest('.chipf'); if(!b) return;
+  poFilter = b.dataset.f;
+  document.querySelectorAll('.chipf').forEach(c => c.setAttribute('aria-pressed', String(c === b)));
+  renderPost();
+});
+$('#potbody').addEventListener('change', async e => {
+  if(!e.target.classList.contains('estado')) return;
+  const row = postulaciones.find(r => r.id === e.target.closest('tr').dataset.id), prev = row.estado;
+  row.estado = e.target.value; e.target.className = 'estado ' + row.estado;
+  const { error } = await emnSupabase.from('postulaciones').update({ estado: row.estado }).eq('id', row.id);
+  if(error){ console.error(error); row.estado = prev; renderPost(); emnAlert('No se pudo cambiar el estado. Inténtalo de nuevo.'); }
+  else renderPost();
+});
+$('#potbody').addEventListener('click', async e => {
+  const b = e.target.closest('[data-del]'); if(!b) return;
+  const row = postulaciones.find(r => r.id === b.closest('tr').dataset.id);
+  if(!(await emnConfirm(`¿Eliminar la postulación de ${row.nombre}? No se puede deshacer.`, { yesLabel: 'Eliminar' }))) return;
+  const { error } = await emnSupabase.from('postulaciones').delete().eq('id', row.id);
+  if(error){ console.error(error); emnAlert('No se pudo eliminar. Inténtalo de nuevo.'); return; }
+  postulaciones = postulaciones.filter(r => r.id !== row.id); renderPost();
+});
+
+/* ---------- arranque ---------- */
+async function boot(){
+  const gate = $('#gate-msg');
+  if(!['admin','professor'].includes(emnStudentProfile?.role)){
+    gate.innerHTML = emnSession ? 'Esta página es solo para administradores.' : 'Inicia sesión para continuar. <a href="/emn-login">Inicia sesión</a>';
+    gate.style.display = 'block'; return;
+  }
+  const [a, p, po] = await Promise.all([
+    emnSupabase.from('alumnos').select('*').order('created_at'),
+    emnSupabase.from('profesores').select('*').order('nombre'),
+    emnSupabase.from('postulaciones').select('*').order('created_at', { ascending: false }),
+  ]);
+  if(a.error || p.error){ console.error(a.error || p.error); gate.textContent = 'No se pudieron cargar los datos.'; gate.style.display = 'block'; return; }
+  alumnos = a.data || []; profesores = p.data || []; postulaciones = po.data || [];
+  $('#body-a').style.display = 'block';
+  renderAll();
+  syncAll(true); // trae lo último de Airtable al abrir la página
+}
+emnInit().then(boot);
+</script>
+</body>
+</html>

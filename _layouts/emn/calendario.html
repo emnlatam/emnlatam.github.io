@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es" class="emn-landing">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% include emn-favicon.html %}
+<title>EMN — Calendario</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="/assets/css/emn.css?v={{ site.time | date: '%s' }}">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/assets/js/emn-auth.js?v={{ site.time | date: '%s' }}"></script>
+<style>
+  body{ background:var(--gray-100); font-family:var(--font-body); color:var(--ink); margin:0; }
+  button, input{ font-family:inherit; }
+  .wrap-c{ max-width:1200px; margin:0 auto; padding:32px 24px 70px; }
+  .head-c{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px; }
+  .head-c h1{ font-family:var(--font-display); font-size:26px; margin:0; }
+  .head-c a.back{ font-size:13px; color:var(--gray-700); }
+  #gate-msg{ text-align:center; padding:80px 20px; color:var(--gray-700); }
+  #gate-msg a{ color:var(--red); font-weight:600; }
+
+  .people{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; }
+  .person{ display:flex; align-items:center; gap:8px; border:2px solid var(--c); background:var(--paper); border-radius:999px; padding:7px 14px; font-size:13.5px; font-weight:600; cursor:pointer; color:var(--ink); }
+  .person i{ width:11px; height:11px; border-radius:50%; background:var(--c); }
+  .person[aria-pressed="true"]{ background:var(--c); color:#fff; }
+  .person[aria-pressed="true"] i{ background:#fff; }
+
+  .layout{ display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:20px; align-items:start; }
+  @media (max-width:980px){ .layout{ grid-template-columns:minmax(0,1fr); } }
+  .card{ background:var(--paper); border:1px solid var(--gray-300); border-radius:var(--radius); padding:18px; }
+
+  .nav{ display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  .nav button{ width:34px; height:34px; border-radius:50%; border:1px solid var(--gray-300); background:var(--paper); font-size:16px; color:var(--red); cursor:pointer; }
+  .nav button:hover{ background:var(--red); border-color:var(--red); color:#fff; }
+  .nav h2{ font-family:var(--font-display); font-size:19px; margin:0; text-transform:capitalize; }
+  .nav .today{ margin-left:auto; width:auto; border-radius:7px; padding:0 12px; font-size:12px; color:var(--gray-700); }
+  .wd, .grid{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; }
+  .wd span{ text-align:center; font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--gray-500); padding-bottom:5px; }
+  .day{ min-height:96px; background:var(--gray-100); border:1px solid var(--gray-300); border-radius:8px; padding:5px 5px 6px; display:flex; flex-direction:column; gap:3px; text-align:left; overflow:hidden; font:inherit; color:inherit; }
+  button.day{ cursor:default; }
+  button.day.pick{ cursor:pointer; }
+  button.day.pick:hover{ border-color:var(--red); background:#fff; }
+  .day.out{ opacity:.35; }
+  .day.past{ background:repeating-linear-gradient(135deg, var(--gray-100), var(--gray-100) 6px, #ebedef 6px, #ebedef 12px); }
+  .day.today{ border-color:var(--red); background:var(--red-tint); }
+  .day b{ font-family:var(--font-display); font-size:12.5px; color:var(--gray-700); font-weight:400; }
+  .day.today b{ color:var(--red); font-weight:700; }
+  .ev{ font-size:10.5px; line-height:1.25; padding:2px 4px 2px 5px; border-radius:4px; background:#fff; border:1px solid var(--gray-300); border-left:4px solid var(--c); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ev.dim{ opacity:.4; }
+  .ev.mock{ background:#E8F5EE; border-color:#1E8E5A; color:#0B7A43; font-weight:700; }
+
+  .side h3{ font-family:var(--font-display); font-size:17px; margin:0 0 12px; display:flex; align-items:center; gap:8px; }
+  .side h3 i{ width:12px; height:12px; border-radius:50%; background:var(--c); flex-shrink:0; }
+  .lbl{ display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--gray-500); margin:14px 0 6px; }
+  .courses{ display:flex; flex-direction:column; gap:7px; }
+  .course{ text-align:left; border:1px solid var(--gray-300); background:var(--paper); border-radius:8px; padding:10px 12px; font-size:13.5px; font-weight:600; cursor:pointer; color:var(--ink); }
+  .course:hover{ border-color:var(--red); }
+  .course[aria-pressed="true"]{ border-color:var(--c); box-shadow:inset 0 0 0 1px var(--c); background:#fff; }
+  .course small{ display:block; font-weight:400; color:var(--gray-500); font-size:12px; margin-top:2px; }
+  .in{ width:100%; box-sizing:border-box; padding:9px 11px; border:1px solid var(--gray-300); border-radius:8px; font-size:13.5px; background:#fff; color:var(--ink); }
+  .in:focus{ border-color:var(--red); outline:none; }
+  .help{ font-size:12.5px; color:var(--gray-500); line-height:1.45; margin:8px 0 0; }
+  .ses{ display:grid; grid-template-columns:auto 92px minmax(0,1fr) auto; gap:6px; align-items:center; padding:7px 0; border-top:1px solid var(--gray-100); font-size:12.5px; }
+  .ses .in{ padding:6px 8px; font-size:12.5px; }
+  .ses button{ border:0; background:none; color:var(--gray-500); font-size:16px; cursor:pointer; padding:2px 6px; border-radius:5px; }
+  .ses button:hover{ color:var(--red); background:var(--gray-100); }
+  .none{ color:var(--gray-500); font-size:13px; font-style:italic; }
+</style>
+</head>
+<body>
+
+{% include emn-header.html %}
+
+<div class="wrap-c">
+  <div class="head-c">
+    <h1>Calendario</h1>
+    <a class="back" href="/administrar">&larr; Volver a Administrar</a>
+  </div>
+
+  <div id="gate-msg" style="display:none"></div>
+
+  <div id="body-c" style="display:none">
+    <div class="people" id="people" role="group" aria-label="Alumnos"></div>
+    <div class="layout">
+      <div class="card">
+        <div class="nav">
+          <button type="button" id="prev" aria-label="Mes anterior">‹</button>
+          <h2 id="month">—</h2>
+          <button type="button" id="next" aria-label="Mes siguiente">›</button>
+          <button type="button" class="today" id="today">Hoy</button>
+        </div>
+        <div class="wd"><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span></div>
+        <div class="grid" id="grid"></div>
+      </div>
+      <aside class="card side" id="side"></aside>
+    </div>
+  </div>
+</div>
+
+<script>
+const MOCK = 'Mock Audition';
+const TUTORING = 'Tutoring';   // lo tienen todos los alumnos: siempre se puede agendar
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+let alumnos = [], clases = [], meet = {}, cur = null, curso = null;
+let view = new Date(); view.setDate(1);
+
+// Último domingo de un mes (el Mock Audition es automático ese día).
+function lastSunday(y, m){ const d = new Date(y, m + 1, 0); d.setDate(d.getDate() - d.getDay()); return ymd(d); }
+const alumno = () => alumnos.find(a => a.id === cur);
+const finDe = a => /^\d{4}-\d{2}-\d{2}$/.test(a?.datos?.fin || '') ? a.datos.fin : null;   // "Fecha de fin" del alumno
+const fmt = k => `${k.slice(8)}/${k.slice(5, 7)}/${k.slice(0, 4)}`;
+
+/* ---------- alumnos (colores) ---------- */
+function renderPeople(){
+  $('#people').innerHTML = alumnos.map(a => `<button type="button" class="person" style="--c:${esc(a.color)}" data-id="${a.id}" aria-pressed="${a.id === cur}"><i></i>${esc(a.nombre)}</button>`).join('')
+    || '<span class="none">Todavía no hay alumnos. Agrégalos en <a href="/comunidad" style="color:var(--red)">Comunidad</a>.</span>';
+}
+
+/* ---------- calendario ---------- */
+function renderCal(){
+  const y = view.getFullYear(), m = view.getMonth();
+  $('#month').textContent = `${MESES[m]} ${y}`;
+  const first = new Date(y, m, 1), start = new Date(first); start.setDate(1 - ((first.getDay() + 6) % 7));
+  const today = ymd(new Date()), mock = lastSunday(y, m), a = alumno(), fin = finDe(a);
+  const canPick = a && curso && curso !== MOCK;
+  const cells = [];
+  for(let i = 0; i < 42; i++){
+    const d = new Date(start); d.setDate(start.getDate() + i);
+    const k = ymd(d), outside = d.getMonth() !== m;
+    if(i >= 35 && outside) break;
+    const evs = clases.filter(c => c.fecha === k).sort((p, q) => p.hora.localeCompare(q.hora)).map(c => {
+      const al = alumnos.find(x => x.id === c.alumno_id); if(!al) return '';
+      return `<div class="ev${c.alumno_id === cur ? '' : ' dim'}" style="--c:${esc(al.color)}" title="${esc(al.nombre)} · ${esc(c.curso)} · ${esc(c.hora.slice(0,5))}">${esc(c.hora.slice(0,5))} ${esc(al.nombre.split(' ')[0])} · ${esc(c.curso)}</div>`;
+    }).join('');
+    const mk = k === lastSunday(d.getFullYear(), d.getMonth()) ? `<div class="ev mock">${MOCK}</div>` : '';
+    cells.push(`<button type="button" class="day${outside ? ' out' : ''}${k === today ? ' today' : ''}${canPick && !outside ? ' pick' : ''}${canPick && fin && k > fin ? ' past' : ''}" data-d="${k}"${canPick && fin && k > fin ? ` title="Después de la fecha final del alumno (${fmt(fin)})"` : ''}><b>${d.getDate()}</b>${mk}${evs}</button>`);
+  }
+  $('#grid').innerHTML = cells.join('');
+}
+
+/* ---------- panel derecho ---------- */
+function renderSide(){
+  const a = alumno(), side = $('#side');
+  if(!a){ side.innerHTML = '<p class="none">Elige un alumno para agendar sus clases.</p>'; return; }
+  const list = [...a.cursos, TUTORING, MOCK];
+  if(!list.includes(curso)) curso = a.cursos[0] || TUTORING;
+  const ses = curso && curso !== MOCK ? clases.filter(c => c.alumno_id === a.id && c.curso === curso).sort((p, q) => (p.fecha + p.hora).localeCompare(q.fecha + q.hora)) : [];
+  side.style.setProperty('--c', a.color);
+  side.innerHTML = `
+    <h3><i></i>Clases de ${esc(a.nombre)}</h3>
+    <div class="courses">
+      ${[...a.cursos, TUTORING].map(c => `<button type="button" class="course" data-c="${esc(c)}" aria-pressed="${c === curso}">${esc(c)}<small>${a.profes_curso?.[c] ? 'Profesor: ' + esc(a.profes_curso[c]) + ' · ' : ''}${clases.filter(x => x.alumno_id === a.id && x.curso === c).length} clases agendadas</small></button>`).join('')}
+      <button type="button" class="course" data-c="${MOCK}" aria-pressed="${curso === MOCK}">${MOCK}<small>Automático · último domingo de cada mes</small></button>
+    </div>
+    ${a.cursos.length ? '' : '<p class="help">Este alumno todavía no tiene cursos asignados. Asígnaselos en <a href="/comunidad" style="color:var(--red)">Comunidad</a>.</p>'}
+    ${finDe(a) ? `<p class="help">Fecha final: <strong>${fmt(finDe(a))}</strong>. No se pueden agendar clases después de esa fecha.</p>` : '<p class="help">Este alumno no tiene fecha final: puedes agendar sin límite. Defínela en <a href="/comunidad" style="color:var(--red)">Comunidad</a>.</p>'}
+    ${curso ? `
+      <label class="lbl" for="meet">Link de Meet de ${esc(curso)}</label>
+      <input class="in" id="meet" type="url" placeholder="https://meet.google.com/…" value="${esc(meet[curso] || '')}">
+      ${curso === MOCK
+        ? '<p class="help">Se agenda solo el último domingo de cada mes (verde en el calendario). Aquí solo defines el link.</p>'
+        : `<p class="help">Haz clic en los días del calendario para agendar <strong>${esc(curso)}</strong>. Cada clase queda con este link y puedes cambiar su hora o su link abajo.</p>
+           <span class="lbl">Clases agendadas</span>
+           ${ses.length ? ses.map(s => `<div class="ses" data-id="${s.id}">
+               <span>${esc(s.fecha.slice(8))}/${esc(s.fecha.slice(5, 7))}</span>
+               <input class="in" type="time" value="${esc(s.hora.slice(0, 5))}" data-f="hora" aria-label="Hora">
+               <input class="in" type="url" value="${esc(s.link || '')}" data-f="link" placeholder="Link de Meet" aria-label="Link">
+               <button type="button" data-del aria-label="Quitar clase">×</button></div>`).join('') : '<p class="none">Aún no hay clases de este curso.</p>'}`}
+    ` : ''}`;
+}
+
+function renderAll(){ renderPeople(); renderCal(); renderSide(); }
+
+/* ---------- eventos ---------- */
+$('#people').addEventListener('click', e => {
+  const b = e.target.closest('.person'); if(!b) return;
+  cur = b.dataset.id; curso = null; renderAll();
+  const u = new URL(location); u.searchParams.set('alumno', cur); history.replaceState(null, '', u);
+});
+$('#prev').addEventListener('click', () => { view.setMonth(view.getMonth() - 1); renderCal(); });
+$('#next').addEventListener('click', () => { view.setMonth(view.getMonth() + 1); renderCal(); });
+$('#today').addEventListener('click', () => { view = new Date(); view.setDate(1); renderCal(); });
+
+$('#side').addEventListener('click', async e => {
+  const c = e.target.closest('.course');
+  if(c){ curso = c.dataset.c; renderAll(); return; }
+  if(e.target.closest('[data-del]')){
+    const id = e.target.closest('.ses').dataset.id;
+    const { error } = await emnSupabase.from('clases').delete().eq('id', id);
+    if(error) return emnAlert('No se pudo quitar la clase: ' + error.message);
+    clases = clases.filter(x => x.id !== id); renderAll();
+  }
+});
+
+$('#side').addEventListener('change', async e => {
+  if(e.target.id === 'meet'){
+    const link = e.target.value.trim() || null;
+    const { error } = await emnSupabase.from('cursos_meet').upsert({ curso, link });
+    if(error) return emnAlert('No se pudo guardar el link: ' + error.message);
+    meet[curso] = link;
+    return;
+  }
+  const row = e.target.closest('.ses'); if(!row || !e.target.dataset.f) return;
+  const cl = clases.find(x => x.id === row.dataset.id), f = e.target.dataset.f;
+  let val = e.target.value.trim() || null;
+  if(f === 'hora' && !val){ e.target.value = cl.hora.slice(0, 5); return; }
+  const { error } = await emnSupabase.from('clases').update({ [f]: val }).eq('id', cl.id);
+  if(error) return emnAlert('No se pudo guardar el cambio: ' + error.message);
+  cl[f] = val; renderCal();
+});
+
+$('#grid').addEventListener('click', async e => {
+  const d = e.target.closest('.day.pick'); if(!d || d.classList.contains('out')) return;
+  const a = alumno(); if(!a || !curso || curso === MOCK) return;
+  const fecha = d.dataset.d, fin = finDe(a);
+  if(fin && fecha > fin){
+    await emnAlert(`${a.nombre} termina el ${fmt(fin)}. No se pueden agendar clases después de la fecha final (${fmt(fecha)} ya la pasa). Si necesitas más tiempo, cambia su fecha de fin en Comunidad.`);
+    return;
+  }
+  if(clases.some(x => x.alumno_id === a.id && x.curso === curso && x.fecha === fecha)) return;
+  // La hora por defecto es la de la última clase de este curso (o 18:00).
+  const prev = clases.filter(x => x.alumno_id === a.id && x.curso === curso).pop();
+  const row = { alumno_id: a.id, curso, fecha, hora: prev?.hora || '18:00', link: meet[curso] || null };
+  const { data, error } = await emnSupabase.from('clases').insert(row).select().single();
+  if(error) return emnAlert('No se pudo agendar la clase: ' + error.message);
+  clases.push(data); renderAll();
+});
+
+/* ---------- arranque ---------- */
+async function boot(){
+  const gate = $('#gate-msg');
+  if(!['admin','professor'].includes(emnStudentProfile?.role)){
+    gate.innerHTML = emnSession ? 'Esta página es solo para administradores.' : 'Inicia sesión para continuar. <a href="/emn-login">Inicia sesión</a>';
+    gate.style.display = 'block'; return;
+  }
+  const [a, c, m] = await Promise.all([
+    emnSupabase.from('alumnos').select('*').order('created_at'),
+    emnSupabase.from('clases').select('*').order('fecha'),
+    emnSupabase.from('cursos_meet').select('*'),
+  ]);
+  if(a.error || c.error || m.error){ console.error(a.error || c.error || m.error); gate.textContent = 'No se pudo cargar el calendario.'; gate.style.display = 'block'; return; }
+  alumnos = a.data; clases = c.data.map(x => ({ ...x, hora: x.hora.slice(0, 8) })); (m.data || []).forEach(x => meet[x.curso] = x.link);
+  const asked = new URLSearchParams(location.search).get('alumno');
+  cur = alumnos.find(x => x.id === asked)?.id || alumnos[0]?.id || null;
+  $('#body-c').style.display = 'block';
+  renderAll();
+}
+emnInit().then(boot);
+</script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+# Términos y condiciones que se agregan al final de cada invoice en PDF (/invoices).
+# Para cambiarlos, edita el texto de abajo y sube el archivo. Formato:
+#   - La primera línea es el título.
+#   - Una línea que empieza con un número y punto ("1. Naturaleza...") es un subtítulo.
+#   - Una línea que empieza con "- " es un punto de lista; con 2 espacios antes ("  - ") es un sub-punto.
+#   - Cualquier otra línea es un párrafo.
+texto: |
+  TÉRMINOS Y CONDICIONES
+
+  Al inscribirse en el programa de su preferencia en EMN, el alumno acepta las siguientes condiciones:
+
+  1. Naturaleza del programa
+  Es un programa de preparación personalizada con cupos limitados. La reserva del cupo se confirma únicamente con el pago correspondiente.
+
+  2. Política de pagos y reembolsos
+  - El pago realizado no es reembolsable.
+  - No se realizan devoluciones parciales ni totales por inasistencias, abandono voluntario o retiro del programa.
+  - El pago asegura el cupo, la planificación y la disponibilidad del maestro asignado.
+  - La única excepción es que EMN cancele el programa de forma definitiva sin ofrecer una alternativa. En ese caso, se reembolsarán las sesiones no dictadas.
+
+  3. Inasistencias y reprogramaciones
+  - Toda inasistencia debe comunicarse con un mínimo de 48 horas de anticipación.
+  - Si el alumno avisa con al menos 48 horas de anticipación, podrá coordinar directamente con el maestro una reprogramación dentro de la misma semana.
+  - Si el alumno no asiste o avisa con menos de 48 horas de anticipación, la clase se considera dictada. No es reembolsable ni acumulable.
+  - En caso de fuerza mayor, el alumno deberá comunicarlo tan pronto como le sea posible, aunque sea con menos de 48 horas. Se entiende por fuerza mayor una situación imprevista fuera del control de las partes, como:
+    - enfermedad grave
+    - accidente
+    - emergencia familiar
+    - falla técnica grave
+    - desastre natural
+  - En estos casos, el alumno podrá coordinar con el maestro una posible reprogramación dentro de la misma semana.
+  - La reprogramación no está garantizada y depende exclusivamente de la disponibilidad del maestro.
+  - Si no es posible reprogramar dentro de la semana correspondiente, la clase se considera dictada. No es recuperable ni reembolsable.
+
+  4. Puntualidad
+  - El alumno debe conectarse o presentarse puntualmente a la clase.
+  - No se extenderá el tiempo de clase por llegadas tardías.
+  - Si el alumno llega con más de 15 minutos de retraso, la clase podrá darse por dictada sin derecho a reposición.
+
+  5. Faltas consecutivas
+  - Una falta injustificada es aquella en la que no hubo aviso con 48 horas de anticipación ni causa de fuerza mayor.
+  - Si el alumno acumula tres (3) faltas injustificadas consecutivas, será retirado automáticamente del programa.
+  - En ese caso, no se realizará ningún tipo de reembolso.
+
+  6. Cambios de horario
+  - Toda solicitud de cambio permanente de horario debe realizarse con un mínimo de una (1) semana de anticipación.
+  - Los cambios están sujetos a la disponibilidad del maestro.
+  - No se garantizan modificaciones inmediatas ni fuera del plazo establecido.
+
+  7. Compromiso del alumno
+  - El alumno se compromete a asistir preparado a cada sesión.
+  - EMN no se responsabiliza por la falta de progreso derivada de la ausencia de práctica o del incumplimiento de tareas.
+  - El programa requiere un compromiso activo del alumno con su avance fuera de las clases.
+
+  8. Cancelación por parte de EMN
+  - En caso de fuerza mayor o indisponibilidad del maestro, EMN reprogramará la clase sin afectar el total de sesiones del alumno.
+  - La nueva fecha se coordinará con el alumno, buscando el horario que más le convenga.
+
+  9. Aceptación
+  La inscripción y el pago del programa implican la aceptación total de estos términos y condiciones.
