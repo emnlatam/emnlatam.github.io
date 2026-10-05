@@ -16,3 +16,5 @@ exclude:
   - Gemfile.lock
   - vendor
   - "assets/img/*_img.*"   # fotos originales de los mentores (pesadas); el sitio usa las versiones de assets/img/mentores/
+  - "assets/img/IMG_0813.*"   # original pesado del banner de Mentores; el sitio usa assets/img/mentores-hero.jpg
+  - "assets/img/berkleeperu_gente.*"   # original del banner de Nosotros; el sitio usa assets/img/nosotros-hero.jpg

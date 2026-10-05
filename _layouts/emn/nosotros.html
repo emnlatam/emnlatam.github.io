@@ -14,7 +14,9 @@
 <body>
 <div class="wrap">
 
-  <div class="m-hero m-hero--story">
+  {% comment %} Fondo del banner: assets/img/nosotros-hero.jpg (versión liviana de berkleeperu_gente.png). {% endcomment %}
+  {% assign hero = site.static_files | where: "basename", "nosotros-hero" | first %}
+  <div class="m-hero m-hero--story"{% if hero %} style="--m-hero-img: url('{{ hero.path }}')"{% endif %}>
     {% include emn-header.html variant="dark" %}
     <div class="m-hero__inner">
       <p class="m-hero__lead">Nosotros</p>
