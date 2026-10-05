@@ -367,6 +367,7 @@ function emnInjectCareerMenu(st){
     <div class="emn-nav__dropdown">
       <a href="/career" class="emn-nav__dropdown-item ${path === '/career' ? 'is-active' : ''}">Calendario</a>
       <a href="/career-progress" class="emn-nav__dropdown-item ${path === '/career-progress' ? 'is-active' : ''}">Career Progress</a>
+      <a href="/mock-audition" class="emn-nav__dropdown-item ${path === '/mock-audition' ? 'is-active' : ''}">Berklee Mock Audition</a>
     </div>
   `;
   nav.appendChild(item);

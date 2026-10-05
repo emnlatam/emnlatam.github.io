@@ -3254,3 +3254,36 @@
   .emn-landing .n-intro { grid-template-columns: 1fr; gap: 28px; padding-top: 56px; }
   .emn-landing .n-intro__photo { max-width: 320px; }
 }
+
+/* Nosotros: primeros colaboradores */
+.emn-landing .n-collab { max-width: 1000px; padding-bottom: 72px; }
+.emn-landing .n-collab__list { display: grid; gap: 22px; }
+.emn-landing .n-person {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e6e1d9;
+  border-left: 4px solid var(--red);
+  border-radius: 8px;
+}
+.emn-landing .n-person__photo {
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: linear-gradient(160deg, #2a0006, #8a0a1d);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.emn-landing .n-person__photo img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
+.emn-landing .n-person__photo span { font-family: var(--font-display); font-size: 56px; color: rgba(255, 255, 255, 0.85); }
+.emn-landing .n-person h3 { margin: 0 0 4px; font-size: 22px; }
+.emn-landing .n-person__role { margin: 0 0 12px; font-weight: 600; font-size: 14px; color: var(--red); }
+.emn-landing .n-person p:last-child { margin: 0; font-size: 16px; line-height: 1.65; color: #3a3a3a; }
+@media (max-width: 640px) {
+  .emn-landing .n-person { grid-template-columns: 1fr; }
+  .emn-landing .n-person__photo { max-width: 200px; }
+}

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es" class="emn-landing">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% include emn-favicon.html %}
+<title>EMN — Berklee Mock Audition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="/assets/css/emn.css?v={{ site.time | date: '%s' }}">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/assets/js/emn-auth.js?v={{ site.time | date: '%s' }}"></script>
+<style>
+  body{ background:var(--gray-100); font-family:var(--font-body); color:var(--ink); margin:0; }
+  button{ font-family:inherit; }
+  .ma{ max-width:1180px; margin:0 auto; padding:32px 24px 72px; }
+  .ma h1{ font-family:'Bricolage Grotesque', var(--font-body); font-weight:800; font-size:clamp(30px,4.4vw,46px); letter-spacing:-.02em; margin:0 0 6px; }
+  .ma .lede{ margin:0 0 18px; color:var(--gray-700); max-width:62ch; font-size:16px; line-height:1.55; }
+  .ma .eyebrow{ font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--red); margin:0 0 8px; }
+  .facts{ display:flex; flex-wrap:wrap; gap:8px; margin:0 0 30px; }
+  .fact{ font-size:13px; font-weight:600; border:1px solid var(--gray-300); background:var(--paper); padding:6px 14px; border-radius:999px; }
+  #gate-msg{ text-align:center; padding:90px 20px; color:var(--gray-700); }
+  #gate-msg a{ color:var(--red); font-weight:600; }
+  [hidden]{ display:none !important; }
+
+  /* ---- agendador (admin / profesor) ---- */
+  .ma-grid{ display:grid; grid-template-columns:270px minmax(0,1fr); gap:22px; align-items:start; }
+  @media (max-width:860px){ .ma-grid{ grid-template-columns:minmax(0,1fr); } }
+  .pool{ position:sticky; top:12px; background:var(--paper); border:1px solid var(--gray-300); border-radius:var(--radius); padding:14px; }
+  @media (max-width:860px){ .pool{ position:static; } }
+  .pool h2{ font-size:15px; margin:0 0 4px; }
+  .pool .hint{ margin:0 0 10px; font-size:12.5px; color:var(--gray-500); line-height:1.4; }
+  .pool input[type=search]{ width:100%; box-sizing:border-box; border:1px solid var(--gray-300); border-radius:8px; padding:8px 10px; font:inherit; font-size:13.5px; margin-bottom:10px; }
+  #pool-list{ display:flex; flex-wrap:wrap; gap:6px; max-height:60vh; overflow-y:auto; }
+  .chip{ display:inline-flex; align-items:center; gap:7px; padding:6px 12px; border:1px solid var(--gray-300); border-radius:999px; background:var(--paper); font-size:13px; font-weight:600; cursor:grab; user-select:none; }
+  .chip i{ width:9px; height:9px; border-radius:50%; background:var(--c, var(--red)); flex-shrink:0; }
+  .chip:hover{ border-color:var(--red); }
+  .chip.picked{ background:var(--red); border-color:var(--red); color:#fff; }
+  .chip.picked i{ background:#fff; }
+  .none{ color:var(--gray-500); font-size:13px; }
+
+  .date{ background:var(--paper); border:1px solid var(--gray-300); border-radius:var(--radius); padding:16px 18px; margin-bottom:16px; }
+  .date-head{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px; justify-content:space-between; margin-bottom:12px; }
+  .date-head h3{ margin:0; font-family:'Bricolage Grotesque', var(--font-body); font-size:20px; }
+  .date-head h3::first-letter, .next h2::first-letter{ text-transform:uppercase; }
+  .date-link{ display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--gray-700); flex:1 1 280px; max-width:460px; }
+  .date-link input{ flex:1; min-width:0; border:1px solid var(--gray-300); border-radius:8px; padding:7px 10px; font:inherit; font-size:13px; }
+  .date-link input.missing{ border-color:var(--red); background:var(--red-tint); }
+  .slot{ display:grid; grid-template-columns:minmax(0,230px) minmax(0,1fr); gap:14px; align-items:center; padding:10px 0; border-top:1px solid var(--gray-100); }
+  @media (max-width:560px){ .slot{ grid-template-columns:minmax(0,1fr); gap:6px; } }
+  .time strong{ display:block; font-size:14.5px; }
+  .time span{ display:block; font-size:12px; color:var(--gray-500); margin-top:1px; }
+  .drop{ min-height:44px; border:2px dashed var(--gray-300); border-radius:10px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:6px 12px; color:var(--gray-500); font-size:13px; transition:border-color .12s, background .12s; }
+  .drop.over, .drop.armed:hover{ border-color:var(--red); background:var(--red-tint); }
+  .drop.filled{ border-style:solid; border-color:var(--gray-300); background:var(--gray-100); color:var(--ink); }
+  .drop .who{ display:inline-flex; align-items:center; gap:7px; font-weight:700; font-size:14px; }
+  .drop .who i{ width:10px; height:10px; border-radius:50%; background:var(--c, var(--red)); }
+  .st{ font-size:12px; font-weight:600; }
+  .st.ok{ color:#1E8E5A; }
+  .st.bad{ color:var(--red); }
+  .st.wait{ color:var(--gray-500); }
+  .mini{ border:1px solid var(--gray-300); background:var(--paper); border-radius:7px; padding:3px 9px; font-size:12px; cursor:pointer; color:var(--gray-700); }
+  .mini:hover{ border-color:var(--red); color:var(--red); }
+  .drop .push{ margin-left:auto; display:flex; gap:6px; }
+
+  /* ---- vista del alumno ---- */
+  .next{ background:var(--paper); border:1px solid var(--gray-300); border-radius:var(--radius); padding:20px 22px; max-width:760px; }
+  .next h2{ margin:0 0 2px; font-family:'Bricolage Grotesque', var(--font-body); font-size:24px; }
+  .next .sub{ margin:0 0 14px; font-size:13.5px; color:var(--gray-700); }
+  .next .slot{ grid-template-columns:minmax(0,260px) minmax(0,1fr); }
+  .next .who-row{ font-size:15px; font-weight:700; }
+  .next .who-row.free{ color:var(--gray-500); font-weight:400; }
+  .next .who-row.mine{ color:var(--red); }
+  .next .who-row .tag{ font-size:11px; background:var(--red); color:#fff; border-radius:999px; padding:2px 9px; margin-left:8px; vertical-align:middle; }
+  .btn-res{ margin-left:10px; border:0; background:var(--red); color:#fff; border-radius:7px; padding:6px 16px; font-size:13px; font-weight:700; cursor:pointer; }
+  .btn-res:hover{ background:var(--red-dark); }
+  .note{ margin:14px 0 0; font-size:13.5px; color:var(--gray-700); line-height:1.5; }
+
+  /* ---- cómo prepararte ---- */
+  .prep{ margin-top:52px; display:flex; flex-direction:column; gap:44px; max-width:860px; }
+  .prep h2{ font-family:'Bricolage Grotesque', var(--font-body); font-weight:800; font-size:clamp(24px,3.2vw,34px); letter-spacing:-.015em; margin:0 0 16px; }
+  .parts{ list-style:none; margin:0; padding:0; border-top:1px solid var(--gray-300); }
+  .part{ display:grid; grid-template-columns:48px minmax(0,1fr); gap:16px; padding:18px 0; border-bottom:1px solid var(--gray-300); }
+  .mark{ width:44px; height:44px; display:grid; place-items:center; border:2px solid var(--red); color:var(--red); border-radius:6px; font-family:'Bricolage Grotesque', var(--font-body); font-weight:800; font-size:21px; }
+  .part h3{ margin:0; font-size:17px; }
+  .part .en{ display:block; font-size:11.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--gray-500); margin:2px 0 6px; }
+  .part p{ margin:0; line-height:1.55; }
+  .part ul{ margin:8px 0 0; padding-left:18px; color:var(--gray-700); line-height:1.5; }
+  .check{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px; }
+  .check li{ background:var(--paper); border:1px solid var(--gray-300); border-radius:10px; padding:13px 15px; display:grid; grid-template-columns:auto minmax(0,1fr); gap:12px; align-items:start; }
+  .check input{ margin-top:4px; width:18px; height:18px; accent-color:var(--red); }
+  .check label{ cursor:pointer; }
+  .check strong{ display:block; }
+  .check span{ color:var(--gray-700); font-size:14px; line-height:1.45; }
+  .tip{ margin:16px 0 0; background:var(--red-tint); border-radius:10px; padding:14px 18px; line-height:1.55; }
+  details.faq{ border-bottom:1px solid var(--gray-300); }
+  details.faq:first-of-type{ border-top:1px solid var(--gray-300); }
+  details.faq summary{ cursor:pointer; list-style:none; padding:15px 34px 15px 0; font-weight:700; position:relative; }
+  details.faq summary::-webkit-details-marker{ display:none; }
+  details.faq summary::after{ content:"+"; position:absolute; right:4px; top:10px; font-size:24px; color:var(--red); transition:transform .2s; }
+  details.faq[open] summary::after{ transform:rotate(45deg); }
+  details.faq summary:focus-visible{ outline:2px solid var(--red); outline-offset:3px; border-radius:4px; }
+  details.faq > div{ padding:0 0 16px; color:var(--gray-700); max-width:64ch; line-height:1.6; }
+  @media (prefers-reduced-motion:reduce){ details.faq summary::after{ transition:none; } }
+</style>
+</head>
+<body>
+
+{% include emn-header.html %}
+
+<main class="ma" id="ma">
+  <p class="eyebrow">EMN · Mock Audition mensual</p>
+  <h1>Berklee Mock Audition</h1>
+  <p class="lede">Una audición completa al estilo Berklee, para que llegues al día real sabiendo exactamente qué esperar. Así te preparas.</p>
+  <div class="facts">
+    <span class="fact">Último domingo de cada mes</span>
+    <span class="fact">11:00–15:00 hora Perú</span>
+    <span class="fact">Slots de 1 hora</span>
+  </div>
+
+  <div id="gate-msg" style="display:none"></div>
+
+  <!-- Admin / profesor: agendar arrastrando alumnos a los slots -->
+  <div id="staff" hidden>
+    <div class="ma-grid">
+      <aside class="pool">
+        <h2>Alumnos</h2>
+        <p class="hint">Arrastra un nombre a un slot libre (o toca el nombre y luego el slot). Al agendar, el alumno recibe un correo con su hora y el link.</p>
+        <input type="search" id="q" placeholder="Buscar alumno…" aria-label="Buscar alumno">
+        <div id="pool-list"></div>
+      </aside>
+      <div id="dates"></div>
+    </div>
+  </div>
+
+  <!-- Alumno: slots y nombres del mes siguiente -->
+  <div id="student" hidden></div>
+
+  <div class="prep" id="prep" hidden>
+    <section>
+      <p class="eyebrow">Lo que vas a hacer</p>
+      <h2>Las 5 partes de la audición</h2>
+      <ol class="parts">
+        <li class="part"><span class="mark">A</span><div>
+          <h3>Pieza preparada</h3><span class="en">Prepared piece</span>
+          <p>Una pieza que muestre tus fortalezas, de unos 3 minutos. Elige algo que domines, no lo que crees que el jurado quiere oír.</p>
+          <ul><li>Tócala de principio a fin varias veces, sin parar ante errores.</li><li>Ten listo el backing track si lo necesitas.</li><li>Prepara una segunda pieza por si te piden otra.</li></ul>
+        </div></li>
+        <li class="part"><span class="mark">B</span><div>
+          <h3>Improvisación</h3><span class="en">Improvisation</span>
+          <p>Improvisarás sobre una pista o una progresión. Se valora la musicalidad, no la velocidad.</p>
+          <ul><li>Repasa escalas mayores y sus modos, y arpegios.</li><li>Practica sobre blues y standards con backing tracks.</li><li>Cuenta una idea clara: frases cortas, espacio y desarrollo.</li></ul>
+        </div></li>
+        <li class="part"><span class="mark">C</span><div>
+          <h3>Ear training</h3><span class="en">Call &amp; response</span>
+          <p>Escucharás frases rítmicas o melódicas y tendrás que repetirlas o identificarlas.</p>
+          <ul><li>Practica intervalos, acordes y dictados cortos cada día.</li><li>Canta lo que escuchas antes de tocarlo.</li></ul>
+        </div></li>
+        <li class="part"><span class="mark">D</span><div>
+          <h3>Lectura a primera vista</h3><span class="en">Sight-reading</span>
+          <p>Te mostraremos una partitura que no conoces. Los ejercicios van de fáciles a difíciles.</p>
+          <ul><li>Antes de tocar, mira compás, tonalidad y ritmos difíciles.</li><li>Mantén el pulso aunque falles una nota: el ritmo pesa más.</li></ul>
+        </div></li>
+        <li class="part"><span class="mark">E</span><div>
+          <h3>Entrevista</h3><span class="en">Mock interview</span>
+          <p>Una conversación sobre tu historia, tus metas y por qué Berklee. Trabajamos con Las 7 Gemas.</p>
+          <ul><li>Repasa tus historias de cada gema, no respuestas memorizadas.</li><li>Prepárate para responder en inglés.</li></ul>
+        </div></li>
+      </ol>
+    </section>
+
+    <section>
+      <p class="eyebrow">Antes de tu slot</p>
+      <h2>Qué tener listo</h2>
+      <ul class="check" id="checklist">
+        <li><input type="checkbox" id="c1"><label for="c1"><strong>Instrumento afinado</strong><span>Cuerdas, parches, cañas o lo que uses, en buen estado y con repuestos.</span></label></li>
+        <li><input type="checkbox" id="c2"><label for="c2"><strong>Partitura de tu pieza</strong><span>Impresa o en pantalla, para ti.</span></label></li>
+        <li><input type="checkbox" id="c3"><label for="c3"><strong>Backing track</strong><span>Descargado en tu dispositivo, no dependas de internet.</span></label></li>
+        <li><input type="checkbox" id="c4"><label for="c4"><strong>Conexión y audio probados</strong><span>Cámara, micrófono y audífonos funcionando antes de conectarte.</span></label></li>
+        <li><input type="checkbox" id="c5"><label for="c5"><strong>Espacio tranquilo</strong><span>Sin ruido ni interrupciones durante la hora.</span></label></li>
+        <li><input type="checkbox" id="c6"><label for="c6"><strong>Calentamiento hecho</strong><span>Entra con 10–15 minutos de calentamiento previos.</span></label></li>
+        <li><input type="checkbox" id="c7"><label for="c7"><strong>Agua y algo para anotar</strong><span>Vas a querer apuntar el feedback.</span></label></li>
+        <li><input type="checkbox" id="c8"><label for="c8"><strong>5 minutos antes</strong><span>Conéctate antes de que empiece tu slot.</span></label></li>
+      </ul>
+      <p class="tip"><strong>Trátalo como el día real.</strong> Vístete como irías a la audición, no pares si te equivocas y sigue tocando. Ese es el entrenamiento.</p>
+    </section>
+
+    <section>
+      <p class="eyebrow">Preguntas frecuentes</p>
+      <h2>FAQ</h2>
+      <div>
+        <details class="faq"><summary>¿Cómo reservo mi slot?</summary><div>Entra con tu usuario a esta página (Mi Aula → Berklee Mock Audition), elige el horario que prefieras de la sesión del mes siguiente y pulsa Reservar. Solo puedes elegir un horario que esté libre, y recibirás un correo con tu hora y el link de la llamada.</div></details>
+        <details class="faq"><summary>¿Cuánto dura y qué incluye?</summary><div>Tu slot dura 1 hora e incluye las 5 partes: pieza, improvisación, ear training, lectura a primera vista y entrevista.</div></details>
+        <details class="faq"><summary>¿Tengo que preparar algo nuevo cada mes?</summary><div>No. Puedes repetir tu pieza para medir cómo avanzas. Lo de improvisación, oído y lectura no se prepara de antemano: se entrena.</div></details>
+        <details class="faq"><summary>¿Qué pieza debería tocar?</summary><div>Una que muestre lo mejor de ti y que domines bien. Si dudas entre dos, coméntalo con tu profesor en clase antes del simulacro.</div></details>
+        <details class="faq"><summary>Soy baterista, ¿cómo funciona la improvisación para mí?</summary><div>Se espera que mantengas el groove sobre la forma de la canción y que hagas fills y solos con sentido musical. Practica tocando sobre la forma completa de un tema y llevando la cuenta de los compases.</div></details>
+        <details class="faq"><summary>¿La entrevista es en inglés o en español?</summary><div>Practícala en inglés, que es como será en Berklee. Si en algún momento te bloqueas, sigue adelante y lo trabajamos en el feedback.</div></details>
+        <details class="faq"><summary>¿Qué pasa si me equivoco?</summary><div>Nada. Para eso es el simulacro. Sigue tocando como lo harías en la audición real: recuperarte de un error también se evalúa.</div></details>
+        <details class="faq"><summary>¿Y si no puedo asistir a mi slot?</summary><div>Cancela tu reserva desde esta misma página, lo antes posible, para liberar el slot y poder elegir otro horario libre. Si no puedes, avísanos por correo.</div></details>
+        <details class="faq"><summary>Vivo fuera de Perú, ¿qué hora es para mí?</summary><div>Los horarios siempre se publican en hora Perú (UTC−5). Conviértelos a tu zona horaria con anticipación.</div></details>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- fechas y horas (Perú = UTC−5 todo el año, sin horario de verano) ---------- */
+const PE = 5;
+const HORAS = [11, 12, 13, 14];   // hora de inicio de cada slot, hora Perú (el último es 2–3 p. m.)
+const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const key = d => d.toISOString().slice(0, 10);
+const limaNow = () => new Date(Date.now() - PE * 3600e3);   // usar getters UTC sobre esto
+function lastSunday(y, m){ const d = new Date(Date.UTC(y, m + 1, 0)); d.setUTCDate(d.getUTCDate() - d.getUTCDay()); return key(d); }
+function longDate(k){ const [y, m, d] = k.split('-').map(Number); return `${DIAS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]} ${d} de ${MESES[m - 1]} de ${y}`; }
+function instant(k, h){ const [y, m, d] = k.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d, h + PE)); }
+const tFmt = (dt, tz) => dt.toLocaleTimeString('es', { hour: 'numeric', minute: '2-digit', timeZone: tz });
+const dFmt = (dt, tz) => dt.toLocaleDateString('es', { weekday: 'short', day: 'numeric', month: 'short', timeZone: tz });
+function tzShort(dt){ try{ return new Intl.DateTimeFormat('es', { timeZoneName: 'short' }).formatToParts(dt).find(p => p.type === 'timeZoneName')?.value || ''; }catch(e){ return ''; } }
+
+// Texto de un slot: hora Perú y, al lado, la hora del país donde estás (según tu dispositivo).
+function slotTime(k, h){
+  const a = instant(k, h), b = instant(k, h + 1);
+  const peru = `${tFmt(a, 'America/Lima')} – ${tFmt(b, 'America/Lima')}`;
+  const loc = `${tFmt(a)} – ${tFmt(b)}`;
+  const otherDay = dFmt(a) !== dFmt(a, 'America/Lima') ? `, ${dFmt(a)}` : '';
+  const tz = tzShort(a);
+  const mine = (loc === peru && !otherDay) ? 'Es tu misma hora' : `Tu hora: ${loc}${otherDay}${tz ? ' (' + tz + ')' : ''}`;
+  return `<div class="time"><strong>${peru}</strong><span>Hora Perú · ${esc(mine)}</span></div>`;
+}
+
+/* ---------- agendador (admin / profesor) ---------- */
+let alumnos = [], slots = [], fechas = {}, meetDefault = '', picked = null;
+
+// Las fechas de hoy a 6 meses: el último domingo de cada mes.
+function upcoming(){
+  const t = limaNow(), y = t.getUTCFullYear(), m = t.getUTCMonth();
+  const hoy = key(t), tope = key(new Date(Date.UTC(y, m + 6, t.getUTCDate())));
+  const out = [];
+  for(let i = 0; i <= 7; i++){ const k = lastSunday(y, m + i); if(k >= hoy && k <= tope) out.push(k); }
+  return out;
+}
+const linkOf = k => fechas[k] ?? meetDefault ?? '';
+
+function renderPool(){
+  const q = $('#q').value.trim().toLowerCase();
+  const list = alumnos.filter(a => !q || a.nombre.toLowerCase().includes(q));
+  $('#pool-list').innerHTML = list.map(a => `<div class="chip${picked === a.id ? ' picked' : ''}" draggable="true" data-al="${a.id}" style="--c:${esc(a.color)}"><i></i>${esc(a.nombre)}</div>`).join('')
+    || '<span class="none">No hay alumnos activos. Agrégalos en Comunidad.</span>';
+}
+
+function slotHTML(k, h){
+  const s = slots.find(x => x.fecha === k && x.hora === h);
+  const al = s && alumnos.find(a => a.id === s.alumno_id);
+  let inner;
+  if(s){
+    const st = s.sending ? '<span class="st wait">Enviando correo…</span>'
+      : s.correo_enviado ? '<span class="st ok">✓ Correo enviado</span>'
+      : `<span class="st bad">${s.error ? '⚠ ' + esc(s.error) : '⚠ Correo sin enviar'}</span>`;
+    inner = `<span class="who" style="--c:${esc(al?.color || '')}"><i></i>${esc(s.nombre)}</span>${st}
+      <span class="push">${s.sending ? '' : '<button type="button" class="mini" data-resend="' + s.id + '">' + (s.correo_enviado ? 'Reenviar' : 'Enviar correo') + '</button>'}
+      <button type="button" class="mini" data-del="${s.id}" aria-label="Quitar a ${esc(s.nombre)} de este slot">✕</button></span>`;
+  } else {
+    inner = picked ? 'Toca para agendar aquí' : 'Arrastra un alumno aquí';
+  }
+  return `<div class="slot">${slotTime(k, h)}<div class="drop${s ? ' filled' : ''}${!s && picked ? ' armed' : ''}" data-f="${k}" data-h="${h}">${inner}</div></div>`;
+}
+
+function renderDates(){
+  $('#dates').innerHTML = upcoming().map(k => {
+    const l = linkOf(k);
+    return `<section class="date" data-date="${k}">
+      <div class="date-head"><h3>${longDate(k)}</h3>
+        <label class="date-link">Link de la llamada<input type="url" data-link="${k}" value="${esc(l)}" placeholder="https://meet.google.com/…" class="${l ? '' : 'missing'}"></label></div>
+      ${HORAS.map(h => slotHTML(k, h)).join('')}
+    </section>`;
+  }).join('') || '<p class="none">No hay fechas en los próximos 6 meses.</p>';
+}
+const renderAll = () => { renderPool(); renderDates(); };
+
+async function sendMail(id){
+  const s = slots.find(x => x.id === id); if(!s) return;
+  s.sending = true; s.error = ''; renderDates();
+  let msg = '';
+  try{
+    const { data, error } = await emnSupabase.functions.invoke('mock-audition-email', { body: { slot_id: id } });
+    if(error) msg = 'No se pudo enviar el correo.';
+    else if(!data?.ok) msg = data?.error || 'No se pudo enviar el correo.';
+    else s.correo_enviado = true;
+  }catch(e){ msg = 'No se pudo enviar el correo.'; }
+  s.sending = false; s.error = msg; renderDates();
+  if(msg) emnAlert(`${s.nombre} quedó agendado, pero ${msg.charAt(0).toLowerCase() + msg.slice(1)}`);
+}
+
+async function assign(k, h, alId){
+  const a = alumnos.find(x => x.id === alId); if(!a) return;
+  if(slots.some(s => s.fecha === k && s.hora === h)) return;
+  if(slots.some(s => s.fecha === k && s.alumno_id === alId)) return emnAlert(`${a.nombre} ya tiene un slot ese día.`);
+  if(!linkOf(k)) return emnAlert('Pon primero el link de la llamada de esa fecha (arriba de sus slots): es el que se envía por correo.');
+  if(!a.correo && !(await emnConfirm(`${a.nombre} no tiene correo guardado, así que no recibirá la confirmación. ¿Agendarlo de todos modos?`))) return;
+  const { data, error } = await emnSupabase.from('mock_slots').insert({ fecha: k, hora: h, alumno_id: alId, nombre: a.nombre, student_id: a.student_id || null }).select().single();
+  if(error){ console.error(error); return emnAlert('No se pudo agendar: ' + error.message); }
+  slots.push(data); picked = null; renderAll();
+  if(a.correo) sendMail(data.id);
+}
+
+async function removeSlot(id){
+  const s = slots.find(x => x.id === id); if(!s) return;
+  if(!(await emnConfirm(`¿Quitar a ${s.nombre} de este slot?`))) return;
+  const { error } = await emnSupabase.from('mock_slots').delete().eq('id', id);
+  if(error){ console.error(error); return emnAlert('No se pudo quitar: ' + error.message); }
+  slots = slots.filter(x => x.id !== id); renderDates();
+}
+
+function wireStaff(){
+  $('#q').addEventListener('input', renderPool);
+  const dates = $('#dates'), pool = $('#pool-list');
+  pool.addEventListener('dragstart', e => {
+    const c = e.target.closest('[data-al]'); if(!c) return;
+    e.dataTransfer.setData('text/plain', c.dataset.al); e.dataTransfer.effectAllowed = 'move';
+  });
+  pool.addEventListener('click', e => {
+    const c = e.target.closest('[data-al]'); if(!c) return;
+    picked = picked === c.dataset.al ? null : c.dataset.al; renderAll();
+  });
+  dates.addEventListener('dragover', e => { const d = e.target.closest('.drop'); if(d && !d.classList.contains('filled')){ e.preventDefault(); d.classList.add('over'); } });
+  dates.addEventListener('dragleave', e => e.target.closest('.drop')?.classList.remove('over'));
+  dates.addEventListener('drop', e => {
+    const d = e.target.closest('.drop'); if(!d) return;
+    e.preventDefault(); d.classList.remove('over');
+    const id = e.dataTransfer.getData('text/plain');
+    if(id && !d.classList.contains('filled')) assign(d.dataset.f, Number(d.dataset.h), id);
+  });
+  dates.addEventListener('click', e => {
+    const del = e.target.closest('[data-del]'); if(del) return removeSlot(del.dataset.del);
+    const re = e.target.closest('[data-resend]'); if(re) return sendMail(re.dataset.resend);
+    const d = e.target.closest('.drop');
+    if(d && picked && !d.classList.contains('filled')) assign(d.dataset.f, Number(d.dataset.h), picked);
+  });
+  dates.addEventListener('change', async e => {
+    const inp = e.target.closest('[data-link]'); if(!inp) return;
+    const k = inp.dataset.link, v = inp.value.trim();
+    if(v && !/^https?:\/\//i.test(v)){ inp.value = linkOf(k); return emnAlert('El link debe empezar con https://'); }
+    const { error } = await emnSupabase.from('mock_fechas').upsert({ fecha: k, link: v || null });
+    if(error){ console.error(error); return emnAlert('No se pudo guardar el link: ' + error.message); }
+    fechas[k] = v; inp.classList.toggle('missing', !v);
+  });
+}
+
+async function startStaff(){
+  $('#staff').hidden = false;
+  const hoy = key(limaNow());
+  const [al, sl, fe, me] = await Promise.all([
+    emnSupabase.from('alumnos').select('id,nombre,correo,color,student_id,activo').order('nombre'),
+    emnSupabase.from('mock_slots').select('*').gte('fecha', hoy),
+    emnSupabase.from('mock_fechas').select('*'),
+    emnSupabase.from('cursos_meet').select('link').eq('curso', 'Mock Audition').maybeSingle(),
+  ]);
+  if(al.error || sl.error || fe.error){ console.error(al.error || sl.error || fe.error); return emnAlert('No se pudieron cargar los datos.'); }
+  alumnos = al.data.filter(x => x.activo !== false);
+  slots = sl.data;
+  fe.data.forEach(f => { fechas[f.fecha] = f.link || ''; });
+  meetDefault = me.data?.link || '';
+  wireStaff(); renderAll();
+}
+
+/* ---------- vista del alumno: el mes siguiente (puede reservar un slot libre) ---------- */
+let nextKey = null;
+const errMsg = e => String(e?.message || e || '').replace(/^.*?(Solo puedes|Ese horario|Ya tienes|Tu cuenta|Tu ficha|Inicia sesi|No encontr)/, '$1') || 'No se pudo completar.';
+
+async function startStudent(){
+  const t = limaNow(); nextKey = lastSunday(t.getUTCFullYear(), t.getUTCMonth() + 1);
+  const k = nextKey, box = $('#student'); box.hidden = false;
+  const { data, error } = await emnSupabase.from('mock_slots').select('id,hora,nombre,student_id').eq('fecha', k);
+  if(error){ console.error(error); box.innerHTML = '<p class="none">No se pudieron cargar los slots.</p>'; return; }
+  const me = emnSession?.user?.id;
+  const mineSlot = data.find(x => me && x.student_id === me);
+  const rows = HORAS.map(h => {
+    const s = data.find(x => x.hora === h), mine = !!s && s === mineSlot;
+    let who;
+    if(!s) who = `<div class="who-row free">Disponible${mineSlot ? '' : ` <button type="button" class="btn-res" data-reservar="${h}">Reservar</button>`}</div>`;
+    else who = `<div class="who-row${mine ? ' mine' : ''}">${esc(s.nombre)}${mine ? `<span class="tag">Tu slot</span> <button type="button" class="mini" data-cancelar="${s.id}">Cancelar mi reserva</button>` : ''}</div>`;
+    return `<div class="slot">${slotTime(k, h)}${who}</div>`;
+  }).join('');
+  const nota = mineSlot
+    ? 'Tu slot está confirmado. Conéctate unos minutos antes: pasada la hora de tu slot no se te evaluará.'
+    : 'Elige un horario disponible y pulsa Reservar. Solo se puede reservar un slot libre de esta sesión y un slot por persona; te llegará un correo con tu hora y el link de la llamada.';
+  box.innerHTML = `<div class="next"><p class="eyebrow">Próxima sesión</p><h2>${longDate(k)}</h2>
+    <p class="sub">Hora Perú, con tu hora local al lado.</p>${rows}<p class="note">${nota}</p></div>`;
+}
+
+async function reservar(h){
+  const [, , d] = nextKey.split('-');
+  if(!(await emnConfirm(`¿Reservar el ${longDate(nextKey)}, de ${tFmt(instant(nextKey, h), 'America/Lima')} a ${tFmt(instant(nextKey, h + 1), 'America/Lima')} (hora Perú)?`, { yesLabel: 'Reservar' }))) return;
+  const { data, error } = await emnSupabase.rpc('mock_reservar', { p_fecha: nextKey, p_hora: h });
+  if(error){ await startStudent(); return emnAlert(errMsg(error)); }
+  await startStudent();
+  let sent = false;
+  try{ const r = await emnSupabase.functions.invoke('mock-audition-email', { body: { slot_id: data.id } }); sent = !!r.data?.ok; }catch(e){}
+  emnAlert(sent ? '¡Listo! Tu slot está reservado. Te enviamos un correo con tu hora y el link de la llamada.'
+                : '¡Listo! Tu slot está reservado. No pudimos enviarte el correo de confirmación, pero tu hora está confirmada: aparece aquí con tu nombre.');
+}
+
+async function cancelar(id){
+  if(!(await emnConfirm('¿Cancelar tu reserva? El slot quedará libre para otra persona.', { yesLabel: 'Cancelar reserva', noLabel: 'Mantenerla' }))) return;
+  const { error } = await emnSupabase.rpc('mock_cancelar', { p_id: id });
+  if(error) emnAlert(errMsg(error));
+  startStudent();
+}
+
+$('#student').addEventListener('click', e => {
+  const r = e.target.closest('[data-reservar]'); if(r) return reservar(Number(r.dataset.reservar));
+  const c = e.target.closest('[data-cancelar]'); if(c) return cancelar(c.dataset.cancelar);
+});
+
+/* ---------- checklist (se recuerda en este navegador) ---------- */
+function wireChecklist(){
+  const KEY = 'emn.mock.check';
+  let saved = [];
+  try{ saved = JSON.parse(localStorage.getItem(KEY)) || []; }catch(e){}
+  document.querySelectorAll('#checklist input').forEach(i => {
+    i.checked = saved.includes(i.id);
+    i.addEventListener('change', () => {
+      const on = [...document.querySelectorAll('#checklist input:checked')].map(x => x.id);
+      try{ localStorage.setItem(KEY, JSON.stringify(on)); }catch(e){}
+    });
+  });
+}
+
+emnInit().then(() => {
+  const gate = $('#gate-msg');
+  if(!emnSession){
+    gate.innerHTML = 'Inicia sesión para ver el Mock Audition. <a href="/emn-login">Inicia sesión</a>';
+    gate.style.display = 'block'; return;
+  }
+  $('#prep').hidden = false; wireChecklist();
+  if(['admin', 'professor'].includes(emnStudentProfile?.role)) startStaff(); else startStudent();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+# Primeros colaboradores — aparecen en /nosotros. Para agregar a alguien: copia un bloque.
+# La foto va en assets/img/<id>.jpg (o .jpeg / .png / .webp); sin foto se muestran las iniciales.
+- id: abarreda
+  name: Alessandro Barreda
+  role: Marketing y contenido · Berklee Perú
+  bio: >-
+    Estudiante de Berklee College of Music en Boston, con doble especialización en Contemporary Writing & Production
+    y Music Business (graduación prevista en mayo de 2029). Productor audiovisual desde Lima, ha dirigido grabaciones
+    multicámara de ensayos y presentaciones en vivo, y edita video para artistas independientes. Desde 2025 forma parte
+    del equipo de marketing y contenido de Berklee Perú. Recibió un reconocimiento del Congreso de la República del Perú
+    por su aporte artístico al desarrollo de la juventud y ganó dos veces la Batalla de CULS, como mejor banda y mejor intérprete.
