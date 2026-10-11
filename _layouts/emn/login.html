@@ -225,9 +225,17 @@
       }
 
       forgotBtn.disabled = false;
+      if(res.blocked){
+        resetForgot();
+        errEl.textContent = `Demasiados intentos. Inténtalo de nuevo en ${res.retry_min} minuto${res.retry_min === 1 ? '' : 's'}.`;
+        errEl.classList.add('show');
+        return;
+      }
       if(!res.registered){
         resetForgot();
-        errEl.textContent = 'Correo denegado';
+        errEl.textContent = 'Correo denegado' + (typeof res.left !== 'number' ? ''
+          : res.left > 0 ? `. Te quedan ${res.left} intento${res.left === 1 ? '' : 's'}.`
+          : '. Agotaste tus intentos; vuelve a probar en 1 hora.');
         errEl.classList.add('show');
         return;
       }
