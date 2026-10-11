@@ -24,6 +24,10 @@
   }
   #admin-view-banner a{ color:var(--red); font-weight:600; }
 
+  #student-picker{ display:none; align-items:center; gap:10px; margin:0 0 18px; flex-wrap:wrap; }
+  #student-picker label{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--gray-500); }
+  #student-select{ min-width:260px; padding:9px 12px; border:1px solid var(--gray-300); border-radius:8px; font-family:inherit; font-size:14px; background:var(--paper); color:var(--ink); }
+  #student-select:focus{ outline:none; border-color:var(--red); }
   .tabs{ display:flex; gap:10px; margin-bottom:22px; flex-wrap:wrap; }
   .tab-btn{
     border:1px solid var(--red); background:var(--red-tint); font-family:var(--font-display); font-size:13.5px; font-weight:600;
@@ -140,6 +144,10 @@
   <div id="admin-view-banner" style="display:none"></div>
 
   <div id="body" style="display:none">
+    <div id="student-picker">
+      <label for="student-select">Alumno</label>
+      <select id="student-select"></select>
+    </div>
     <div class="tabs">
       <button type="button" class="tab-btn is-active" data-view="preguntas">Preguntas</button>
       <button type="button" class="tab-btn" data-view="finales">Respuestas Finales</button>
@@ -667,23 +675,58 @@ async function boot(){
   effectiveStudentId = emnSession.user.id;
 
   const isStaff = emnStudentProfile?.role === 'admin' || emnStudentProfile?.role === 'professor';
-  const requestedStudentId = new URLSearchParams(location.search).get('student');
-  if(isStaff && requestedStudentId && requestedStudentId !== emnSession.user.id){
-    const { data: target } = await emnSupabase.from('students').select('*').eq('id', requestedStudentId).maybeSingle();
-    if(target){
-      viewingStudent = target;
-      effectiveStudentId = target.id;
-      const banner = document.getElementById('admin-view-banner');
-      banner.innerHTML = `<span>Estás viendo y editando las respuestas de <b>${target.full_name || target.email}</b> (modo staff).</span> <a href="/clases-interview-prep">Volver a las tuyas</a>`;
-      banner.style.display = 'flex';
+  let people = [];
+  if(isStaff){
+    // Staff picks whose session to open: everything shown and saved below is that person's.
+    const { data } = await emnSupabase.from('students').select('id, full_name, email').order('full_name', { ascending: true });
+    people = (data || []).filter(p => p.id !== emnSession.user.id);
+    const sel = document.getElementById('student-select');
+    sel.innerHTML = `<option value="${emnSession.user.id}">— Mis respuestas —</option>` +
+      people.map(p => `<option value="${p.id}">${escapeHtml(p.full_name || p.email)}</option>`).join('');
+    document.getElementById('student-picker').style.display = 'flex';
+    sel.addEventListener('change', () => switchStudent(sel.value, people));
+
+    const requested = new URLSearchParams(location.search).get('student');
+    if(requested && people.some(p => p.id === requested)){
+      effectiveStudentId = requested;
+      sel.value = requested;
     }
   }
 
+  updateStaffBanner(people);
+  await loadAndRenderAll();
+  document.getElementById('body').style.display = 'block';
+}
+
+async function loadAndRenderAll(){
+  selectedFinalId = null;
+  stepIndex = 0;
   await Promise.all([loadPrelimAnswers(), loadFinalAnswers()]);
   renderPreguntasView();
   renderFinalesView();
   renderGemasView();
-  document.getElementById('body').style.display = 'block';
+}
+
+function updateStaffBanner(people){
+  const banner = document.getElementById('admin-view-banner');
+  const target = people.find(p => p.id === effectiveStudentId);
+  if(target){
+    banner.innerHTML = `<span>Estás viendo y editando las respuestas de <b>${escapeHtml(target.full_name || target.email)}</b> (modo staff). Lo que escribas se guarda en su sesión.</span>`;
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+async function switchStudent(id, people){
+  effectiveStudentId = id;
+  const url = new URL(location.href);
+  if(id === emnSession.user.id) url.searchParams.delete('student'); else url.searchParams.set('student', id);
+  history.replaceState(null, '', url);
+  updateStaffBanner(people);
+  document.getElementById('student-select').disabled = true;
+  await loadAndRenderAll();
+  document.getElementById('student-select').disabled = false;
 }
 boot();
 </script>

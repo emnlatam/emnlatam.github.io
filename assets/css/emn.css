@@ -3139,6 +3139,29 @@
 .emn-tool .brandline-below .home-link:hover { background: var(--red); color: #fff; }
 .emn-tool .brandline-below .home-link:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
 
+/* Live mode trigger: same pill size as "Ir a Página Principal", filled red,
+   placed right before it (to its left). */
+.emn-tool .brandline-below .live-link {
+  margin-left: auto;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--red);
+  color: #fff;
+  border: 1px solid var(--red);
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.emn-tool .brandline-below .live-link:hover { background: var(--red-dark); border-color: var(--red-dark); }
+.emn-tool .brandline-below .live-link + .home-link { margin-left: 0; }
+
 /* Mentores: the sentence itself is the page title */
 .emn-landing .m-hero h1.m-hero__title {
   max-width: 17em;
