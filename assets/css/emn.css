@@ -2119,6 +2119,9 @@
 }
 .emn-tool .cp-fam:hover { border-color: var(--red); }
 .emn-tool .cp-fam.active { background: var(--ink); color: #fff; }
+.emn-tool .cp-allrow { display: flex; }
+.emn-tool .cp-all { width: auto; min-width: 96px; text-align: center; border-color: var(--red); }
+.emn-tool .cp-all.active { background: var(--red); border-color: var(--red); }
 /* Student's answer row */
 .emn-tool .cp-answer { border-top: 1px solid var(--line); padding-top: 14px; }
 .emn-tool .cp-answer-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }

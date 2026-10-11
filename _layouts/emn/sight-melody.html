@@ -1197,7 +1197,10 @@ function renderChordPicker(){
     return `<button type="button" class="${cls}" data-ans="${i.k}"${off}>${i.label}${mark}</button>`;
   }).join('') : '<span class="cp-hint">Select the chord qualities above to build the answer options.</span>';
 
-  chordPickerEl.innerHTML = `<div class="cp-fams">${fams}</div>
+  const allItems = CHORD_FAMILIES.flatMap(f => f.items);
+  const allOn = allItems.every(i => chordSel.has(i.k));
+  chordPickerEl.innerHTML = `<div class="cp-allrow"><button type="button" class="cp-fam cp-all${allOn ? ' active' : ''}" data-all>All</button></div>
+    <div class="cp-fams">${fams}</div>
     <div class="cp-answer">
       <div class="cp-answer-head"><span>Your answer</span><button type="button" class="cp-repeat" data-repeat${currentChord ? '' : ' disabled'}>↻ Repeat</button></div>
       <div class="cp-opts">${answerBtns}</div>
@@ -1209,8 +1212,14 @@ chordPickerEl.addEventListener('click', (e) => {
   const item = e.target.closest('[data-chord]');
   const ans = e.target.closest('[data-ans]');
   const rep = e.target.closest('[data-repeat]');
+  const allBtn = e.target.closest('[data-all]');
   if(rep){ if(currentChord) playChord(true); return; }
-  if(ans){
+  if(allBtn){
+    // All: selects every chord quality; if they're all selected already, clears them.
+    const items = CHORD_FAMILIES.flatMap(f => f.items);
+    const every = items.every(i => chordSel.has(i.k));
+    items.forEach(i => every ? chordSel.delete(i.k) : chordSel.add(i.k));
+  } else if(ans){
     if(!currentChord || answerResult) return;
     answerResult = { picked: ans.dataset.ans };
   } else if(fam){
@@ -2301,11 +2310,13 @@ function emnSetupLiveMode(){
           <h3>Conectado a la sesión ${liveCode}</h3>
           <p style="font-size:13px;color:#555;margin:0 0 16px;">Tú y tu profesor comparten los mismos filtros y el mismo ejercicio en tiempo real — cualquiera de los dos puede cambiarlos y el otro lo ve al instante. Dictation Mode es solo tuyo.</p>
           <div class="emn-modal-actions">
-            <button type="button" class="emn-modal-btn-primary" id="live-leave-btn">Salir de la sesión</button>
+            <button type="button" class="emn-modal-btn-primary" id="live-accept-btn">Aceptar</button>
+            <button type="button" class="emn-modal-btn-ghost" id="live-leave-btn">Abandonar la sala</button>
           </div>
         </div>
       `;
       document.body.appendChild(overlay);
+      overlay.querySelector('#live-accept-btn').addEventListener('click', () => document.body.removeChild(overlay));
       overlay.querySelector('#live-leave-btn').addEventListener('click', () => {
         liveLeave();
         updateTriggerLabel();
