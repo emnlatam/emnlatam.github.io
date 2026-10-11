@@ -107,3 +107,37 @@ revoke all on function public.mock_reservar(date, smallint) from public, anon;
 revoke all on function public.mock_cancelar(uuid) from public, anon;
 grant execute on function public.mock_reservar(date, smallint) to authenticated;
 grant execute on function public.mock_cancelar(uuid) to authenticated;
+
+-- ---------------------------------------------------------------------------------------------
+-- Mock Audition Evaluation Report (/mock-audition-test). Una evaluación por alumno y día; "datos"
+-- guarda todos los puntajes y textos para regenerar el PDF. Solo staff.
+-- ---------------------------------------------------------------------------------------------
+create table if not exists public.mock_evaluaciones (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  fecha date not null,
+  alumno_id uuid not null references public.alumnos(id) on delete cascade,
+  alumno_nombre text not null,
+  instrumento text,
+  evaluador text not null,
+  evaluador_id uuid references public.students(id) on delete set null,
+  puntaje_performance numeric(6,2),
+  puntaje_sight numeric(6,2),
+  datos jsonb not null default '{}'::jsonb,
+  pdf_path text,                 -- archivo en el bucket "mock-reports"
+  enviado_at timestamptz,        -- cuándo se envió el PDF al alumno
+  unique (alumno_id, fecha)
+);
+alter table public.mock_evaluaciones enable row level security;
+drop policy if exists "mock_evaluaciones_staff" on public.mock_evaluaciones;
+create policy "mock_evaluaciones_staff" on public.mock_evaluaciones for all to authenticated
+  using (public.emn_is_staff()) with check (public.emn_is_staff());
+
+-- Bucket privado con los PDF de los reportes.
+insert into storage.buckets (id, name, public) values ('mock-reports', 'mock-reports', false)
+  on conflict (id) do nothing;
+drop policy if exists "mock_reports_staff" on storage.objects;
+create policy "mock_reports_staff" on storage.objects for all to authenticated
+  using (bucket_id = 'mock-reports' and public.emn_is_staff())
+  with check (bucket_id = 'mock-reports' and public.emn_is_staff());

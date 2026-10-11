@@ -61,6 +61,8 @@
   .mini{ border:1px solid var(--gray-300); background:var(--paper); border-radius:7px; padding:3px 9px; font-size:12px; cursor:pointer; color:var(--gray-700); }
   .mini:hover{ border-color:var(--red); color:var(--red); }
   .drop .push{ margin-left:auto; display:flex; gap:6px; }
+  .btn-test{ background:var(--red); color:#fff; border-radius:7px; padding:4px 12px; font-size:12.5px; font-weight:700; text-decoration:none; }
+  .btn-test:hover{ background:var(--red-dark); }
 
   /* ---- vista del alumno ---- */
   .next{ background:var(--paper); border:1px solid var(--gray-300); border-radius:var(--radius); padding:20px 22px; max-width:760px; }
@@ -258,7 +260,8 @@ function slotHTML(k, h){
     const st = s.sending ? '<span class="st wait">Enviando correo…</span>'
       : s.correo_enviado ? '<span class="st ok">✓ Correo enviado</span>'
       : `<span class="st bad">${s.error ? '⚠ ' + esc(s.error) : '⚠ Correo sin enviar'}</span>`;
-    inner = `<span class="who" style="--c:${esc(al?.color || '')}"><i></i>${esc(s.nombre)}</span>${st}
+    inner = `<span class="who" style="--c:${esc(al?.color || '')}"><i></i>${esc(s.nombre)}</span>
+      <a class="btn-test" href="/mock-audition-test?alumno=${encodeURIComponent(s.alumno_id)}">Iniciar test</a>${st}
       <span class="push">${s.sending ? '' : '<button type="button" class="mini" data-resend="' + s.id + '">' + (s.correo_enviado ? 'Reenviar' : 'Enviar correo') + '</button>'}
       <button type="button" class="mini" data-del="${s.id}" aria-label="Quitar a ${esc(s.nombre)} de este slot">✕</button></span>`;
   } else {

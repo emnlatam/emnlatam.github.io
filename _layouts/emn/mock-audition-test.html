@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="es" class="emn-landing">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% include emn-favicon.html %}
+<title>EMN — Mock Audition Evaluation Report</title>
+<link rel="stylesheet" href="/assets/css/emn.css?v={{ site.time | date: '%s' }}">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="/assets/js/emn-auth.js?v={{ site.time | date: '%s' }}"></script>
+<style>
+  html, body{ margin:0; height:100%; }
+  body{ background:#E6E7E9; font-family:var(--font-body); color:var(--ink); overflow:hidden; display:flex; flex-direction:column; }
+  [hidden]{ display:none !important; }
+  button{ font-family:inherit; }
+
+  /* ---- barra superior (no sale en el PDF) ---- */
+  .bar{ flex:none; display:flex; align-items:center; gap:10px; padding:8px 16px; background:var(--paper); border-bottom:1px solid var(--gray-300); flex-wrap:wrap; }
+  .bar a.back{ font-size:13px; font-weight:600; color:var(--gray-700); text-decoration:none; }
+  .bar a.back:hover{ color:var(--red); }
+  .bar img{ height:26px; }
+  .steps{ display:flex; gap:6px; margin-left:8px; }
+  .step{ border:1px solid var(--gray-300); background:var(--paper); border-radius:8px; padding:6px 14px; font-size:13px; font-weight:600; cursor:pointer; color:var(--gray-700); }
+  .step.on{ background:var(--red); border-color:var(--red); color:#fff; }
+  .bar .sp{ flex:1; }
+  .status{ font-size:12px; color:var(--gray-500); }
+  .btn{ border:1px solid var(--gray-300); background:var(--paper); border-radius:8px; padding:7px 14px; font-size:13px; font-weight:600; cursor:pointer; color:var(--ink); }
+  .btn:hover{ border-color:var(--red); color:var(--red); }
+  .btn.pri{ background:var(--red); border-color:var(--red); color:#fff; }
+  .btn.pri:hover{ background:var(--red-dark); color:#fff; }
+  .btn:disabled{ opacity:.55; cursor:default; }
+
+  #gate-msg{ text-align:center; padding:90px 20px; color:var(--gray-700); }
+  #gate-msg a{ color:var(--red); font-weight:600; }
+
+  /* ---- hojas: A4 horizontal a 96 dpi (1123 × 794) ---- */
+  #stage{ flex:1; overflow:auto; display:flex; justify-content:center; align-items:flex-start; padding:0; }
+  #sheets{ width:var(--sw, 1123px); }
+  .sheet{ width:var(--sw, 1123px); height:794px; background:#fff; box-sizing:border-box; position:relative; overflow:hidden; font-size:15px; }
+  .sheet:not(.on){ display:none; }
+  #stage.export{ overflow:visible; display:block; padding:0; }
+  #stage.export .sheet{ display:block; margin:0 0 20px; }
+
+  .sh-head{ display:flex; align-items:center; justify-content:space-between; padding:18px 36px 12px; border-bottom:3px solid var(--red); }
+  .sh-head img{ height:50px; }
+  .sh-head .t{ text-align:right; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--gray-500); line-height:1.5; }
+  .sh-head .t strong{ display:block; color:var(--ink); font-size:15px; }
+  .sh-body{ padding:14px 36px 0; }
+  .sh-foot{ position:absolute; left:36px; right:36px; bottom:10px; display:flex; justify-content:space-between; font-size:12px; color:var(--gray-500); }
+
+  /* portada */
+  .cover{ height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0 80px 60px; }
+  .cover img{ height:96px; margin-bottom:26px; }
+  .cover .school{ font-family:'Bricolage Grotesque', var(--font-body); font-weight:800; font-size:38px; letter-spacing:.01em; margin:0 0 6px; }
+  .cover .report{ font-size:28px; color:var(--gray-700); margin:0 0 4px; }
+  .cover .berklee{ font-size:19px; font-weight:700; letter-spacing:.18em; color:var(--red); margin:0 0 38px; }
+  .meta{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:16px 40px; width:min(900px, 78%); text-align:left; }
+  .meta label{ display:block; font-size:13.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--gray-500); margin-bottom:4px; }
+  .meta .v{ min-height:24px; }
+  .meta select, .meta .v{ width:100%; box-sizing:border-box; border:1px solid var(--gray-300); border-radius:8px; padding:11px 13px; font:inherit; font-size:19px; background:#fff; }
+  .meta .v.ro{ background:var(--gray-100); }
+
+  /* tablas tipo Excel */
+  .titlebar{ display:flex; align-items:baseline; justify-content:space-between; margin:0 0 10px; }
+  .titlebar h2{ margin:0; font-family:'Bricolage Grotesque', var(--font-body); font-size:28px; font-weight:800; }
+  .score-big{ font-size:21px; font-weight:700; }
+  .score-big b{ color:var(--red); font-size:28px; }
+  .perf{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px 20px; align-items:start; }
+  table.grid{ width:100%; border-collapse:collapse; margin-bottom:10px; table-layout:fixed; }
+  table.grid th, table.grid td{ border:1px solid #BFC3C8; padding:4px 8px; vertical-align:middle; font-size:14.5px; line-height:1.25; }
+  table.grid thead th{ background:var(--red); color:#fff; text-align:left; font-size:14.5px; }
+  table.grid thead th small{ font-weight:500; opacity:.9; }
+  table.grid .c-score{ width:96px; text-align:center; }
+  table.grid td.c-name{ font-weight:600; width:35%; }
+  table.grid td.c-name em{ font-style:normal; font-weight:500; color:var(--gray-500); }
+  table.grid td.c-desc{ color:var(--gray-700); }
+  table.grid tr.tot td{ background:var(--gray-100); font-weight:800; }
+  table.grid tr.tot td.c-score{ color:var(--red); }
+  table.grid tr.tot td.c-score small{ color:var(--gray-500); font-weight:500; }
+  table.grid input[type=number], table.grid input[type=text]{ width:100%; box-sizing:border-box; border:1px solid transparent; background:#FFF8E1; border-radius:4px; padding:3px 4px; font:inherit; font-size:16px; text-align:center; }
+  table.grid input[type=text]{ text-align:left; }
+  table.grid input:focus{ outline:2px solid var(--red); background:#fff; }
+  input[type=number]::-webkit-inner-spin-button{ opacity:.5; }
+  .sub{ display:flex; align-items:center; justify-content:space-between; background:var(--red); color:#fff; border-radius:6px; padding:8px 16px; font-weight:800; font-size:17px; margin-bottom:10px; }
+  .sub b{ font-size:26px; }
+  .tx label{ display:block; font-size:14px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--red); margin:0 0 3px; }
+  .tx textarea{ width:100%; box-sizing:border-box; resize:none; border:1px solid #BFC3C8; border-radius:6px; padding:8px 10px; font:inherit; font-size:15.5px; line-height:1.4; height:104px; margin-bottom:8px; background:#FFF8E1; }
+  .tx textarea:focus{ outline:2px solid var(--red); background:#fff; }
+  .tx.big textarea{ height:210px; font-size:17px; }
+  .tx2{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:0 22px; margin-top:2px; }
+  .tx2 textarea{ height:112px; margin-bottom:0; }
+
+  /* sight reading */
+  .sr-score{ display:flex; align-items:center; gap:8px; font-size:21px; font-weight:700; }
+  .sr-score input{ width:90px; box-sizing:border-box; border:1px solid #BFC3C8; border-radius:6px; padding:5px 8px; font:inherit; font-size:22px; font-weight:800; color:var(--red); text-align:center; background:#FFF8E1; }
+  table.grid td.c-chk{ width:170px; text-align:center; }
+  table.grid td.c-chk input{ width:24px; height:24px; accent-color:var(--red); }
+  table.grid td.c-ex{ font-weight:600; width:170px; }
+
+  .btn-link{ display:inline-block; text-decoration:none; padding:9px 18px; }
+  .qwrap{ display:grid; grid-template-columns:minmax(380px, 34%) minmax(0,1fr); gap:26px; align-items:start; }
+  .qlist{ list-style:none; margin:0; padding:0; }
+  .qlist li{ display:grid; grid-template-columns:26px minmax(0,1fr); gap:10px; align-items:start; padding:9px 0; border-bottom:1px solid var(--gray-100); font-size:16px; line-height:1.35; }
+  .qlist li.gap{ margin-top:16px; border-top:1px solid #BFC3C8; }
+  .qlist input{ width:21px; height:21px; margin:1px 0 0; accent-color:var(--red); }
+  .qnotes{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; align-content:start; border-left:3px solid var(--red); padding-left:20px; min-height:300px; }
+  .qcard strong{ display:block; font-size:13.5px; line-height:1.25; color:var(--red); margin-bottom:3px; }
+  .qcard textarea{ width:100%; box-sizing:border-box; resize:none; height:58px; border:1px solid #BFC3C8; border-radius:6px; padding:5px 8px; font:inherit; font-size:14.5px; line-height:1.3; background:#FFF8E1; }
+  .qcard textarea:focus{ outline:2px solid var(--red); background:#fff; }
+  .qempty{ grid-column:1 / -1; margin:0; font-size:15px; color:var(--gray-500); }
+  #stage.export .qempty{ display:none; }
+
+  /* sustitutos de controles al exportar */
+  .ro-text{ white-space:pre-wrap; word-break:break-word; }
+  .cbx{ display:inline-block; width:16px; height:16px; border:1.5px solid #8A8F96; border-radius:3px; line-height:15px; font-weight:800; font-size:13px; color:var(--red); }
+</style>
+</head>
+<body>
+
+<div class="bar" id="bar" hidden>
+  <a class="back" href="/mock-audition">← Mock Audition</a>
+  <img src="/assets/img/emn-logo.png" alt="EMN">
+  <div class="steps" id="steps">
+    <button type="button" class="step on" data-go="0">1 · Datos</button>
+    <button type="button" class="step" data-go="1">2 · Performance</button>
+    <button type="button" class="step" data-go="2">3 · Sight Reading</button>
+    <button type="button" class="step" data-go="3">4 · Ear Training</button>
+    <button type="button" class="step" data-go="4">5 · Improvisation</button>
+    <button type="button" class="step" data-go="5">6 · Interview</button>
+  </div>
+  <span class="sp"></span>
+  <span class="status" id="status"></span>
+  <button type="button" class="btn" id="b-save">Guardar</button>
+  <button type="button" class="btn" id="b-pdf">Descargar PDF</button>
+  <button type="button" class="btn pri" id="b-send">Exportar y enviar al alumno</button>
+</div>
+
+<div id="gate-msg" style="display:none"></div>
+
+<div id="stage" hidden>
+  <div id="sheets">
+
+    <!-- 1 · portada + datos -->
+    <section class="sheet on" data-sheet="0">
+      <div class="cover">
+        <img src="/assets/img/emn-logo.png" alt="EMN">
+        <p class="school">EMN – ESCUELA DE MÚSICA Y NEGOCIOS</p>
+        <p class="report">Mock Audition Evaluation Report</p>
+        <p class="berklee">BERKLEE MOCK AUDITION</p>
+        <div class="meta">
+          <div><label for="f-student">Student</label><select id="f-student"></select></div>
+          <div><label>Instrument</label><div class="v ro" id="f-instrument">—</div></div>
+          <div><label>Date</label><div class="v ro" id="f-date"></div></div>
+          <div><label>Evaluator</label><div class="v ro" id="f-evaluator"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 · performance -->
+    <section class="sheet" data-sheet="1">
+      <div class="sh-head"><img src="/assets/img/emn-logo.png" alt="EMN">
+        <div class="t"><strong>Mock Audition Evaluation Report</strong><span data-who></span></div></div>
+      <div class="sh-body">
+        <div class="titlebar"><h2>PERFORMANCE</h2><div class="score-big">Score <b id="perf-x">0</b>/100</div></div>
+        <div class="perf">
+          <div id="perf-left"></div>
+          <div>
+            <div id="perf-right"></div>
+            <div class="sub"><span>SUB TOTAL (0 - 100)</span><span><b id="perf-sub">0</b></span></div>
+          </div>
+        </div>
+        <div class="tx tx2">
+          <div><label for="f-strengths">Strengths</label><textarea id="f-strengths" data-f="strengths"></textarea></div>
+          <div><label for="f-improve">Areas of Improvement</label><textarea id="f-improve" data-f="improvements"></textarea></div>
+        </div>
+      </div>
+      <div class="sh-foot"><span>EMN – Escuela de Música y Negocios</span><span>Página 2 de 3</span></div>
+    </section>
+
+    <!-- 3 · sight reading -->
+    <section class="sheet" data-sheet="2">
+      <div class="sh-head"><img src="/assets/img/emn-logo.png" alt="EMN">
+        <div class="t"><strong>Mock Audition Evaluation Report</strong><span data-who></span></div></div>
+      <div class="sh-body">
+        <div class="titlebar"><h2>SIGHT READING</h2>
+          <div class="sr-score">Score <input type="number" min="0" max="100" step="0.5" data-f="sight_score" id="f-sr"> /100</div></div>
+        <table class="grid" id="sr-table">
+          <thead><tr><th style="width:150px">Ejercicio</th><th class="c-chk">Completados correctamente</th><th>Comentarios (opcional)</th></tr></thead>
+          <tbody id="sr-body"></tbody>
+        </table>
+        <div class="tx big">
+          <label for="f-summary">Summary Evaluation</label><textarea id="f-summary" data-f="summary"></textarea>
+        </div>
+      </div>
+      <div class="sh-foot"><span>EMN – Escuela de Música y Negocios</span><span>Página 3 de 6</span></div>
+    </section>
+
+    <!-- 4 · ear training (en blanco) -->
+    <section class="sheet" data-sheet="3">
+      <div class="sh-head"><img src="/assets/img/emn-logo.png" alt="EMN">
+        <div class="t"><strong>Mock Audition Evaluation Report</strong><span data-who></span></div></div>
+      <div class="sh-body">
+        <div class="titlebar"><h2>EAR TRAINING</h2></div>
+      </div>
+      <div class="sh-foot"><span>EMN – Escuela de Música y Negocios</span><span>Página 4 de 6</span></div>
+    </section>
+
+    <!-- 5 · improvisation -->
+    <section class="sheet" data-sheet="4">
+      <div class="sh-head"><img src="/assets/img/emn-logo.png" alt="EMN">
+        <div class="t"><strong>Mock Audition Evaluation Report</strong><span data-who></span></div></div>
+      <div class="sh-body">
+        <div class="titlebar"><h2>IMPROVISATION</h2></div>
+        <p class="no-pdf" style="margin:0 0 16px"><a class="btn pri btn-link" href="https://college.berklee.edu/admissions/undergraduate/practiceexercises" target="_blank" rel="noopener">Berklee practice exercises ↗</a></p>
+        <div class="tx big">
+          <label for="f-improv">Summary Evaluation</label><textarea id="f-improv" data-f="improv_summary" style="height:440px"></textarea>
+        </div>
+      </div>
+      <div class="sh-foot"><span>EMN – Escuela de Música y Negocios</span><span>Página 5 de 6</span></div>
+    </section>
+
+    <!-- 6 · interview -->
+    <section class="sheet" data-sheet="5">
+      <div class="sh-head"><img src="/assets/img/emn-logo.png" alt="EMN">
+        <div class="t"><strong>Mock Audition Evaluation Report</strong><span data-who></span></div></div>
+      <div class="sh-body">
+        <div class="titlebar"><h2>INTERVIEW</h2></div>
+        <div class="qwrap"><ul class="qlist" id="q-list"></ul><div class="qnotes" id="q-notes"></div></div>
+      </div>
+      <div class="sh-foot"><span>EMN – Escuela de Música y Negocios</span><span>Página 6 de 6</span></div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const PE = 5;                                           // Perú = UTC−5 todo el año
+const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const limaNow = () => new Date(Date.now() - PE * 3600e3);
+const hoyKey = () => limaNow().toISOString().slice(0, 10);
+function longDate(k){ const [y, m, d] = k.split('-').map(Number); return `${DIAS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]} ${d} de ${MESES[m - 1]} de ${y}`; }
+
+/* ---------- criterios (el máximo de cada sección es la suma de sus criterios; en total 100) ---------- */
+const SECTIONS = [
+  { key:'tecnica', title:'Técnica Instrumental', items:[
+    { k:'afinacion',   name:'Afinación / Precisión',        max:8, desc:'Precisión en la afinación' },
+    { k:'colocacion',  name:'Colocación/Proyección/Timbre', max:8, desc:'Proyección vocal y resonancia' },
+    { k:'control',     name:'Control',                      max:7, desc:'' } ] },
+  { key:'musicalidad', title:'Musicalidad y Expresión', items:[
+    { k:'dinamica',    name:'Dinámica',                     max:8, desc:'El uso de piano, forte, mezzoforte, etc, en la pieza' },
+    { k:'fraseo',      name:'Fraseo / Intención',           max:8, desc:'Energía y detalle en el fraseo de las palabras en la pieza' },
+    { k:'conexion',    name:'Conexión emocional',           max:6, desc:'La apreciación personal del público respecto a cómo demuestran la conexión emocional' } ] },
+  { key:'ritmo', title:'Ritmo', items:[
+    { k:'tempo',       name:'Tempo',                        max:8, desc:'Entradas a tempo y cómo lo sostiene' },
+    { k:'groove',      name:'Groove',                       max:8, desc:'Groove vocal respecto al género, subdivisión rítmica' },
+    { k:'articulacion',name:'Articulación',                 max:7, desc:'Uso variado de legato, staccato, calderón, etc' } ] },
+  { key:'presencia', title:'Presencia Escénica y Seguridad', items:[
+    { k:'visual',      name:'Aspectos Visuales',            max:8, desc:'El fondo limpio, buena iluminación, buena calidad de audio, vestimenta apropiada, imagen profesional' },
+    { k:'noverbal',    name:'Comunicación no verbal',       max:8, desc:'Qué tan bien comunica sus gestos, manos, cuerpo entero la narración de la letra de la canción. ¿Ha armado un performance?' } ] },
+  { key:'identidad', title:'Identidad Artística', items:[
+    { k:'originalidad',name:'Originalidad',                 max:8, desc:'La puesta en escena es algo distinto, fresco, ¿como pieza para Berklee funcionaría?' },
+    { k:'coherencia',  name:'Coherencia artística',         max:8, desc:'¿Hay un estilo propio fácil de identificar, un nicho más único? ¿El outfit es coherente con el estilo de canto y la pieza seleccionada?' } ] },
+];
+const secMax = s => s.items.reduce((a, i) => a + i.max, 0);
+const NEX = 6;
+
+/* Preguntas de la entrevista. Al marcar una, pasa al panel de la derecha con su cuadro de comentarios.
+   GAP_AFTER = índice de la última pregunta del primer bloque (deja un espacio antes del siguiente). */
+const INTERVIEW = [
+  'What is your favorite part of being a musician?',
+  'What inspired you to pursue a music career?',
+  'What does community / safe environment mean to you?',
+  'What could you offer Berklee? / What makes you different from other applicants?',
+  'What are your practice routines?',
+  'What are the qualities of a successful musician?',
+  'What are your musical strengths?',
+  'What excites you about the industry? / What career opportunities would you like to take advantage of in the music industry?',
+  "Why Berklee? What about Berklee's programs and activities speak to your career goals?",
+];
+const GAP_AFTER = 3;
+$('#q-list').innerHTML = INTERVIEW.map((q, n) => `<li${n === GAP_AFTER ? ' class="gap"' : ''}><input type="checkbox" data-q="${n}" id="q${n}" aria-label="${esc(q)}"><label for="q${n}">${esc(q)}</label></li>`).join('');
+
+// Comentarios por pregunta (se guardan aunque desmarques y vuelvas a marcar).
+let qNotes = {};
+setTimeout(() => renderNotes());
+function renderNotes(){
+  const on = INTERVIEW.map((q, n) => n).filter(n => $(`[data-q="${n}"]`).checked);
+  $('#q-notes').innerHTML = on.map(n => `<div class="qcard"><strong>${esc(INTERVIEW[n])}</strong><textarea data-qc="${n}" placeholder="Comentarios…" aria-label="Comentarios: ${esc(INTERVIEW[n])}">${esc(qNotes[n] || '')}</textarea></div>`).join('')
+    || '<p class="qempty">Marca una pregunta para agregarla aquí y escribir tus comentarios.</p>';
+}
+
+function sectionHTML(s){
+  const rows = s.items.map(i => `<tr><td class="c-name">${esc(i.name)} <em>(0–${i.max})</em></td><td class="c-desc">${esc(i.desc)}</td>
+    <td class="c-score"><input type="number" min="0" max="${i.max}" step="0.5" inputmode="decimal" data-k="${i.k}" data-sec="${s.key}" aria-label="${esc(i.name)}"></td></tr>`).join('');
+  return `<table class="grid"><thead><tr><th>${esc(s.title)} <small>(${secMax(s)} puntos)</small></th><th>Explicación</th><th class="c-score">PUNTAJE</th></tr></thead>
+    <tbody>${rows}<tr class="tot"><td colspan="2">TOTAL</td><td class="c-score"><span data-total="${s.key}">0</span> <small>/${secMax(s)}</small></td></tr></tbody></table>`;
+}
+$('#perf-left').innerHTML = SECTIONS.slice(0, 3).map(sectionHTML).join('');
+$('#perf-right').innerHTML = SECTIONS.slice(3).map(sectionHTML).join('');
+$('#sr-body').innerHTML = Array.from({ length: NEX }, (_, n) => `<tr><td class="c-ex">Ejercicio ${n + 1}</td>
+  <td class="c-chk"><input type="checkbox" data-ex="${n}" data-p="done" aria-label="Ejercicio ${n + 1} completado correctamente"></td>
+  <td><input type="text" data-ex="${n}" data-p="c" aria-label="Comentarios ejercicio ${n + 1}"></td></tr>`).join('');
+
+/* ---------- estado <-> pantalla ---------- */
+const num = v => { const n = parseFloat(v); return Number.isFinite(n) ? n : null; };
+
+function collect(){
+  const perf = {};
+  $$('[data-k]').forEach(i => { perf[i.dataset.k] = i.value; });
+  const ex = Array.from({ length: NEX }, (_, n) => ({
+    done: $(`[data-ex="${n}"][data-p="done"]`).checked,
+    c: $(`[data-ex="${n}"][data-p="c"]`).value,
+  }));
+  return { perf, strengths: $('#f-strengths').value, improvements: $('#f-improve').value,
+           sight: { score: $('#f-sr').value, ex, summary: $('#f-summary').value },
+           improv_summary: $('#f-improv').value,
+           interview: INTERVIEW.map((q, n) => ({ q, n })).filter(x => $(`[data-q="${x.n}"]`).checked).map(x => ({ q: x.q, c: qNotes[x.n] || '' })) };
+}
+function fill(d){
+  d = d || {};
+  $$('[data-k]').forEach(i => { i.value = d.perf?.[i.dataset.k] ?? ''; });
+  $('#f-strengths').value = d.strengths || '';
+  $('#f-improve').value = d.improvements || '';
+  $('#f-sr').value = d.sight?.score ?? '';
+  $('#f-summary').value = d.sight?.summary || '';
+  for(let n = 0; n < NEX; n++){
+    const e = d.sight?.ex?.[n] || {};
+    $(`[data-ex="${n}"][data-p="done"]`).checked = !!e.done;
+    $(`[data-ex="${n}"][data-p="c"]`).value = e.c || '';
+  }
+  $('#f-improv').value = d.improv_summary || '';
+  qNotes = {};
+  INTERVIEW.forEach((q, n) => {
+    const hit = (d.interview || []).find(x => (x.q ?? x) === q);
+    $(`[data-q="${n}"]`).checked = !!hit;
+    if(hit) qNotes[n] = hit.c || '';
+  });
+  renderNotes();
+  recalc();
+}
+const fmt = n => String(Math.round(n * 100) / 100);
+function perfTotal(){ return SECTIONS.reduce((a, s) => a + s.items.reduce((b, i) => b + (num($(`[data-k="${i.k}"]`).value) || 0), 0), 0); }
+function recalc(){
+  SECTIONS.forEach(s => {
+    $(`[data-total="${s.key}"]`).textContent = fmt(s.items.reduce((b, i) => b + (num($(`[data-k="${i.k}"]`).value) || 0), 0));
+  });
+  const t = fmt(perfTotal());
+  $('#perf-sub').textContent = t; $('#perf-x').textContent = t;
+}
+
+/* ---------- datos de la persona evaluada ---------- */
+let alumnos = [], cur = null, evalId = null, evaluador = '';
+
+function setStudent(id){
+  cur = alumnos.find(a => a.id === id) || null;
+  evalId = null;
+  $('#f-instrument').textContent = cur?.datos?.instrumento || '—';
+  $$('[data-who]').forEach(e => { e.textContent = cur ? `${cur.nombre} · ${longDate(hoyKey())}` : ''; });
+  fill(null);
+  if(cur) loadEval();
+}
+async function loadEval(){
+  const id = cur.id;
+  const { data, error } = await emnSupabase.from('mock_evaluaciones').select('id,datos').eq('alumno_id', id).eq('fecha', hoyKey()).maybeSingle();
+  if(cur?.id !== id) return;
+  if(error){ console.error(error); return setStatus('No se pudo cargar la evaluación guardada.'); }
+  if(data){ evalId = data.id; fill(data.datos); setStatus('Evaluación de hoy recuperada'); }
+}
+
+/* ---------- guardar ---------- */
+let dirty = false, timer = null, saving = Promise.resolve();
+const setStatus = t => { $('#status').textContent = t; };
+
+function save(){
+  saving = saving.then(doSave); return saving;
+}
+async function doSave(){
+  clearTimeout(timer);
+  if(!cur) return null;
+  setStatus('Guardando…');
+  const d = collect();
+  const row = { alumno_id: cur.id, alumno_nombre: cur.nombre, fecha: hoyKey(), evaluador, evaluador_id: emnSession.user.id,
+    instrumento: cur.datos?.instrumento || null, puntaje_performance: perfTotal(), puntaje_sight: num(d.sight.score), datos: d,
+    updated_at: new Date().toISOString() };
+  const { data, error } = await emnSupabase.from('mock_evaluaciones').upsert(row, { onConflict: 'alumno_id,fecha' }).select('id').single();
+  if(error){ console.error(error); setStatus('⚠ No se pudo guardar'); return null; }
+  evalId = data.id; dirty = false;
+  setStatus('Guardado ✓ ' + new Date().toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' }));
+  return evalId;
+}
+function touch(){ dirty = true; setStatus('Cambios sin guardar…'); clearTimeout(timer); timer = setTimeout(save, 1500); }
+
+/* ---------- PDF (3 hojas horizontales, con el logo) ---------- */
+async function buildPdf(){
+  const stage = $('#stage'), sheets = $('#sheets');
+  const prevZoom = sheets.style.zoom;
+  sheets.style.zoom = 1; sheets.style.setProperty('--sw', '1123px'); stage.classList.add('export');
+  try{
+    await Promise.all($$('#sheets img').map(im => im.complete ? 1 : new Promise(r => { im.onload = im.onerror = r; })));
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [1123, 794], compress: true });
+    const els = $$('.sheet');
+    for(let n = 0; n < els.length; n++){
+      const canvas = await html2canvas(els[n], { scale: 2, backgroundColor: '#ffffff', useCORS: true, width: 1123, height: 794,
+        onclone: (doc) => {
+          // Los controles se dibujan mal en canvas: se cambian por texto fijo en la copia.
+          doc.querySelectorAll('select, textarea, input').forEach(c => {
+            const s = doc.createElement('div');
+            if(c.type === 'checkbox'){ s.className = 'cbx'; s.textContent = c.checked ? '✓' : ''; }
+            else { s.className = 'ro-text'; s.textContent = c.tagName === 'SELECT' ? (c.selectedOptions[0]?.textContent || '') : c.value; s.style.cssText = 'min-height:1em;padding:3px 4px;font:inherit;text-align:' + (c.type === 'number' ? 'center' : 'left'); }
+            c.replaceWith(s);
+          });
+          doc.querySelectorAll('.no-pdf').forEach(e => e.remove());
+          doc.querySelectorAll('.sheet').forEach(e => { e.style.display = 'block'; });
+        } });
+      if(n) pdf.addPage([1123, 794], 'landscape');
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 1123, 794);
+    }
+    return pdf.output('blob');
+  } finally {
+    stage.classList.remove('export'); sheets.style.zoom = prevZoom; fit();
+  }
+}
+const fileName = () => `EMN-Mock-Audition-Report-${(cur?.nombre || 'alumno').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${hoyKey()}.pdf`;
+
+function needStudent(){ if(cur) return true; emnAlert('Elige primero al alumno (hoja 1 · Student).'); go(0); return false; }
+
+async function downloadPdf(){
+  if(!needStudent()) return;
+  const b = $('#b-pdf'); b.disabled = true; b.textContent = 'Generando…';
+  try{
+    const blob = await buildPdf();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fileName(); a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }catch(e){ console.error(e); emnAlert('No se pudo generar el PDF.'); }
+  b.disabled = false; b.textContent = 'Descargar PDF';
+}
+
+async function sendReport(){
+  if(!needStudent()) return;
+  if(!cur.correo) return emnAlert(`${cur.nombre} no tiene correo guardado. Agrégalo en Comunidad y vuelve a intentar.`);
+  if(!(await emnConfirm(`¿Exportar el reporte y enviarlo a ${cur.nombre} (${cur.correo})?`, { yesLabel: 'Enviar' }))) return;
+  const b = $('#b-send'); b.disabled = true; b.textContent = 'Enviando…';
+  try{
+    const id = await save(); if(!id) throw new Error('save');
+    const blob = await buildPdf();
+    const path = `${id}.pdf`;
+    const up = await emnSupabase.storage.from('mock-reports').upload(path, blob, { upsert: true, contentType: 'application/pdf' });
+    if(up.error) throw up.error;
+    await emnSupabase.from('mock_evaluaciones').update({ pdf_path: path }).eq('id', id);
+    const { data, error } = await emnSupabase.functions.invoke('mock-audition-report', { body: { evaluacion_id: id, filename: fileName() } });
+    if(error || !data?.ok) throw new Error(data?.error || 'No se pudo enviar el correo.');
+    setStatus('Reporte enviado ✓');
+    emnAlert(`Listo: el reporte en PDF se envió a ${cur.nombre} (${cur.correo}).`);
+  }catch(e){
+    console.error(e);
+    emnAlert('No se pudo enviar el reporte: ' + (e.message && e.message !== 'save' ? e.message : 'revisa la conexión e inténtalo de nuevo.'));
+  }
+  b.disabled = false; b.textContent = 'Exportar y enviar al alumno';
+}
+
+/* ---------- navegación y ajuste a la pantalla ---------- */
+let page = 0;
+function go(n){
+  page = n;
+  $$('.sheet').forEach((s, i) => s.classList.toggle('on', i === n));
+  $$('.step').forEach((s, i) => s.classList.toggle('on', i === n));
+  fit();
+}
+function fit(){
+  // La hoja mide 794 px de alto (de diseño) y se agranda para ocupar toda la altura disponible;
+  // el ancho de diseño se ajusta a la pantalla, así no quedan franjas a los lados.
+  const availH = innerHeight - $('#bar').offsetHeight;
+  const z = Math.max(availH / 794, 0.3);
+  $('#sheets').style.setProperty('--sw', Math.max(innerWidth / z, 900) + 'px');
+  $('#sheets').style.zoom = z;
+}
+addEventListener('resize', fit);
+
+/* ---------- arranque ---------- */
+emnInit().then(async () => {
+  const gate = $('#gate-msg');
+  const show = html => { gate.innerHTML = html; gate.style.display = 'block'; };
+  if(!emnSession) return show('Inicia sesión para continuar. <a href="/emn-login">Inicia sesión</a>');
+  if(!['admin', 'professor'].includes(emnStudentProfile?.role)) return show('Esta página es solo para administradores y profesores. <a href="/mock-audition">Volver</a>');
+
+  const { data, error } = await emnSupabase.from('alumnos').select('id,nombre,correo,datos,activo').order('nombre');
+  if(error){ console.error(error); return show('No se pudieron cargar los alumnos. <a href="/mock-audition">Volver</a>'); }
+  alumnos = data.filter(a => a.activo !== false);
+  evaluador = emnStudentProfile.full_name || emnSession.user.email;
+
+  $('#f-student').innerHTML = '<option value="">— Elige al alumno —</option>' + alumnos.map(a => `<option value="${esc(a.id)}">${esc(a.nombre)}</option>`).join('');
+  $('#f-date').textContent = longDate(hoyKey());
+  $('#f-evaluator').textContent = evaluador;
+  $('#bar').hidden = false; $('#stage').hidden = false;
+
+  $('#f-student').addEventListener('change', async e => {
+    if(dirty && cur) await save();
+    setStudent(e.target.value);
+  });
+  $('#steps').addEventListener('click', e => { const s = e.target.closest('[data-go]'); if(s){ if(dirty && cur) save(); go(Number(s.dataset.go)); } });
+  $('#sheets').addEventListener('input', e => {
+    const i = e.target;
+    if(i.matches('input[type=number]')){
+      const max = Number(i.max), v = num(i.value);
+      if(v !== null && v > max) i.value = max;
+      if(v !== null && v < 0) i.value = 0;
+    }
+    if(i.dataset.qc !== undefined) qNotes[i.dataset.qc] = i.value;
+    recalc(); if(cur) touch();
+  });
+  $('#sheets').addEventListener('change', e => {
+    if(e.target.type !== 'checkbox') return;
+    if(e.target.dataset.q !== undefined) renderNotes();
+    if(cur) touch();
+  });
+  $('#b-save').addEventListener('click', () => { if(needStudent()) save(); });
+  $('#b-pdf').addEventListener('click', downloadPdf);
+  $('#b-send').addEventListener('click', sendReport);
+  addEventListener('beforeunload', e => { if(dirty){ e.preventDefault(); e.returnValue = ''; } });
+
+  const pre = new URLSearchParams(location.search).get('alumno');
+  if(pre && alumnos.some(a => a.id === pre)){ $('#f-student').value = pre; setStudent(pre); }
+  fit();
+});
+</script>
+</body>
+</html>
