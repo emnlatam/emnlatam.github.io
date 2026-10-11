@@ -2133,6 +2133,39 @@
 .emn-tool .ans-btn.right { background: #1E8E5A; border-color: #1E8E5A; color: #fff; opacity: 1; }
 .emn-tool .ans-btn.wrong { background: var(--red); border-color: var(--red); color: #fff; opacity: 1; }
 .emn-tool .ans-btn.reveal { border-color: #1E8E5A; color: #1E8E5A; opacity: 1; }
+
+/* Live + Dictation: teacher console (all chords x 12 roots) */
+.emn-tool .live-console {
+  width: 100%; max-width: 1100px; box-sizing: border-box;
+  padding: 6px 36px 10px; cursor: default; display: flex; flex-direction: column; gap: 9px;
+}
+.emn-tool .live-console[hidden] { display: none; }
+.emn-tool .lc-head { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; font-size: 12.5px; color: var(--muted); margin-bottom: 4px; }
+.emn-tool .lc-last { font-size: 14px; color: var(--ink); }
+.emn-tool .lc-row { display: grid; grid-template-columns: 128px minmax(0, 1fr); align-items: center; gap: 10px; }
+.emn-tool .lc-name { font-size: 12px; font-weight: 700; letter-spacing: .02em; color: var(--ink); }
+.emn-tool .lc-btns { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 5px; }
+.emn-tool .lc-btn {
+  padding: 7px 2px; border: 1px solid var(--line); border-radius: 7px;
+  font-size: 12px; font-weight: 600; background: var(--panel); color: var(--ink);
+  cursor: pointer; transition: all .1s ease; white-space: nowrap;
+}
+.emn-tool .lc-btn:hover { border-color: var(--red); background: var(--red); color: #fff; }
+.emn-tool .lc-btn.played { background: var(--ink); border-color: var(--ink); color: #fff; }
+@media (max-width: 760px) {
+  .emn-tool .lc-row { grid-template-columns: 1fr; }
+  .emn-tool .lc-btns { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+
+/* Live + Dictation: what the other person sees (nothing but a listening cue) */
+.emn-tool .live-listen { width: 100%; max-width: 700px; padding: 40px 36px; cursor: default; }
+.emn-tool .live-listen[hidden] { display: none; }
+.emn-tool .ll-box { text-align: center; }
+.emn-tool .ll-icon { font-size: 54px; line-height: 1; margin-bottom: 10px; transition: transform .15s ease; }
+.emn-tool .live-listen.sounding .ll-icon { animation: llPulse 1.1s ease-in-out infinite; }
+.emn-tool .ll-box p { margin: 0 0 14px; font-size: 16px; color: var(--ink); }
+.emn-tool .ll-ok { font-size: 12px; color: #1E8E5A; font-weight: 600; }
+@keyframes llPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); } }
 .emn-tool .record-row {
   display: flex; align-items: center; gap: 12px;
 }

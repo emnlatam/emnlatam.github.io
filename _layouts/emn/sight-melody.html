@@ -60,6 +60,8 @@
     </div>
   </div>
   <div class="chord-picker" id="chordPicker" hidden></div>
+  <div class="live-console" id="liveConsole" hidden></div>
+  <div class="live-listen" id="liveListen" hidden></div>
   <div id="staff-wrap">
     <div id="output"></div>
   </div>
@@ -1041,15 +1043,56 @@ const btnDictation = document.getElementById('btnDictation');
 const staffWrap = document.getElementById('staff-wrap');
 // Harmony + Dictation: besides hiding the score, show the chord-quality picker
 // (see CHORD_FAMILIES below) and make Play sound a random chord from the picks.
-const chordModeActive = () => btnDictation.classList.contains('active') && state.mode === 'harmony';
+// Which Dictation view applies:
+//  'solo'    -- not in a live session: the chord-quality picker + answer buttons (Harmony)
+//  'console' -- live session, staff with Dictation on in Harmony: every chord as a button;
+//               clicking one sounds it on BOTH screens
+//  'listen'  -- live session, the other person (a teacher has Dictation on): sees no options,
+//               only hears the chords the teacher plays
+let remoteDictation = false;   // the other side (staff) has Dictation on in Harmony
+let lastDictSent = null;
+let lastLiveChord = null;      // { k, pc, midis, label } -- last chord sounded in the live session
+const isStaffUser = () => ['admin', 'professor'].includes(emnStudentProfile?.role);
+function dictView(){
+  const on = btnDictation.classList.contains('active');
+  const harmony = state.mode === 'harmony';
+  if(liveRole){
+    if(isStaffUser() && on && harmony) return 'console';
+    if(remoteDictation && harmony) return 'listen';
+    return null;
+  }
+  return on && harmony ? 'solo' : null;
+}
+const chordModeActive = () => dictView() === 'solo';
+let chordSamplesPreloaded = false;
+function preloadChordSamples(){
+  if(chordSamplesPreloaded) return;
+  chordSamplesPreloaded = true;
+  for(let m = 48; m <= 70; m++) loadBuffer(midiToSampleUrl(m)).catch(() => {});
+}
 function updateDictationView(){
   const on = btnDictation.classList.contains('active');
-  const chordMode = chordModeActive();
-  document.getElementById('chordPicker').hidden = !chordMode;
-  // The picker takes the score's place in Harmony; in the other modes the score's
-  // box keeps its space (visibility, not display) so nothing below it shifts up.
-  staffWrap.style.display = chordMode ? 'none' : '';
+  const view = dictView();
+  document.getElementById('chordPicker').hidden = view !== 'solo';
+  document.getElementById('liveConsole').hidden = view !== 'console';
+  document.getElementById('liveListen').hidden = view !== 'listen';
+  // A panel takes the score's place; otherwise the score's box keeps its space
+  // (visibility, not display) so nothing below it shifts up.
+  staffWrap.style.display = view ? 'none' : '';
   staffWrap.style.visibility = on ? 'hidden' : '';
+  if(view === 'console') renderLiveConsole();
+  if(view === 'listen') renderLiveListen();
+  if(view) preloadChordSamples();
+  liveSyncDictation();
+}
+// Tells the other person that staff has Dictation on (so their screen switches to
+// the listening view). Only sends when the value actually changes.
+function liveSyncDictation(){
+  if(!liveChannel){ lastDictSent = null; return; }
+  const want = isStaffUser() && btnDictation.classList.contains('active') && state.mode === 'harmony';
+  if(want === lastDictSent) return;
+  lastDictSent = want;
+  liveChannel.send({ type:'broadcast', event:'dictation', payload:{ on: want } });
 }
 btnDictation.onclick = (e)=>{
   e.stopPropagation();
@@ -1069,6 +1112,65 @@ const CHORD_FAMILIES = [
   { name: 'Sus',        items: [ {k:'sus2', label:'sus2',     iv:[0,2,7]},    {k:'sus4', label:'sus4',     iv:[0,5,7]} ] },
   { name: '6th Chords', items: [ {k:'maj6', label:'M6',       iv:[0,4,7,9]},  {k:'min6', label:'m6',       iv:[0,3,7,9]} ] }
 ];
+const CHORD_SFX = { maj:'maj', min:'m', maj7:'maj7', m7:'m7', dom7:'7', dim:'dim', hdim:'m7b5', aug:'aug', aug7:'aug7', sus2:'sus2', sus4:'sus4', maj6:'6', min6:'m6' };
+CHORD_FAMILIES.forEach(f => f.items.forEach(i => { i.sfx = CHORD_SFX[i.k]; }));
+
+// ---- Live + Dictation: teacher console (every chord x 12 roots) and student listening panel ----
+const lcRoots = () => PIANO_PC_NAMES; // C, Db, D, Eb, E, F, Gb, G, Ab, A, Bb, B
+function renderLiveConsole(){
+  const rows = CHORD_FAMILIES.flatMap(f => f.items.map(i => {
+    const title = f.items.length === 1 ? f.name : `${f.name} · ${i.label}`;
+    return `<div class="lc-row"><div class="lc-name">${title}</div><div class="lc-btns">` +
+      lcRoots().map((r, pc) => `<button type="button" class="lc-btn" data-lc="${i.k}" data-pc="${pc}">${r}${i.sfx}</button>`).join('') + '</div></div>';
+  })).join('');
+  document.getElementById('liveConsole').innerHTML =
+    `<div class="lc-head"><span>🎹 The other person can't see this panel — click a chord and it sounds on both screens.</span>` +
+    `<span class="lc-last" id="lcLast"></span><button type="button" class="cp-repeat" data-lc-repeat>↻ Repeat</button></div>${rows}`;
+  markLiveChord();
+}
+function markLiveChord(){
+  const el = document.getElementById('liveConsole');
+  el.querySelectorAll('.lc-btn.played').forEach(b => b.classList.remove('played'));
+  const last = document.getElementById('lcLast');
+  if(lastLiveChord){
+    const b = el.querySelector(`[data-lc="${lastLiveChord.k}"][data-pc="${lastLiveChord.pc}"]`);
+    if(b) b.classList.add('played');
+    if(last) last.innerHTML = `Last: <b>${lastLiveChord.label}</b>`;
+  } else if(last) last.textContent = '';
+  const rp = el.querySelector('[data-lc-repeat]');
+  if(rp) rp.disabled = !lastLiveChord;
+}
+function liveSendChord(ch){
+  lastLiveChord = ch;
+  if(liveChannel) liveChannel.send({ type:'broadcast', event:'chord', payload:{ midis: ch.midis } });
+  markLiveChord();
+  soundChord(ch.midis);
+}
+document.getElementById('liveConsole').addEventListener('click', (e) => {
+  e.stopPropagation(); // #mainStage would otherwise treat this as "new exercise"
+  if(e.target.closest('[data-lc-repeat]')){ if(lastLiveChord) liveSendChord(lastLiveChord); return; }
+  const b = e.target.closest('[data-lc]');
+  if(!b) return;
+  const item = CHORD_FAMILIES.flatMap(f => f.items).find(i => i.k === b.dataset.lc);
+  const pc = Number(b.dataset.pc);
+  liveSendChord({ k: item.k, pc, midis: item.iv.map(x => 48 + pc + x), label: lcRoots()[pc] + item.sfx });
+});
+
+function renderLiveListen(){
+  const needsSound = getAudioCtx().state !== 'running';
+  document.getElementById('liveListen').innerHTML =
+    `<div class="ll-box"><div class="ll-icon">🎧</div><p>Listen carefully to the chord and answer your teacher.</p>` +
+    (needsSound ? '<button type="button" class="cp-repeat" data-ll-sound>🔊 Enable sound</button>' : '<span class="ll-ok">Sound ready ✓</span>') + '</div>';
+}
+document.getElementById('liveListen').addEventListener('click', async (e) => {
+  e.stopPropagation();
+  if(e.target.closest('[data-ll-sound]')){ try { await getAudioCtx().resume(); } catch {} renderLiveListen(); }
+});
+// Any first interaction unlocks audio, so chords from the teacher can sound right away.
+['pointerdown', 'keydown'].forEach(ev => addEventListener(ev, () => {
+  if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume().then(() => { if(dictView() === 'listen') renderLiveListen(); }).catch(() => {});
+}, { passive: true }));
+
 const chordSel = new Set();
 const chordPickerEl = document.getElementById('chordPicker');
 let currentChord = null;  // { item, midis } -- the chord just played
@@ -1896,7 +1998,6 @@ function stopMelody(){
 // Harmony + Dictation: plays one block chord -- random root, random quality
 // among the ones checked in the picker -- using the same piano samples.
 async function playChord(repeat = false){
-  const btn = document.getElementById('btnPlay');
   if(repeat){
     stopMelody(); // cut whatever is still sounding before replaying the same chord
   } else {
@@ -1908,11 +2009,21 @@ async function playChord(repeat = false){
     answerResult = null;
     renderChordPicker();
   }
-  const midis = currentChord.midis;
+  await soundChord(currentChord.midis);
+}
 
+// Sounds one block chord with the piano samples (used by the solo picker and by the live session).
+async function soundChord(midis){
+  const btn = document.getElementById('btnPlay');
+  activeSources.forEach(s => { try { s.stop(); } catch {} });
+  activeSources = [];
   const myToken = ++playbackToken;
   const ctx = getAudioCtx();
-  if(ctx.state === 'suspended') await ctx.resume();
+  if(ctx.state !== 'running'){
+    // Without a prior click the browser keeps audio suspended: ask for resume, but don't hang.
+    try { await Promise.race([ctx.resume(), new Promise(r => setTimeout(r, 500))]); } catch {}
+    if(ctx.state !== 'running'){ if(dictView() === 'listen') renderLiveListen(); return; }
+  }
   btn.disabled = true;
   btn.textContent = 'Loading…';
   let buffers;
@@ -1928,6 +2039,8 @@ async function playChord(repeat = false){
   btn.disabled = false;
   btn.classList.add('playing');
   btn.textContent = '■ Stop';
+  const listenEl = document.getElementById('liveListen');
+  listenEl.classList.add('sounding');
   const sources = [];
   const t0 = ctx.currentTime + 0.05;
   const HOLD = 2.6; // seconds
@@ -1935,6 +2048,7 @@ async function playChord(repeat = false){
   activeSources = sources;
   setTimeout(() => {
     if(myToken !== playbackToken) return;
+    listenEl.classList.remove('sounding');
     finishPlayback(btn);
   }, HOLD * 1000 + 80);
 }
@@ -1942,8 +2056,13 @@ async function playChord(repeat = false){
 document.getElementById('btnPlay').onclick = (e) => {
   e.stopPropagation();
   if(document.getElementById('btnPlay').classList.contains('playing')) stopMelody();
-  else if(chordModeActive()) playChord();
-  else playMelody();
+  else {
+    const view = dictView();
+    if(view === 'console'){ if(lastLiveChord) liveSendChord(lastLiveChord); } // replays it on both screens
+    else if(view === 'listen'){ if(lastLiveChord) soundChord(lastLiveChord.midis); }
+    else if(view === 'solo') playChord();
+    else playMelody();
+  }
 };
 
 /* ============================= LIVE MODE (realtime sync) =============================
@@ -1971,7 +2090,7 @@ function liveChannelName(code){ return `emn-sight-melody-live-${code}`; }
 // above) — Dictation Mode is the only thing excluded, and it already never
 // touches `state` or calls generate(), so it needs no special-casing here.
 // This hook is kept in case a future visual "you're live" indicator is added.
-function applyLiveRoleUI(){}
+function applyLiveRoleUI(){ updateDictationView(); }
 
 function liveBroadcastState(seed){
   if(!liveChannel) return;
@@ -2029,12 +2148,23 @@ function liveSetupChannelHandlers(){
     state.bpm = payload.bpm;
     renderBpm();
   });
+  // Dictation + chords (Harmony): staff on the other side switched Dictation on/off, or
+  // played a chord that has to sound here too.
+  liveChannel.on('broadcast', { event: 'dictation' }, ({ payload }) => {
+    remoteDictation = !!payload.on;
+    updateDictationView();
+  });
+  liveChannel.on('broadcast', { event: 'chord' }, ({ payload }) => {
+    lastLiveChord = { midis: payload.midis };
+    soundChord(payload.midis);
+  });
   // Whoever's already in the room replies to a late/rejoining participant's
   // 'hello' with whatever's currently on screen, so they don't have to wait
   // for the next change to see anything.
   liveChannel.on('broadcast', { event: 'hello' }, () => {
     liveChannel.send({ type:'broadcast', event:'state', payload:{ state, seed: liveLastSeed ?? Date.now() } });
     liveChannel.send({ type:'broadcast', event:'bpm', payload:{ bpm: state.bpm } });
+    lastDictSent = null; liveSyncDictation(); // a late joiner also needs to know about Dictation
   });
 }
 
@@ -2060,9 +2190,15 @@ function liveJoinAsFollower(code){
 }
 
 function liveLeave(){
-  if(liveChannel){ emnSupabase.removeChannel(liveChannel); liveChannel = null; }
+  if(liveChannel){
+    if(lastDictSent) liveChannel.send({ type:'broadcast', event:'dictation', payload:{ on: false } }); // free the other screen
+    emnSupabase.removeChannel(liveChannel);
+    liveChannel = null;
+  }
   liveRole = null;
   liveCode = null;
+  remoteDictation = false;
+  lastDictSent = null;
   applyLiveRoleUI();
 }
 
