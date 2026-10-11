@@ -341,7 +341,7 @@ $('#ear-grid').innerHTML = EAR_PARTS.map(([k, label]) => `<div class="ear-col">
   <div class="tx"><label for="ear-c-${k}">${label} · Comments</label><textarea id="ear-c-${k}" data-ear-c="${k}"></textarea></div></div>`).join('');
 
 /* Preguntas de la entrevista. Al marcar una, pasa al panel de la derecha con su cuadro de comentarios.
-   GAP_AFTER = índice de la última pregunta del primer bloque (deja un espacio antes del siguiente). */
+   GAP_AFTER = índice de la primera pregunta del segundo bloque (la línea separadora va justo antes de ella). */
 const INTERVIEW = [
   'What is your favorite part of being a musician?',
   'What inspired you to pursue a music career?',
@@ -353,7 +353,7 @@ const INTERVIEW = [
   'What excites you about the industry? / What career opportunities would you like to take advantage of in the music industry?',
   "Why Berklee? What about Berklee's programs and activities speak to your career goals?",
 ];
-const GAP_AFTER = 3;
+const GAP_AFTER = 4;
 
 /* Ejercicios de improvisación (Berklee practice exercises). */
 const IMPROV = {
@@ -529,7 +529,7 @@ function pdfSection(d, s){
 
 function paginate(d, root){
   const measure = document.createElement('div'); measure.className = 'pp-measure'; root.appendChild(measure);
-  const pages = []; let body = null, used = 0;
+  const pages = []; let body = null, used = 0, sectionGap = false;
   const mk = (html) => { const b = document.createElement('div'); b.className = 'pp-blk'; b.innerHTML = html; return b; };
   const hOf = b => { measure.innerHTML = ''; measure.appendChild(b); return b.offsetHeight + PGAP; };
   const who = `${esc(cur.nombre)} · ${esc(longDate(hoyKey()))}`;
@@ -541,13 +541,25 @@ function paginate(d, root){
     root.appendChild(p); pages.push(p); body = p.querySelector('.pp-body'); used = 0;
   };
   const put = (b, h) => { body.appendChild(b); used += h; };
+  // Between sections: just a little extra space (a "double space"), not a new page.
+  function applyGap(){
+    if(!sectionGap) return;
+    sectionGap = false;
+    if(body && used > 0){
+      const sp = mk(''); sp.style.height = '8px';
+      const h = hOf(sp);
+      if(used + h <= PCH) put(sp, h);
+    }
+  }
   const place = b => {
+    applyGap();
     const h = hOf(b);
     if(!body || (used > 0 && used + h > PCH)) newPage();
     put(b, h);
   };
   // Texto largo: cada párrafo es un bloque; si uno solo no cabe ni en una hoja entera, se parte por palabras.
   const placeText = (head, text) => {
+    applyGap();
     const paras = String(text || '').split(/\n+/).map(x => x.trim()).filter(Boolean);
     if(!paras.length) paras.push('—');
     let first = true;
@@ -566,7 +578,7 @@ function paginate(d, root){
       }
     }
   };
-  const part = () => { body = null; };
+  const part = () => { sectionGap = true; };
 
   // Portada
   newPage(true);
@@ -575,8 +587,8 @@ function paginate(d, root){
     <table class="pp-meta"><tr><td>Student</td><td>${esc(cur.nombre)}</td></tr><tr><td>Instrument</td><td>${esc(cur.datos?.instrumento || '—')}</td></tr>
     <tr><td>Date</td><td>${esc(longDate(hoyKey()))}</td></tr><tr><td>Evaluator</td><td>${esc(evaluador)}</td></tr></table></div>`));
 
-  // Performance
-  part();
+  // Performance (la portada va sola; desde aquí las secciones fluyen una tras otra)
+  body = null;
   const total = perfScoreOf(d);
   place(mk(`<h2 class="pp-h2">PERFORMANCE <span>Score <b>${fmt(total)}</b>/100</span></h2>${pdfSection(d, SECTIONS[0])}`));
   SECTIONS.slice(1).forEach(s => place(mk(pdfSection(d, s))));
@@ -611,9 +623,9 @@ function paginate(d, root){
 
   // Interview (solo las preguntas marcadas, con sus comentarios)
   part();
-  place(mk(`<h2 class="pp-h2">INTERVIEW <span>Score <b>${pv(d.interview_score)}</b>/100</span></h2>`));
-  if(!d.interview.length) place(mk('<p class="pp-p">—</p>'));
-  d.interview.forEach(x => placeText(`<div class="pp-q">${esc(x.q)}</div>`, x.c));
+  const intH2 = `<h2 class="pp-h2">INTERVIEW <span>Score <b>${pv(d.interview_score)}</b>/100</span></h2>`;
+  if(!d.interview.length) place(mk(intH2 + '<p class="pp-p">—</p>'));
+  d.interview.forEach((x, i) => placeText((i === 0 ? intH2 : '') + `<div class="pp-q">${esc(x.q)}</div>`, x.c));
 
   pages.forEach((p, i) => { p.querySelector('.pn').textContent = `Página ${i + 1} de ${pages.length}`; });
   measure.remove();
