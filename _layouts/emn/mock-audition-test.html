@@ -107,6 +107,11 @@
 
   .imp-row{ display:flex; align-items:center; gap:14px; margin:0 0 16px; }
   .imp-row select{ flex:1; max-width:680px; box-sizing:border-box; border:1px solid #BFC3C8; border-radius:8px; padding:10px 12px; font:inherit; font-size:18px; background:#FFF8E1; }
+  .ear-grid{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:0 24px; align-items:start; }
+  .ear-col table.grid th.c-chk, .ear-col table.grid td.c-chk{ width:92px; }
+  .ear-col table.grid td.c-ex{ width:110px; }
+  .ear-col .tx textarea{ height:96px; }
+  @media (max-width:1000px){ .ear-grid{ grid-template-columns:minmax(0,1fr); } }
   .btn-link{ display:inline-block; text-decoration:none; padding:9px 18px; }
   .qwrap{ display:grid; grid-template-columns:minmax(380px, 34%) minmax(0,1fr); gap:26px; align-items:start; }
   .qlist{ list-style:none; margin:0; padding:0; }
@@ -251,7 +256,9 @@
       <div class="sh-head"><img src="/assets/img/emn-logo.png" alt="EMN">
         <div class="t"><strong>Mock Audition Evaluation Report</strong><span data-who></span></div></div>
       <div class="sh-body">
-        <div class="titlebar"><h2>EAR TRAINING</h2></div>
+        <div class="titlebar"><h2>EAR TRAINING</h2>
+          <div class="sr-score">Score <input type="number" min="0" max="100" step="0.5" id="f-ear-score"> /100</div></div>
+        <div class="ear-grid" id="ear-grid"></div>
       </div>
       <div class="sh-foot"><span>EMN – Escuela de Música y Negocios</span><span>Página 4 de 6</span></div>
     </section>
@@ -261,7 +268,8 @@
       <div class="sh-head"><img src="/assets/img/emn-logo.png" alt="EMN">
         <div class="t"><strong>Mock Audition Evaluation Report</strong><span data-who></span></div></div>
       <div class="sh-body">
-        <div class="titlebar"><h2>IMPROVISATION</h2></div>
+        <div class="titlebar"><h2>IMPROVISATION</h2>
+          <div class="sr-score">Score <input type="number" min="0" max="100" step="0.5" id="f-improv-score"> /100</div></div>
         <div class="imp-row">
           <select id="f-improv-ex" data-f="improv_ex" aria-label="Ejercicio de improvisación"></select>
           <a class="btn pri btn-link" href="https://college.berklee.edu/admissions/undergraduate/practiceexercises" target="_blank" rel="noopener">Berklee practice exercises ↗</a>
@@ -278,7 +286,8 @@
       <div class="sh-head"><img src="/assets/img/emn-logo.png" alt="EMN">
         <div class="t"><strong>Mock Audition Evaluation Report</strong><span data-who></span></div></div>
       <div class="sh-body">
-        <div class="titlebar"><h2>INTERVIEW</h2></div>
+        <div class="titlebar"><h2>INTERVIEW</h2>
+          <div class="sr-score">Score <input type="number" min="0" max="100" step="0.5" id="f-int-score"> /100</div></div>
         <div class="qwrap"><ul class="qlist" id="q-list"></ul><div class="qnotes" id="q-notes"></div></div>
       </div>
       <div class="sh-foot"><span>EMN – Escuela de Música y Negocios</span><span>Página 6 de 6</span></div>
@@ -322,6 +331,14 @@ const SECTIONS = [
 ];
 const secMax = s => s.items.reduce((a, i) => a + i.max, 0);
 const NEX = 6;
+const EAR_PARTS = [['melody', 'Melody'], ['rhythm', 'Rhythm'], ['harmony', 'Harmony']];
+$('#ear-grid').innerHTML = EAR_PARTS.map(([k, label]) => `<div class="ear-col">
+  <table class="grid"><thead><tr><th>${label}</th><th class="c-chk">Correcto</th><th>Comentarios</th></tr></thead><tbody>` +
+  Array.from({ length: NEX }, (_, n) => `<tr><td class="c-ex">Ejercicio ${n + 1}</td>
+    <td class="c-chk"><input type="checkbox" data-ek="${k}" data-en="${n}" data-p="ok" aria-label="${label} ejercicio ${n + 1} correcto"></td>
+    <td><input type="text" data-ek="${k}" data-en="${n}" data-p="c" aria-label="${label} comentarios ejercicio ${n + 1}"></td></tr>`).join('') +
+  `</tbody></table>
+  <div class="tx"><label for="ear-c-${k}">${label} · Comments</label><textarea id="ear-c-${k}" data-ear-c="${k}"></textarea></div></div>`).join('');
 
 /* Preguntas de la entrevista. Al marcar una, pasa al panel de la derecha con su cuadro de comentarios.
    GAP_AFTER = índice de la última pregunta del primer bloque (deja un espacio antes del siguiente). */
@@ -385,6 +402,10 @@ function collect(){
   }));
   return { drums, perf, strengths: $('#f-strengths').value, improvements: $('#f-improve').value,
            sight: { score: $('#f-sr').value, ex, summary: $('#f-summary').value },
+           ear_score: $('#f-ear-score').value, improv_score: $('#f-improv-score').value, interview_score: $('#f-int-score').value,
+           ear: Object.fromEntries(EAR_PARTS.map(([k]) => [k, {
+             ex: Array.from({ length: NEX }, (_, n) => ({ ok: $(`[data-ek="${k}"][data-en="${n}"][data-p="ok"]`).checked, c: $(`[data-ek="${k}"][data-en="${n}"][data-p="c"]`).value })),
+             comments: $(`[data-ear-c="${k}"]`).value }])),
            improv_ex: $('#f-improv-ex').value, improv_summary: $('#f-improv').value,
            interview: INTERVIEW.map((q, n) => ({ q, n })).filter(x => $(`[data-q="${x.n}"]`).checked).map(x => ({ q: x.q, c: qNotes[x.n] || '' })) };
 }
@@ -401,6 +422,17 @@ function fill(d){
     $(`[data-ex="${n}"][data-p="done"]`).checked = !!e.done;
     $(`[data-ex="${n}"][data-p="c"]`).value = e.c || '';
   }
+  EAR_PARTS.forEach(([k]) => {
+    for(let n = 0; n < NEX; n++){
+      const e = d.ear?.[k]?.ex?.[n] || {};
+      $(`[data-ek="${k}"][data-en="${n}"][data-p="ok"]`).checked = !!e.ok;
+      $(`[data-ek="${k}"][data-en="${n}"][data-p="c"]`).value = e.c || '';
+    }
+    $(`[data-ear-c="${k}"]`).value = d.ear?.[k]?.comments || '';
+  });
+  $('#f-ear-score').value = d.ear_score ?? '';
+  $('#f-improv-score').value = d.improv_score ?? '';
+  $('#f-int-score').value = d.interview_score ?? '';
   $('#f-improv').value = d.improv_summary || '';
   $('#f-improv-ex').value = d.improv_ex || '';
   qNotes = {};
@@ -559,18 +591,27 @@ function paginate(d, root){
     <table class="pp-t"><thead><tr><th style="width:130px">Ejercicio</th><th class="sc" style="width:150px">Completados correctamente</th><th>Comentarios</th></tr></thead><tbody>${exRows}</tbody></table>`));
   placeText('<h3 class="pp-h3">Summary Evaluation</h3>', d.sight.summary);
 
-  // Ear Training (en blanco)
+  // Ear Training: Melody / Rhythm / Harmony, cada uno con su tabla de 6 ejercicios y sus comentarios
   part();
-  place(mk('<h2 class="pp-h2">EAR TRAINING</h2>'));
+  EAR_PARTS.forEach(([k, label], idx) => {
+    const e = d.ear?.[k] || {};
+    const rows = Array.from({ length: NEX }, (_, n) => {
+      const x = e.ex?.[n] || {};
+      return `<tr><td class="nm">Ejercicio ${n + 1}</td><td class="sc" style="width:110px"><span class="pp-cb">${x.ok ? '✓' : ''}</span></td><td>${esc(x.c || '')}</td></tr>`;
+    }).join('');
+    place(mk((idx === 0 ? `<h2 class="pp-h2">EAR TRAINING <span>Score <b>${pv(d.ear_score)}</b>/100</span></h2>` : '') +
+      `<table class="pp-t"><thead><tr><th style="width:130px">${label}</th><th class="sc" style="width:110px">Correcto</th><th>Comentarios</th></tr></thead><tbody>${rows}</tbody></table>`));
+    placeText(`<h3 class="pp-h3">${label} · Comments</h3>`, e.comments);
+  });
 
   // Improvisation
   part();
-  place(mk(`<h2 class="pp-h2">IMPROVISATION</h2><p class="pp-line"><b>Exercise:</b> ${esc(d.improv_ex || '—')}</p>`));
+  place(mk(`<h2 class="pp-h2">IMPROVISATION <span>Score <b>${pv(d.improv_score)}</b>/100</span></h2><p class="pp-line"><b>Exercise:</b> ${esc(d.improv_ex || '—')}</p>`));
   placeText('<h3 class="pp-h3">Summary Evaluation</h3>', d.improv_summary);
 
   // Interview (solo las preguntas marcadas, con sus comentarios)
   part();
-  place(mk('<h2 class="pp-h2">INTERVIEW</h2>'));
+  place(mk(`<h2 class="pp-h2">INTERVIEW <span>Score <b>${pv(d.interview_score)}</b>/100</span></h2>`));
   if(!d.interview.length) place(mk('<p class="pp-p">—</p>'));
   d.interview.forEach(x => placeText(`<div class="pp-q">${esc(x.q)}</div>`, x.c));
 
