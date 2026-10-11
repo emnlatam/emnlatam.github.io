@@ -48,6 +48,8 @@
   select.role-select{ font-size:12.5px; padding:5px 7px; border:1px solid var(--gray-300); border-radius:6px; font-family:inherit; }
   .status-pill{ font-size:11px; color:var(--gray-500); }
   .status-pill.active{ color:#1E8E5A; }
+  .del-x{ margin-left:8px; width:22px; height:22px; border:none; border-radius:50%; background:none; color:var(--gray-500); font-size:13px; line-height:1; cursor:pointer; vertical-align:middle; }
+  .del-x:hover{ background:var(--red-tint); color:var(--red); }
 </style>
 </head>
 <body>
@@ -112,7 +114,7 @@ function renderUsersTable(){
   const isStaff = isAdmin || emnStudentProfile?.role === 'professor';
   document.getElementById('users-tbody').innerHTML = ALL_USERS.map(u => `
     <tr data-id="${u.id}">
-      <td>${u.full_name || '—'}</td>
+      <td>${u.full_name || '—'}${isAdmin && u.id !== emnSession?.user?.id ? `<button type="button" class="del-x" data-del="${u.id}" aria-label="Eliminar a ${emnEsc(u.full_name || u.email)}" title="Eliminar">✕</button>` : ''}</td>
       <td>${u.email}</td>
       <td>${isAdmin
         ? `<select class="role-select" data-role-for="${u.id}">
@@ -127,6 +129,9 @@ function renderUsersTable(){
   `).join('') || '<tr><td colspan="5" style="color:var(--gray-500)">Nadie agregado todavía.</td></tr>';
 
   if(isAdmin){
+    document.querySelectorAll('[data-del]').forEach(btn => {
+      btn.addEventListener('click', () => deleteUser(btn.dataset.del));
+    });
     document.querySelectorAll('[data-role-for]').forEach(sel => {
       sel.addEventListener('change', async (e) => {
         const id = sel.dataset.roleFor;
@@ -135,6 +140,32 @@ function renderUsersTable(){
         if(u) u.role = e.target.value;
       });
     });
+  }
+}
+
+// Eliminar: borra la cuenta (y con ella su progreso) a través de la función
+// delete-student, que comprueba en el servidor que quien llama es Admin.
+async function deleteUser(id){
+  const u = ALL_USERS.find(x => x.id === id);
+  if(!u) return;
+  const ok = await emnConfirm(`¿Estás seguro de eliminar a ${u.full_name || u.email}? Se borra su acceso (login) y todo su avance: Interview Prep, Career Progress y cursos. No se puede deshacer.`, { yesLabel: 'Eliminar' });
+  if(!ok) return;
+  try {
+    const res = await fetch(`${EMN_SUPABASE_URL}/functions/v1/delete-student`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${emnSession.access_token}`,
+        'apikey': EMN_SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({ user_id: id })
+    });
+    const result = await res.json().catch(() => ({}));
+    if(!res.ok) throw new Error(result.error || 'No se pudo eliminar.');
+    ALL_USERS = ALL_USERS.filter(x => x.id !== id);
+    renderUsersTable();
+  } catch(err){
+    emnAlert(err.message);
   }
 }
 

@@ -55,11 +55,11 @@
       <button type="button" class="link-btn" id="forgot-link">¿Olvidaste tu contraseña?</button>
     </form>
 
-    <!-- Password reset: only sends a link to an email that already belongs to
-         an enrolled user. Supabase silently skips unknown addresses, and this
-         form never reveals which is which. -->
+    <!-- Password reset, two steps: 1) the email is checked against the registered users
+         (Edge Function `password-reset`); only if it is registered does the "send link"
+         button appear — otherwise it just says "Correo denegado". -->
     <form id="forgot-form" style="display:none">
-      <p class="hint">Escribe el correo con el que te inscribiste y te enviaremos un link para crear una nueva contraseña.</p>
+      <p class="hint">Escribe el correo con el que te inscribiste. Lo verificaremos antes de enviarte el link para crear una nueva contraseña.</p>
       <div class="field">
         <label for="forgot-email">Correo</label>
         <input type="email" id="forgot-email" placeholder="tucorreo@ejemplo.com" autocomplete="username" required>
@@ -68,7 +68,7 @@
       <p class="error-msg" id="forgot-error"></p>
       <p class="ok-msg" id="forgot-ok"></p>
 
-      <button type="submit" class="btn-primary" id="forgot-btn">Enviar link</button>
+      <button type="submit" class="btn-primary" id="forgot-btn">Verificar correo</button>
       <button type="button" class="link-btn" id="forgot-back">← Volver a ingresar</button>
     </form>
 
@@ -189,32 +189,67 @@
     document.getElementById('forgot-link').addEventListener('click', () => showForgot(true));
     document.getElementById('forgot-back').addEventListener('click', () => showForgot(false));
 
+    // Paso 1: verificar que el correo esté registrado. Paso 2 (solo si lo está): enviar el link.
+    let verifiedEmail = null;
+    const forgotBtn = document.getElementById('forgot-btn');
+    const forgotEmail = document.getElementById('forgot-email');
+    const resetForgot = () => { verifiedEmail = null; forgotBtn.textContent = 'Verificar correo'; };
+    forgotEmail.addEventListener('input', () => {   // si cambia el correo, hay que verificarlo de nuevo
+      if(verifiedEmail !== null && forgotEmail.value.trim() !== verifiedEmail){
+        resetForgot();
+        document.getElementById('forgot-ok').classList.remove('show');
+        document.getElementById('forgot-error').classList.remove('show');
+      }
+    });
+    document.getElementById('forgot-link').addEventListener('click', resetForgot);
+
     forgotForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const errEl = document.getElementById('forgot-error'), okEl = document.getElementById('forgot-ok');
-      const btn = document.getElementById('forgot-btn');
+      const email = forgotEmail.value.trim();
+      const sending = verifiedEmail !== null && verifiedEmail === email;
       errEl.classList.remove('show'); okEl.classList.remove('show');
-      btn.disabled = true; btn.textContent = 'Enviando…';
+      forgotBtn.disabled = true; forgotBtn.textContent = sending ? 'Enviando…' : 'Verificando…';
 
-      // Same address the invite emails use, so it's already in this Supabase
-      // project's Redirect URLs allow-list.
-      const { error } = await supabaseClient.auth.resetPasswordForEmail(
-        document.getElementById('forgot-email').value.trim(),
-        { redirectTo: 'https://emnlatam.github.io/emn-login' }
-      );
+      let res = null;
+      try{
+        const { data, error } = await supabaseClient.functions.invoke('password-reset', { body: { email, action: sending ? 'send' : 'check' } });
+        if(error) throw error;
+        res = data;
+      }catch(err){
+        console.error(err);
+        errEl.textContent = 'No se pudo completar. Inténtalo de nuevo en un momento.';
+        errEl.classList.add('show');
+        forgotBtn.disabled = false; forgotBtn.textContent = sending ? 'Enviar link de recuperación' : 'Verificar correo';
+        return;
+      }
 
-      if(error){
-        console.error(error);
-        errEl.textContent = error.status === 429
+      forgotBtn.disabled = false;
+      if(!res.registered){
+        resetForgot();
+        errEl.textContent = 'Correo denegado';
+        errEl.classList.add('show');
+        return;
+      }
+      if(!sending){
+        verifiedEmail = email;
+        okEl.textContent = 'Correo verificado. Pulsa el botón para recibir el link.';
+        okEl.classList.add('show');
+        forgotBtn.textContent = 'Enviar link de recuperación';
+        return;
+      }
+      // enviado (o falló el envío)
+      if(res.ok){
+        okEl.textContent = 'Te enviamos un link para crear una nueva contraseña. Revisa también tu carpeta de spam.';
+        okEl.classList.add('show');
+        forgotBtn.textContent = 'Enviar de nuevo';
+      } else {
+        errEl.textContent = res.error === 'rate'
           ? 'Se enviaron demasiados correos. Espera unos minutos e inténtalo de nuevo.'
           : 'No se pudo enviar el correo. Inténtalo de nuevo en un momento.';
         errEl.classList.add('show');
-      } else {
-        // Deliberately the same answer whether or not the address is enrolled.
-        okEl.textContent = 'Si ese correo pertenece a un alumno inscrito, te enviamos un link para crear una nueva contraseña. Revisa también tu carpeta de spam.';
-        okEl.classList.add('show');
+        forgotBtn.textContent = 'Enviar link de recuperación';
       }
-      btn.disabled = false; btn.textContent = 'Enviar link';
     });
 
     form.addEventListener('submit', async (e) => {

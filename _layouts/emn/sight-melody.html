@@ -56,9 +56,10 @@
     <b class="staff-key-label" id="hintKey">C Major</b>
     <div class="header-right-group">
       <button type="button" class="dictation-btn" id="btnDictation">Dictation Mode</button>
-      <button type="button" class="play-btn" id="btnPlay">▶ Play melody</button>
+      <button type="button" class="play-btn" id="btnPlay">▶ Play</button>
     </div>
   </div>
+  <div class="chord-picker" id="chordPicker" hidden></div>
   <div id="staff-wrap">
     <div id="output"></div>
   </div>
@@ -1011,6 +1012,7 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
     document.querySelectorAll('.clef-section').forEach(s => s.classList.toggle('locked', state.mode !== 'melody'));
     document.querySelectorAll('.harmony-section').forEach(s => s.style.display = state.mode === 'harmony' ? '' : 'none');
     generate();
+    updateDictationView();
   });
 });
 
@@ -1037,13 +1039,89 @@ addTensionsChip.onclick = () => {
 // can only be heard (via Play melody), not read. Doesn't affect generation.
 const btnDictation = document.getElementById('btnDictation');
 const staffWrap = document.getElementById('staff-wrap');
+// Harmony + Dictation: besides hiding the score, show the chord-quality picker
+// (see CHORD_FAMILIES below) and make Play sound a random chord from the picks.
+const chordModeActive = () => btnDictation.classList.contains('active') && state.mode === 'harmony';
+function updateDictationView(){
+  const on = btnDictation.classList.contains('active');
+  const chordMode = chordModeActive();
+  document.getElementById('chordPicker').hidden = !chordMode;
+  // The picker takes the score's place in Harmony; in the other modes the score's
+  // box keeps its space (visibility, not display) so nothing below it shifts up.
+  staffWrap.style.display = chordMode ? 'none' : '';
+  staffWrap.style.visibility = on ? 'hidden' : '';
+}
 btnDictation.onclick = (e)=>{
   e.stopPropagation();
-  const active = btnDictation.classList.toggle('active');
-  // visibility, not display -- the score's box keeps its space reserved so
-  // nothing below it (meta-row, footer) shifts up when it's hidden.
-  staffWrap.style.visibility = active ? 'hidden' : '';
+  btnDictation.classList.toggle('active');
+  updateDictationView();
 };
+
+// Chord qualities for Harmony dictation. Clicking a family name selects (or
+// clears) all its items; each item is its own toggle. Intervals are semitones
+// above the root.
+const CHORD_FAMILIES = [
+  { name: 'Triads',     items: [ {k:'maj',  label:'Major',    iv:[0,4,7]},    {k:'min',  label:'minor',    iv:[0,3,7]} ] },
+  { name: 'M7 & m7',    items: [ {k:'maj7', label:'M7',       iv:[0,4,7,11]}, {k:'m7',   label:'m7',       iv:[0,3,7,10]} ] },
+  { name: 'Dominant 7', items: [ {k:'dom7', label:'7',        iv:[0,4,7,10]} ] },
+  { name: 'Diminished', items: [ {k:'dim',  label:'dim',      iv:[0,3,6]},    {k:'hdim', label:'half dim', iv:[0,3,6,10]} ] },
+  { name: 'Augmented',  items: [ {k:'aug',  label:'aug',      iv:[0,4,8]},    {k:'aug7', label:'aug7',     iv:[0,4,8,10]} ] },
+  { name: 'Sus',        items: [ {k:'sus2', label:'sus2',     iv:[0,2,7]},    {k:'sus4', label:'sus4',     iv:[0,5,7]} ] },
+  { name: '6th Chords', items: [ {k:'maj6', label:'M6',       iv:[0,4,7,9]},  {k:'min6', label:'m6',       iv:[0,3,7,9]} ] }
+];
+const chordSel = new Set();
+const chordPickerEl = document.getElementById('chordPicker');
+let currentChord = null;  // { item, midis } -- the chord just played
+let answerResult = null;  // { picked } once the student has answered it
+const selectedChords = () => CHORD_FAMILIES.flatMap(f => f.items).filter(i => chordSel.has(i.k));
+
+function renderChordPicker(){
+  const fams = CHORD_FAMILIES.map((f, fi) => {
+    const all = f.items.every(i => chordSel.has(i.k));
+    return `<div class="cp-row"><button type="button" class="cp-fam${all ? ' active' : ''}" data-fam="${fi}">${f.name}</button>` +
+      `<div class="cp-items">${f.items.map(i => `<div class="chip${chordSel.has(i.k) ? ' active' : ''}" data-chord="${i.k}">${i.label}</div>`).join('')}</div></div>`;
+  }).join('');
+
+  // Student's answer options: exactly the qualities checked above (quality only, no root).
+  const opts = selectedChords();
+  const answerBtns = opts.length ? opts.map(i => {
+    let cls = 'ans-btn', mark = '';
+    if(answerResult && currentChord){
+      const correctK = currentChord.item.k;
+      if(i.k === answerResult.picked){ const ok = i.k === correctK; cls += ok ? ' right' : ' wrong'; mark = ok ? ' ✓' : ' ✗'; }
+      else if(i.k === correctK){ cls += ' reveal'; mark = ' ✓'; }
+    }
+    const off = (!currentChord || answerResult) ? ' disabled' : '';
+    return `<button type="button" class="${cls}" data-ans="${i.k}"${off}>${i.label}${mark}</button>`;
+  }).join('') : '<span class="cp-hint">Select the chord qualities above to build the answer options.</span>';
+
+  chordPickerEl.innerHTML = `<div class="cp-fams">${fams}</div>
+    <div class="cp-answer">
+      <div class="cp-answer-head"><span>Your answer</span><button type="button" class="cp-repeat" data-repeat${currentChord ? '' : ' disabled'}>↻ Repeat</button></div>
+      <div class="cp-opts">${answerBtns}</div>
+    </div>`;
+}
+chordPickerEl.addEventListener('click', (e) => {
+  e.stopPropagation(); // #mainStage would otherwise treat this as "new exercise"
+  const fam = e.target.closest('[data-fam]');
+  const item = e.target.closest('[data-chord]');
+  const ans = e.target.closest('[data-ans]');
+  const rep = e.target.closest('[data-repeat]');
+  if(rep){ if(currentChord) playChord(true); return; }
+  if(ans){
+    if(!currentChord || answerResult) return;
+    answerResult = { picked: ans.dataset.ans };
+  } else if(fam){
+    const f = CHORD_FAMILIES[Number(fam.dataset.fam)];
+    const all = f.items.every(i => chordSel.has(i.k));
+    f.items.forEach(i => all ? chordSel.delete(i.k) : chordSel.add(i.k));
+  } else if(item){
+    const k = item.dataset.chord;
+    chordSel.has(k) ? chordSel.delete(k) : chordSel.add(k);
+  } else return;
+  renderChordPicker();
+});
+renderChordPicker();
 
 // Voice recording -- same MediaRecorder pattern as interview-prep.html, but
 // capped at 1 minute (vs. that page's 3) and with no download: the point
@@ -1754,7 +1832,7 @@ async function playMelody(){
     await Promise.all(urls.map(loadBuffer));
   } catch (err) {
     btn.disabled = false;
-    btn.textContent = '▶ Play melody';
+    btn.textContent = '▶ Play';
     console.error('Could not load piano samples', err);
     return;
   }
@@ -1806,7 +1884,7 @@ let activeSources = [];
 function finishPlayback(btn){
   btn.classList.remove('playing');
   btn.disabled = false;
-  btn.textContent = '▶ Play melody';
+  btn.textContent = '▶ Play';
 }
 function stopMelody(){
   playbackToken++; // invalidates the in-flight run — already-scheduled sources still finish naturally
@@ -1815,9 +1893,56 @@ function stopMelody(){
   finishPlayback(document.getElementById('btnPlay'));
 }
 
+// Harmony + Dictation: plays one block chord -- random root, random quality
+// among the ones checked in the picker -- using the same piano samples.
+async function playChord(repeat = false){
+  const btn = document.getElementById('btnPlay');
+  if(repeat){
+    stopMelody(); // cut whatever is still sounding before replaying the same chord
+  } else {
+    const pool = selectedChords();
+    if(!pool.length){ emnAlert('Select at least one chord quality to play.'); return; }
+    const chord = pool[Math.floor(Math.random() * pool.length)];
+    const root = 53 + Math.floor(Math.random() * 12); // F3..E4
+    currentChord = { item: chord, midis: chord.iv.map(i => root + i) };
+    answerResult = null;
+    renderChordPicker();
+  }
+  const midis = currentChord.midis;
+
+  const myToken = ++playbackToken;
+  const ctx = getAudioCtx();
+  if(ctx.state === 'suspended') await ctx.resume();
+  btn.disabled = true;
+  btn.textContent = 'Loading…';
+  let buffers;
+  try {
+    buffers = await Promise.all(midis.map(m => loadBuffer(midiToSampleUrl(m))));
+  } catch (err) {
+    finishPlayback(btn);
+    console.error('Could not load piano samples', err);
+    return;
+  }
+  if(myToken !== playbackToken) return;
+
+  btn.disabled = false;
+  btn.classList.add('playing');
+  btn.textContent = '■ Stop';
+  const sources = [];
+  const t0 = ctx.currentTime + 0.05;
+  const HOLD = 2.6; // seconds
+  buffers.forEach(buf => scheduleHit(ctx, buf, t0, sources, t0 + HOLD));
+  activeSources = sources;
+  setTimeout(() => {
+    if(myToken !== playbackToken) return;
+    finishPlayback(btn);
+  }, HOLD * 1000 + 80);
+}
+
 document.getElementById('btnPlay').onclick = (e) => {
   e.stopPropagation();
   if(document.getElementById('btnPlay').classList.contains('playing')) stopMelody();
+  else if(chordModeActive()) playChord();
   else playMelody();
 };
 
@@ -1881,6 +2006,7 @@ function syncAllSettingsUI(){
   document.querySelectorAll('[data-clef]').forEach(c => c.classList.toggle('active', c.dataset.clef === state.clef));
   addTensionsChip.classList.toggle('active', state.addTensions);
   renderBpm();
+  updateDictationView();
 }
 
 function liveApplyRemoteState(remoteState, seed){

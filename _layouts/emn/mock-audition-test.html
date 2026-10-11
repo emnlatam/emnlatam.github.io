@@ -36,9 +36,9 @@
   #gate-msg a{ color:var(--red); font-weight:600; }
 
   /* ---- hojas: A4 horizontal a 96 dpi (1123 × 794) ---- */
-  #stage{ flex:1; overflow:auto; display:flex; justify-content:center; align-items:flex-start; padding:0; }
+  #stage{ flex:1; min-height:0; overflow:auto; display:flex; justify-content:center; align-items:flex-start; padding:0; }
   #sheets{ width:var(--sw, 1123px); }
-  .sheet{ width:var(--sw, 1123px); height:794px; background:#fff; box-sizing:border-box; position:relative; overflow:hidden; font-size:15px; }
+  .sheet{ width:var(--sw, 1123px); min-height:794px; background:#fff; box-sizing:border-box; position:relative; font-size:15px; }
   .sheet:not(.on){ display:none; }
   #stage.export{ overflow:visible; display:block; padding:0; }
   #stage.export .sheet{ display:block; margin:0 0 20px; }
@@ -47,11 +47,11 @@
   .sh-head img{ height:50px; }
   .sh-head .t{ text-align:right; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--gray-500); line-height:1.5; }
   .sh-head .t strong{ display:block; color:var(--ink); font-size:15px; }
-  .sh-body{ padding:14px 36px 0; }
+  .sh-body{ padding:14px 36px 60px; }
   .sh-foot{ position:absolute; left:36px; right:36px; bottom:10px; display:flex; justify-content:space-between; font-size:12px; color:var(--gray-500); }
 
   /* portada */
-  .cover{ height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0 80px 60px; }
+  .cover{ min-height:794px; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0 80px 60px; }
   .cover img{ height:96px; margin-bottom:26px; }
   .cover .school{ font-family:'Bricolage Grotesque', var(--font-body); font-weight:800; font-size:38px; letter-spacing:.01em; margin:0 0 6px; }
   .cover .report{ font-size:28px; color:var(--gray-700); margin:0 0 4px; }
@@ -64,13 +64,13 @@
 
   /* tablas tipo Excel */
   .titlebar{ display:flex; align-items:baseline; justify-content:space-between; margin:0 0 10px; }
-  .titlebar h2{ margin:0; font-family:'Bricolage Grotesque', var(--font-body); font-size:28px; font-weight:800; }
+  .titlebar h2{ margin:0; font-family:'Bricolage Grotesque', var(--font-body); font-size:36px; font-weight:800; }
   .score-big{ font-size:21px; font-weight:700; }
   .score-big b{ color:var(--red); font-size:28px; }
   .perf{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px 20px; align-items:start; }
   table.grid{ width:100%; border-collapse:collapse; margin-bottom:10px; table-layout:fixed; }
   table.grid th, table.grid td{ border:1px solid #BFC3C8; padding:4px 8px; vertical-align:middle; font-size:14.5px; line-height:1.25; }
-  table.grid thead th{ background:var(--red); color:#fff; text-align:left; font-size:14.5px; }
+  table.grid thead th{ background:var(--red); color:#fff; text-align:left; font-size:17px; }
   table.grid thead th small{ font-weight:500; opacity:.9; }
   table.grid .c-score{ width:96px; text-align:center; }
   table.grid td.c-name{ font-weight:600; width:35%; }
@@ -83,6 +83,12 @@
   table.grid input[type=text]{ text-align:left; }
   table.grid input:focus{ outline:2px solid var(--red); background:#fff; }
   input[type=number]::-webkit-inner-spin-button{ opacity:.5; }
+  .drums-btn{ margin-left:10px; border:1.5px solid rgba(255,255,255,.75); background:transparent; color:#fff; border-radius:999px; padding:1px 12px; font:inherit; font-size:13px; font-weight:700; cursor:pointer; vertical-align:middle; }
+  .drums-btn:hover{ background:rgba(255,255,255,.18); }
+  .drums-btn.on{ background:#fff; color:var(--red); }
+  table.grid.off tbody{ opacity:.4; }
+  table.grid.off tbody input{ pointer-events:none; }
+  #drums-note{ font-size:12.5px; font-weight:500; opacity:.92; }
   .sub{ display:flex; align-items:center; justify-content:space-between; background:var(--red); color:#fff; border-radius:6px; padding:8px 16px; font-weight:800; font-size:17px; margin-bottom:10px; }
   .sub b{ font-size:26px; }
   .tx label{ display:block; font-size:14px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--red); margin:0 0 3px; }
@@ -99,6 +105,8 @@
   table.grid td.c-chk input{ width:24px; height:24px; accent-color:var(--red); }
   table.grid td.c-ex{ font-weight:600; width:170px; }
 
+  .imp-row{ display:flex; align-items:center; gap:14px; margin:0 0 16px; }
+  .imp-row select{ flex:1; max-width:680px; box-sizing:border-box; border:1px solid #BFC3C8; border-radius:8px; padding:10px 12px; font:inherit; font-size:18px; background:#FFF8E1; }
   .btn-link{ display:inline-block; text-decoration:none; padding:9px 18px; }
   .qwrap{ display:grid; grid-template-columns:minmax(380px, 34%) minmax(0,1fr); gap:26px; align-items:start; }
   .qlist{ list-style:none; margin:0; padding:0; }
@@ -111,6 +119,47 @@
   .qcard textarea:focus{ outline:2px solid var(--red); background:#fff; }
   .qempty{ grid-column:1 / -1; margin:0; font-size:15px; color:var(--gray-500); }
   #stage.export .qempty{ display:none; }
+
+  /* ---- PDF vertical (A4 794 x 1123): se arma aparte de las pantallas, con paginación ---- */
+  .pdfroot{ position:absolute; left:0; top:0; z-index:1; background:#fff; font-family:var(--font-body); color:var(--ink); }
+  .pdfroot .pp-measure{ position:absolute; left:-20000px; top:0; width:682px; visibility:hidden; }
+  .pdfroot .pp-page{ width:794px; height:1123px; position:relative; overflow:hidden; background:#fff; margin:0 0 20px; box-sizing:border-box; }
+  .pdfroot .pp-head{ position:absolute; left:56px; right:56px; top:30px; height:62px; box-sizing:border-box; display:flex; align-items:center; justify-content:space-between; border-bottom:3px solid var(--red); padding-bottom:10px; }
+  .pdfroot .pp-head img{ height:44px; }
+  .pdfroot .pp-head .t{ text-align:right; font-size:12px; color:var(--gray-500); line-height:1.5; }
+  .pdfroot .pp-head .t strong{ display:block; color:var(--ink); font-size:14px; }
+  .pdfroot .pp-body{ position:absolute; left:56px; top:112px; width:682px; height:947px; overflow:hidden; }
+  .pdfroot .pp-foot{ position:absolute; left:56px; right:56px; bottom:26px; display:flex; justify-content:space-between; font-size:11px; color:var(--gray-500); border-top:1px solid #D9DBDE; padding-top:8px; }
+  .pdfroot .pp-blk{ margin-bottom:14px; }
+  .pdfroot .pp-h2{ font-family:'Bricolage Grotesque', var(--font-body); font-size:30px; font-weight:800; margin:0 0 14px; display:flex; justify-content:space-between; align-items:baseline; }
+  .pdfroot .pp-h2 span{ font-family:var(--font-body); font-size:18px; font-weight:700; }
+  .pdfroot .pp-h2 b{ color:var(--red); font-size:26px; }
+  .pdfroot .pp-h3{ margin:0 0 6px; font-size:14px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--red); }
+  .pdfroot .pp-p{ margin:0; font-size:14.5px; line-height:1.5; }
+  .pdfroot .pp-q{ margin:0 0 4px; font-size:14.5px; font-weight:700; color:var(--red); line-height:1.35; }
+  .pdfroot .pp-line{ margin:0; font-size:15px; line-height:1.4; }
+  .pdfroot table.pp-t{ width:100%; border-collapse:collapse; table-layout:fixed; }
+  .pdfroot table.pp-t th, .pdfroot table.pp-t td{ border:1px solid #BFC3C8; padding:6px 9px; font-size:13.5px; line-height:1.3; vertical-align:middle; text-align:left; }
+  .pdfroot table.pp-t thead th{ background:var(--red); color:#fff; font-size:14px; }
+  .pdfroot table.pp-t thead th small{ font-weight:500; opacity:.9; }
+  .pdfroot table.pp-t .sc{ width:78px; text-align:center; }
+  .pdfroot table.pp-t td.nm{ width:30%; font-weight:600; }
+  .pdfroot table.pp-t td.nm em{ font-style:normal; font-weight:500; color:var(--gray-500); }
+  .pdfroot table.pp-t td.ds{ color:var(--gray-700); }
+  .pdfroot table.pp-t tr.tot td{ background:var(--gray-100); font-weight:800; }
+  .pdfroot table.pp-t tr.tot td.sc{ color:var(--red); }
+  .pdfroot .pp-sub{ display:flex; justify-content:space-between; align-items:center; background:var(--red); color:#fff; border-radius:6px; padding:10px 16px; font-weight:800; font-size:16px; }
+  .pdfroot .pp-sub b{ font-size:24px; }
+  .pdfroot .pp-cb{ display:inline-block; width:18px; height:18px; border:1.5px solid #8A8F96; border-radius:3px; line-height:17px; text-align:center; font-weight:800; font-size:14px; color:var(--red); }
+  .pdfroot .pp-cover{ display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; height:1040px; }
+  .pdfroot .pp-cover img{ height:96px; margin-bottom:28px; }
+  .pdfroot .pp-cover .school{ font-family:'Bricolage Grotesque', var(--font-body); font-weight:800; font-size:30px; margin:0 0 8px; }
+  .pdfroot .pp-cover .report{ font-size:22px; color:var(--gray-700); margin:0 0 4px; }
+  .pdfroot .pp-cover .berklee{ font-size:16px; font-weight:700; letter-spacing:.18em; color:var(--red); margin:0 0 44px; }
+  .pdfroot table.pp-meta{ width:100%; border-collapse:collapse; text-align:left; }
+  .pdfroot table.pp-meta td{ padding:12px 4px; border-bottom:1px solid #D9DBDE; font-size:18px; }
+  .pdfroot table.pp-meta td:first-child{ width:34%; font-size:13px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--gray-500); }
+  #pdf-ov{ position:fixed; inset:0; z-index:9998; background:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:600; color:var(--gray-700); }
 
   /* sustitutos de controles al exportar */
   .ro-text{ white-space:pre-wrap; word-break:break-word; }
@@ -168,7 +217,7 @@
           <div id="perf-left"></div>
           <div>
             <div id="perf-right"></div>
-            <div class="sub"><span>SUB TOTAL (0 - 100)</span><span><b id="perf-sub">0</b></span></div>
+            <div class="sub"><span>SUB TOTAL (0 - 100)<small id="drums-note" hidden> · Drums: sin Técnica Instrumental, calculado sobre las demás secciones</small></span><span><b id="perf-sub">0</b></span></div>
           </div>
         </div>
         <div class="tx tx2">
@@ -213,9 +262,12 @@
         <div class="t"><strong>Mock Audition Evaluation Report</strong><span data-who></span></div></div>
       <div class="sh-body">
         <div class="titlebar"><h2>IMPROVISATION</h2></div>
-        <p class="no-pdf" style="margin:0 0 16px"><a class="btn pri btn-link" href="https://college.berklee.edu/admissions/undergraduate/practiceexercises" target="_blank" rel="noopener">Berklee practice exercises ↗</a></p>
+        <div class="imp-row">
+          <select id="f-improv-ex" data-f="improv_ex" aria-label="Ejercicio de improvisación"></select>
+          <a class="btn pri btn-link" href="https://college.berklee.edu/admissions/undergraduate/practiceexercises" target="_blank" rel="noopener">Berklee practice exercises ↗</a>
+        </div>
         <div class="tx big">
-          <label for="f-improv">Summary Evaluation</label><textarea id="f-improv" data-f="improv_summary" style="height:440px"></textarea>
+          <label for="f-improv">Summary Evaluation</label><textarea id="f-improv" data-f="improv_summary" style="height:400px"></textarea>
         </div>
       </div>
       <div class="sh-foot"><span>EMN – Escuela de Música y Negocios</span><span>Página 5 de 6</span></div>
@@ -285,6 +337,18 @@ const INTERVIEW = [
   "Why Berklee? What about Berklee's programs and activities speak to your career goals?",
 ];
 const GAP_AFTER = 3;
+
+/* Ejercicios de improvisación (Berklee practice exercises). */
+const IMPROV = {
+  'Blues Progressions': ['No Time Blues (jazz blues in F)', 'Any Day (in F)', 'Any Day (in C)', 'Shuffle Blues (in E)', 'Shuffle Blues (in A)', 'Funk Blues (in F)'],
+  'Standard-Form Songs': ['KJC (based on Killer Joe)', 'Parquet (rhythm changes)', 'Aqua Girl (based on Blue Bossa)', 'Samba de Orbit (based on Samba de Orpheus)'],
+  'R&B Vamps': ['R&B Vamp 1 (eight-bar vamp in E-flat minor)', 'R&B Vamp 2 (two-chord vamp in E-minor)'],
+  'Rock Vamps': ['Rock Vamp 1 (two-chord vamp in E)', 'Rock Vamp 2 (four-bar vamp in D-minor)', 'Rock Vamp 3 (four-bar vamp in E-minor)', 'Rock Vamp 4 (two-chord vamp in E)'],
+  'Funk/Fusion Vamps': ['Funk/Fusion Vamp 1 (two-bar vamp in B-flat, based on Chameleon)', 'Funk/Fusion Vamp 2 (Vamp in B-flat, based on The Chicken)', 'Funk/Fusion Vamp 3 (four-bar vamp in A-minor, based on Sunny)', 'Funk/Fusion Vamp 4 (Vamp in E, based on Beneath the Mask)'],
+  'Jazz Vamps': ['Jazz Vamp 1 (medium swing)', 'Jazz Vamp 2 (fast swing)', 'Jazz Vamp 3 (jazz waltz)', 'Jazz Vamp 4 (medium bossa)', 'Jazz Vamp 5 (samba)', 'Jazz Vamp 6 (jazz ballad)'],
+};
+$('#f-improv-ex').innerHTML = '<option value="">— Elige el ejercicio —</option>' + Object.entries(IMPROV).map(([g, l]) =>
+  `<optgroup label="${esc(g)}">${l.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('')}</optgroup>`).join('');
 $('#q-list').innerHTML = INTERVIEW.map((q, n) => `<li${n === GAP_AFTER ? ' class="gap"' : ''}><input type="checkbox" data-q="${n}" id="q${n}" aria-label="${esc(q)}"><label for="q${n}">${esc(q)}</label></li>`).join('');
 
 // Comentarios por pregunta (se guardan aunque desmarques y vuelvas a marcar).
@@ -299,7 +363,8 @@ function renderNotes(){
 function sectionHTML(s){
   const rows = s.items.map(i => `<tr><td class="c-name">${esc(i.name)} <em>(0–${i.max})</em></td><td class="c-desc">${esc(i.desc)}</td>
     <td class="c-score"><input type="number" min="0" max="${i.max}" step="0.5" inputmode="decimal" data-k="${i.k}" data-sec="${s.key}" aria-label="${esc(i.name)}"></td></tr>`).join('');
-  return `<table class="grid"><thead><tr><th>${esc(s.title)} <small>(${secMax(s)} puntos)</small></th><th>Explicación</th><th class="c-score">PUNTAJE</th></tr></thead>
+  const drumsBtn = s.key === 'tecnica' ? ' <button type="button" class="drums-btn" id="b-drums" aria-pressed="false" title="Baterista: esta sección no aplica y el puntaje se calcula sobre las demás">Drums</button>' : '';
+  return `<table class="grid" data-sec-table="${s.key}"><thead><tr><th>${esc(s.title)} <small>(${secMax(s)} puntos)</small>${drumsBtn}</th><th>Explicación</th><th class="c-score">PUNTAJE</th></tr></thead>
     <tbody>${rows}<tr class="tot"><td colspan="2">TOTAL</td><td class="c-score"><span data-total="${s.key}">0</span> <small>/${secMax(s)}</small></td></tr></tbody></table>`;
 }
 $('#perf-left').innerHTML = SECTIONS.slice(0, 3).map(sectionHTML).join('');
@@ -318,13 +383,14 @@ function collect(){
     done: $(`[data-ex="${n}"][data-p="done"]`).checked,
     c: $(`[data-ex="${n}"][data-p="c"]`).value,
   }));
-  return { perf, strengths: $('#f-strengths').value, improvements: $('#f-improve').value,
+  return { drums, perf, strengths: $('#f-strengths').value, improvements: $('#f-improve').value,
            sight: { score: $('#f-sr').value, ex, summary: $('#f-summary').value },
-           improv_summary: $('#f-improv').value,
+           improv_ex: $('#f-improv-ex').value, improv_summary: $('#f-improv').value,
            interview: INTERVIEW.map((q, n) => ({ q, n })).filter(x => $(`[data-q="${x.n}"]`).checked).map(x => ({ q: x.q, c: qNotes[x.n] || '' })) };
 }
 function fill(d){
   d = d || {};
+  drums = !!d.drums;
   $$('[data-k]').forEach(i => { i.value = d.perf?.[i.dataset.k] ?? ''; });
   $('#f-strengths').value = d.strengths || '';
   $('#f-improve').value = d.improvements || '';
@@ -336,6 +402,7 @@ function fill(d){
     $(`[data-ex="${n}"][data-p="c"]`).value = e.c || '';
   }
   $('#f-improv').value = d.improv_summary || '';
+  $('#f-improv-ex').value = d.improv_ex || '';
   qNotes = {};
   INTERVIEW.forEach((q, n) => {
     const hit = (d.interview || []).find(x => (x.q ?? x) === q);
@@ -343,15 +410,33 @@ function fill(d){
     if(hit) qNotes[n] = hit.c || '';
   });
   renderNotes();
-  recalc();
+  setDrums(drums);
 }
 const fmt = n => String(Math.round(n * 100) / 100);
-function perfTotal(){ return SECTIONS.reduce((a, s) => a + s.items.reduce((b, i) => b + (num($(`[data-k="${i.k}"]`).value) || 0), 0), 0); }
+const secSum = (d, s) => s.items.reduce((a, i) => a + (num(d.perf[i.k]) || 0), 0);
+// Con Drums, Técnica Instrumental no cuenta: el puntaje (sobre 100) se calcula solo con las demás secciones.
+const perfScoreOf = d => {
+  const act = SECTIONS.filter(s => !(d.drums && s.key === 'tecnica'));
+  const sum = act.reduce((a, s) => a + secSum(d, s), 0), max = act.reduce((a, s) => a + secMax(s), 0);
+  return max ? sum * 100 / max : 0;
+};
+const perfTotal = () => perfScoreOf(collect());
+let drums = false;
+function setDrums(on){
+  drums = !!on;
+  $('#b-drums').classList.toggle('on', drums);
+  $('#b-drums').setAttribute('aria-pressed', String(drums));
+  $('[data-sec-table="tecnica"]').classList.toggle('off', drums);
+  $$('[data-sec="tecnica"]').forEach(i => { i.disabled = drums; });
+  $('#drums-note').hidden = !drums;
+  recalc();
+}
 function recalc(){
+  const d = collect();
   SECTIONS.forEach(s => {
-    $(`[data-total="${s.key}"]`).textContent = fmt(s.items.reduce((b, i) => b + (num($(`[data-k="${i.k}"]`).value) || 0), 0));
+    $(`[data-total="${s.key}"]`).textContent = (drums && s.key === 'tecnica') ? 'N/A' : fmt(secSum(d, s));
   });
-  const t = fmt(perfTotal());
+  const t = fmt(perfScoreOf(d));
   $('#perf-sub').textContent = t; $('#perf-x').textContent = t;
 }
 
@@ -397,35 +482,122 @@ async function doSave(){
 }
 function touch(){ dirty = true; setStatus('Cambios sin guardar…'); clearTimeout(timer); timer = setTimeout(save, 1500); }
 
-/* ---------- PDF (3 hojas horizontales, con el logo) ---------- */
+/* ---------- PDF vertical (A4) ----------
+   No se fotografían las pantallas: el PDF se arma aparte, en hojas verticales, a partir de lo que llenaste.
+   Cada bloque (tabla, cuadro de texto, pregunta…) se mide y, si ya no cabe en la hoja, pasa a una nueva,
+   así nada se encima ni se sale de los márgenes. Cada parte del reporte empieza en hoja nueva. */
+const PH = 1123, PW = 794, PCH = 947, PGAP = 14;
+const pv = v => { const n = num(v); return n === null ? '—' : fmt(n); };
+function pdfSection(d, s){
+  const off = d.drums && s.key === 'tecnica';
+  const rows = s.items.map(i => `<tr><td class="nm">${esc(i.name)} <em>(0–${i.max})</em></td><td class="ds">${esc(i.desc)}</td><td class="sc">${off ? '—' : pv(d.perf[i.k])}</td></tr>`).join('');
+  return `<table class="pp-t"><thead><tr><th>${esc(s.title)} <small>(${off ? 'Drums: no aplica' : secMax(s) + ' puntos'})</small></th><th>Explicación</th><th class="sc">PUNTAJE</th></tr></thead>
+    <tbody>${rows}<tr class="tot"><td colspan="2">TOTAL</td><td class="sc">${off ? 'N/A' : fmt(secSum(d, s)) + '/' + secMax(s)}</td></tr></tbody></table>`;
+}
+
+function paginate(d, root){
+  const measure = document.createElement('div'); measure.className = 'pp-measure'; root.appendChild(measure);
+  const pages = []; let body = null, used = 0;
+  const mk = (html) => { const b = document.createElement('div'); b.className = 'pp-blk'; b.innerHTML = html; return b; };
+  const hOf = b => { measure.innerHTML = ''; measure.appendChild(b); return b.offsetHeight + PGAP; };
+  const who = `${esc(cur.nombre)} · ${esc(longDate(hoyKey()))}`;
+  const newPage = (cover) => {
+    const p = document.createElement('section'); p.className = 'pp-page';
+    p.innerHTML = `${cover ? '' : `<div class="pp-head"><img src="/assets/img/emn-logo.png" alt="EMN"><div class="t"><strong>Mock Audition Evaluation Report</strong>${who}</div></div>`}
+      <div class="pp-body"${cover ? ' style="top:0;height:1040px"' : ''}></div>
+      <div class="pp-foot"><span>EMN – Escuela de Música y Negocios</span><span class="pn"></span></div>`;
+    root.appendChild(p); pages.push(p); body = p.querySelector('.pp-body'); used = 0;
+  };
+  const put = (b, h) => { body.appendChild(b); used += h; };
+  const place = b => {
+    const h = hOf(b);
+    if(!body || (used > 0 && used + h > PCH)) newPage();
+    put(b, h);
+  };
+  // Texto largo: cada párrafo es un bloque; si uno solo no cabe ni en una hoja entera, se parte por palabras.
+  const placeText = (head, text) => {
+    const paras = String(text || '').split(/\n+/).map(x => x.trim()).filter(Boolean);
+    if(!paras.length) paras.push('—');
+    let first = true;
+    for(const para of paras){
+      let words = para.split(/\s+/);
+      while(words.length){
+        const build = ws => mk((first && head ? head : '') + `<p class="pp-p">${esc(ws.join(' '))}</p>`);
+        const b = build(words), h = hOf(b);
+        if(!body) newPage();
+        if(used + h <= PCH){ put(b, h); first = false; break; }
+        if(used > 0 && (h <= PCH || PCH - used < 90)){ newPage(); continue; }
+        let lo = 1, hi = words.length - 1, n = 1;
+        while(lo <= hi){ const m = (lo + hi) >> 1; if(hOf(build(words.slice(0, m))) <= PCH - used){ n = m; lo = m + 1; } else hi = m - 1; }
+        const b2 = build(words.slice(0, n)); put(b2, hOf(b2)); first = false;
+        words = words.slice(n); newPage();
+      }
+    }
+  };
+  const part = () => { body = null; };
+
+  // Portada
+  newPage(true);
+  body.appendChild(mk(`<div class="pp-cover"><img src="/assets/img/emn-logo.png" alt="EMN">
+    <p class="school">EMN – ESCUELA DE MÚSICA Y NEGOCIOS</p><p class="report">Mock Audition Evaluation Report</p><p class="berklee">BERKLEE MOCK AUDITION</p>
+    <table class="pp-meta"><tr><td>Student</td><td>${esc(cur.nombre)}</td></tr><tr><td>Instrument</td><td>${esc(cur.datos?.instrumento || '—')}</td></tr>
+    <tr><td>Date</td><td>${esc(longDate(hoyKey()))}</td></tr><tr><td>Evaluator</td><td>${esc(evaluador)}</td></tr></table></div>`));
+
+  // Performance
+  part();
+  const total = perfScoreOf(d);
+  place(mk(`<h2 class="pp-h2">PERFORMANCE <span>Score <b>${fmt(total)}</b>/100</span></h2>${pdfSection(d, SECTIONS[0])}`));
+  SECTIONS.slice(1).forEach(s => place(mk(pdfSection(d, s))));
+  place(mk(`<div class="pp-sub"><span>SUB TOTAL (0 - 100)${d.drums ? ' <small style="font-weight:500;font-size:12px">· Drums: sin Técnica Instrumental, calculado sobre las demás secciones</small>' : ''}</span><b>${fmt(total)}</b></div>`));
+  placeText('<h3 class="pp-h3">Strengths</h3>', d.strengths);
+  placeText('<h3 class="pp-h3">Areas of Improvement</h3>', d.improvements);
+
+  // Sight Reading
+  part();
+  const exRows = d.sight.ex.map((e, n) => `<tr><td class="nm">Ejercicio ${n + 1}</td><td class="sc" style="width:150px"><span class="pp-cb">${e.done ? '✓' : ''}</span></td><td>${esc(e.c)}</td></tr>`).join('');
+  place(mk(`<h2 class="pp-h2">SIGHT READING <span>Score <b>${pv(d.sight.score)}</b>/100</span></h2>
+    <table class="pp-t"><thead><tr><th style="width:130px">Ejercicio</th><th class="sc" style="width:150px">Completados correctamente</th><th>Comentarios</th></tr></thead><tbody>${exRows}</tbody></table>`));
+  placeText('<h3 class="pp-h3">Summary Evaluation</h3>', d.sight.summary);
+
+  // Ear Training (en blanco)
+  part();
+  place(mk('<h2 class="pp-h2">EAR TRAINING</h2>'));
+
+  // Improvisation
+  part();
+  place(mk(`<h2 class="pp-h2">IMPROVISATION</h2><p class="pp-line"><b>Exercise:</b> ${esc(d.improv_ex || '—')}</p>`));
+  placeText('<h3 class="pp-h3">Summary Evaluation</h3>', d.improv_summary);
+
+  // Interview (solo las preguntas marcadas, con sus comentarios)
+  part();
+  place(mk('<h2 class="pp-h2">INTERVIEW</h2>'));
+  if(!d.interview.length) place(mk('<p class="pp-p">—</p>'));
+  d.interview.forEach(x => placeText(`<div class="pp-q">${esc(x.q)}</div>`, x.c));
+
+  pages.forEach((p, i) => { p.querySelector('.pn').textContent = `Página ${i + 1} de ${pages.length}`; });
+  measure.remove();
+  return pages;
+}
+
 async function buildPdf(){
-  const stage = $('#stage'), sheets = $('#sheets');
-  const prevZoom = sheets.style.zoom;
-  sheets.style.zoom = 1; sheets.style.setProperty('--sw', '1123px'); stage.classList.add('export');
+  const d = collect();
+  const ov = document.createElement('div'); ov.id = 'pdf-ov'; ov.textContent = 'Generando PDF…';
+  const root = document.createElement('div'); root.className = 'pdfroot';
+  document.body.append(root, ov);
   try{
-    await Promise.all($$('#sheets img').map(im => im.complete ? 1 : new Promise(r => { im.onload = im.onerror = r; })));
+    if(document.fonts?.ready) await document.fonts.ready;
+    const pages = paginate(d, root);
+    await Promise.all([...root.querySelectorAll('img')].map(im => im.complete ? 1 : new Promise(r => { im.onload = im.onerror = r; })));
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [1123, 794], compress: true });
-    const els = $$('.sheet');
-    for(let n = 0; n < els.length; n++){
-      const canvas = await html2canvas(els[n], { scale: 2, backgroundColor: '#ffffff', useCORS: true, width: 1123, height: 794,
-        onclone: (doc) => {
-          // Los controles se dibujan mal en canvas: se cambian por texto fijo en la copia.
-          doc.querySelectorAll('select, textarea, input').forEach(c => {
-            const s = doc.createElement('div');
-            if(c.type === 'checkbox'){ s.className = 'cbx'; s.textContent = c.checked ? '✓' : ''; }
-            else { s.className = 'ro-text'; s.textContent = c.tagName === 'SELECT' ? (c.selectedOptions[0]?.textContent || '') : c.value; s.style.cssText = 'min-height:1em;padding:3px 4px;font:inherit;text-align:' + (c.type === 'number' ? 'center' : 'left'); }
-            c.replaceWith(s);
-          });
-          doc.querySelectorAll('.no-pdf').forEach(e => e.remove());
-          doc.querySelectorAll('.sheet').forEach(e => { e.style.display = 'block'; });
-        } });
-      if(n) pdf.addPage([1123, 794], 'landscape');
-      pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 1123, 794);
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [PW, PH], compress: true });
+    for(let n = 0; n < pages.length; n++){
+      const canvas = await html2canvas(pages[n], { scale: 2, backgroundColor: '#ffffff', useCORS: true, width: PW, height: PH, windowWidth: PW, windowHeight: PH });
+      if(n) pdf.addPage([PW, PH], 'portrait');
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, PW, PH);
     }
     return pdf.output('blob');
   } finally {
-    stage.classList.remove('export'); sheets.style.zoom = prevZoom; fit();
+    root.remove(); ov.remove();
   }
 }
 const fileName = () => `EMN-Mock-Audition-Report-${(cur?.nombre || 'alumno').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${hoyKey()}.pdf`;
@@ -521,6 +693,7 @@ emnInit().then(async () => {
     if(e.target.dataset.q !== undefined) renderNotes();
     if(cur) touch();
   });
+  $('#sheets').addEventListener('click', e => { if(e.target.closest('#b-drums')){ setDrums(!drums); if(cur) touch(); } });
   $('#b-save').addEventListener('click', () => { if(needStudent()) save(); });
   $('#b-pdf').addEventListener('click', downloadPdf);
   $('#b-send').addEventListener('click', sendReport);
