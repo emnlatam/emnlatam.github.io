@@ -1068,7 +1068,7 @@ let chordSamplesPreloaded = false;
 function preloadChordSamples(){
   if(chordSamplesPreloaded) return;
   chordSamplesPreloaded = true;
-  for(let m = 48; m <= 70; m++) loadBuffer(midiToSampleUrl(m)).catch(() => {});
+  for(let m = 48; m <= 70; m++) loadBuffer(midiToSample(m).url).catch(() => {});
 }
 function updateDictationView(){
   const on = btnDictation.classList.contains('active');
@@ -1805,10 +1805,21 @@ function generateCore(){
 // matches scientific pitch notation (midi 60 = C4), same convention letterOctave()
 // already uses above. There's no separate sharp set, so lookup is by pitch class only.
 const PIANO_PC_NAMES = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
-function midiToSampleUrl(midi){
-  const pc = ((midi % 12) + 12) % 12;
-  const octave = Math.floor(midi / 12) - 1;
-  return `/assets/sounds/piano/${PIANO_PC_NAMES[pc]}${octave}.mp3`;
+// Trial bank switch: 'salamander' (assets/sounds/piano-salamander, every minor third, pitch-shifted in between) or 'legacy' (assets/sounds/piano, every key).
+const PIANO_BANK = 'salamander';
+const SALAMANDER_PC_NAMES = {0:'C', 3:'Ds', 6:'Fs', 9:'A'}; // pitch classes in the Salamander set (A0 = midi 21, then every 3 semitones)
+// Returns { url, rate }: the sample to load and the playbackRate that turns it into the requested pitch.
+function midiToSample(midi){
+  if(PIANO_BANK === 'legacy'){
+    const pc = ((midi % 12) + 12) % 12;
+    const octave = Math.floor(midi / 12) - 1;
+    return { url: `/assets/sounds/piano/${PIANO_PC_NAMES[pc]}${octave}.mp3`, rate: 1 };
+  }
+  const clamped = Math.min(108, Math.max(21, midi));
+  const base = 21 + 3 * Math.round((clamped - 21) / 3);
+  const pc = ((base % 12) + 12) % 12;
+  const octave = Math.floor(base / 12) - 1;
+  return { url: `/assets/sounds/piano-salamander/${SALAMANDER_PC_NAMES[pc]}${octave}.mp3`, rate: Math.pow(2, (midi - base) / 12) };
 }
 function secondsPerTick(){ return 60 / state.bpm / 4; } // 4 ticks (sixteenths) per quarter note, read live so the BPM control takes effect immediately
 
@@ -1891,9 +1902,10 @@ async function loadBuffer(url){
 // would ring out its full raw sample length, which is what was surfacing
 // as a lingering extra layer under the following notes. A short linear
 // fade into the cutoff avoids an audible click from stopping cold.
-function scheduleHit(ctx, buffer, when, sources, stopAt){
+function scheduleHit(ctx, buffer, when, sources, stopAt, rate = 1){
   const source = ctx.createBufferSource();
   source.buffer = buffer;
+  source.playbackRate.value = rate;
   const gain = ctx.createGain();
   source.connect(gain);
   gain.connect(ctx.destination);
@@ -1936,7 +1948,7 @@ async function playMelody(){
 
   // Rhythm mode doesn't need any piano samples at all -- every note is the
   // synthesized click instead (see scheduleRhythmClick).
-  const urls = state.mode === 'rhythm' ? [] : [...new Set(playbackSeq.filter(e => e.midi != null).map(e => midiToSampleUrl(e.midi)))];
+  const urls = state.mode === 'rhythm' ? [] : [...new Set(playbackSeq.filter(e => e.midi != null).map(e => midiToSample(e.midi).url))];
   btn.disabled = true;
   btn.textContent = 'Loading…';
   try {
@@ -1968,7 +1980,8 @@ async function playMelody(){
       if(state.mode === 'rhythm'){
         scheduleRhythmClick(ctx, t0 + cursor, sources);
       } else {
-        const buffer = await bufferCache[midiToSampleUrl(ev.midi)];
+        const sample = midiToSample(ev.midi);
+        const buffer = await bufferCache[sample.url];
         // Every note gets a cutoff -- a rest right after gets an almost
         // immediate one so the silence reads as silence; a following note
         // (or the end of the piece) gets a short natural tail instead of
@@ -1977,7 +1990,7 @@ async function playMelody(){
         const next = playbackSeq[i + 1];
         const noteEndTime = t0 + cursor + ev.ticks * spt;
         const stopAt = (next && next.midi == null) ? noteEndTime : noteEndTime + 0.25;
-        scheduleHit(ctx, buffer, t0 + cursor, sources, stopAt);
+        scheduleHit(ctx, buffer, t0 + cursor, sources, stopAt, sample.rate);
       }
     }
     cursor += ev.ticks * spt;
@@ -2037,7 +2050,10 @@ async function soundChord(midis){
   btn.textContent = 'Loading…';
   let buffers;
   try {
-    buffers = await Promise.all(midis.map(m => loadBuffer(midiToSampleUrl(m))));
+    buffers = await Promise.all(midis.map(async m => {
+      const sample = midiToSample(m);
+      return { buffer: await loadBuffer(sample.url), rate: sample.rate };
+    }));
   } catch (err) {
     finishPlayback(btn);
     console.error('Could not load piano samples', err);
@@ -2053,7 +2069,7 @@ async function soundChord(midis){
   const sources = [];
   const t0 = ctx.currentTime + 0.05;
   const HOLD = 2.6; // seconds
-  buffers.forEach(buf => scheduleHit(ctx, buf, t0, sources, t0 + HOLD));
+  buffers.forEach(({ buffer, rate }) => scheduleHit(ctx, buffer, t0, sources, t0 + HOLD, rate));
   activeSources = sources;
   setTimeout(() => {
     if(myToken !== playbackToken) return;
