@@ -227,7 +227,12 @@ async function openCourse(id){
     const v = Array.isArray(r.lesson_videos) ? r.lesson_videos[0] : r.lesson_videos;
     const name = r.section || '';
     if(!modules.length || modules[modules.length - 1].name !== name) modules.push({ name, lessons: [] });
-    modules[modules.length - 1].lessons.push({ id: r.id, kind: r.kind, title: r.title, description: r.description || '', duration_min: r.duration_min, is_free: r.is_free, video_url: v?.video_url || '', quiz: v?.quiz || [] });
+    const rawTitle = (r.title || '').trim();
+    const title = id === '4ce37d75-aaa0-46aa-ab43-0f21ece1a635'
+      ? (/^empieza aqu[ií]$/i.test(rawTitle) ? 'What are we building and how?'
+        : /^construye tu p[aá]gina$/i.test(rawTitle) ? 'Meet GitHub' : r.title)
+      : r.title;
+    modules[modules.length - 1].lessons.push({ id: r.id, kind: r.kind, title, description: r.description || '', duration_min: r.duration_min, is_free: r.is_free, video_url: v?.video_url || '', quiz: v?.quiz || [] });
   });
   loadedIds = (data || []).map(r => r.id);
   setDirty(false); $('#msg').textContent = '';

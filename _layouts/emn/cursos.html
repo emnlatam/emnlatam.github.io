@@ -83,11 +83,14 @@
   .stage__nav button:hover{ color:var(--red); }
   .stage__nav button:disabled{ opacity:.3; cursor:default; color:inherit; }
   .stage__nav button:focus-visible{ outline:2px solid var(--blue); }
-  .stage__body{ max-width:1180px; margin:0 auto; padding:40px 32px 60px; }
+  .stage__body{ width:100%; max-width:none; margin:0; padding:40px clamp(24px,5vw,80px) 60px; }
   .stage__body h1{ font-family:var(--font-body); font-weight:700; font-size:clamp(28px,4vw,46px); line-height:1.15; letter-spacing:-.01em; margin:0 0 30px; }
   .player{ aspect-ratio:16/9; border-radius:16px; overflow:hidden; background:#111; border:1px solid var(--gray-300); }
   .player iframe, .player video{ width:100%; height:100%; border:0; display:block; background:#000; }
   .player__empty{ height:100%; display:flex; align-items:center; justify-content:center; color:#aaa; font-size:14px; }
+  .shortcuts{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:18px; padding:14px 18px; border:1px solid var(--gray-300); border-radius:12px; background:var(--gray-100); }
+  .shortcuts__title{ margin:0 8px 0 0; font-size:13px; font-weight:700; }
+  .shortcuts .btn{ text-decoration:none; }
   .player--locked{ background:var(--gray-100); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center; padding:24px; }
   .player--locked svg{ width:44px; height:44px; color:var(--red); }
   .player--locked h2{ font-family:var(--font-display); font-size:22px; margin:0; }
@@ -306,6 +309,7 @@ function renderLesson(){
     <div class="stage__body">
       <h1>${esc(current.title)}</h1>
       ${locked ? lockedHTML() : (isQuiz ? `<div id="quiz">${quizHTML()}</div>` : playerHTML(current.video_url))}
+      ${!isQuiz ? `<section class="shortcuts" aria-label="ShortCuts"><h2 class="shortcuts__title">ShortCuts</h2>${i === 1 ? `<a class="btn" href="https://github.com/signup?ref_cta=Sign+up&ref_loc=header+logged+out&ref_page=%2F&source=header-home" target="_blank" rel="noopener noreferrer">GitHub</a>` : ''}</section>` : ''}
       <div class="actions">
         <button class="btn" type="button" data-nav="-1"${first}>← Anterior</button>
         ${manual ? `<button class="btn${isDone ? ' is-done' : ''}" id="toggle" type="button">${isDone ? '✓ Completada' : 'Marcar como completada'}</button>` : ''}
@@ -352,7 +356,11 @@ async function showViewer(courseId, lessonId){
     if(error) console.error(error);
     lessons = (data || []).map(l => {
       const v = Array.isArray(l.lesson_videos) ? l.lesson_videos[0] : l.lesson_videos;
-      return { ...l, video_url: v?.video_url || null, quiz: v?.quiz || [] };
+      const title = courseId === '4ce37d75-aaa0-46aa-ab43-0f21ece1a635'
+        ? (/^empieza aqu[ií]$/i.test(l.title.trim()) ? 'What are we building and how?'
+          : /^construye tu p[aá]gina$/i.test(l.title.trim()) ? 'Meet GitHub' : l.title)
+        : l.title;
+      return { ...l, title, video_url: v?.video_url || null, quiz: v?.quiz || [] };
     });
   }
   if(!lessons.length){

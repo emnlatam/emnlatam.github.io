@@ -43,7 +43,9 @@ Deno.serve(async (req) => {
   if (callerErr || !caller) return json({ error: 'Invalid session' }, 401);
 
   const adminClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-  const { data: callerRow } = await adminClient.from('students').select('role').eq('id', caller.id).maybeSingle();
+  const { data: callerRow, error: roleErr } = await adminClient.from('students').select('role').eq('id', caller.id).maybeSingle();
+  // If the lookup itself fails (e.g. bad SUPABASE_SERVICE_ROLE_KEY) say so, instead of a misleading "Admins only".
+  if (roleErr) return json({ error: `No se pudo verificar el rol: ${roleErr.message}` }, 500);
   if (callerRow?.role !== 'admin') return json({ error: 'Admins only' }, 403);
 
   let body: any;
