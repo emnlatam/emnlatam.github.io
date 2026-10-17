@@ -310,7 +310,7 @@ function renderLesson(){
     <div class="stage__body">
       <h1>${esc(current.title)}</h1>
       ${locked ? lockedHTML() : (isQuiz ? `<div id="quiz">${quizHTML()}</div>` : playerHTML(current.video_url))}
-      ${!isQuiz ? `<section class="shortcuts" aria-label="ShortCuts"><h2 class="shortcuts__title">ShortCuts:</h2>${i === 1 ? `<a class="btn" href="https://github.com/signup?ref_cta=Sign+up&ref_loc=header+logged+out&ref_page=%2F&source=header-home" target="_blank" rel="noopener noreferrer">GitHub</a>` : ''}</section>` : ''}
+      ${!isQuiz ? `<section class="shortcuts" aria-label="ShortCuts"><h2 class="shortcuts__title">ShortCuts:</h2>${i === 1 ? `<a class="btn" href="https://github.com/signup?ref_cta=Sign+up&ref_loc=header+logged+out&ref_page=%2F&source=header-home" target="_blank" rel="noopener noreferrer">GitHub</a>` : ''}${/^publica tu (?:p[aá]gina|pg) gratis$/i.test(current.title.trim()) ? `<a class="btn" href="https://desktop.github.com/download/" target="_blank" rel="noopener noreferrer">GitHub Desktop</a>` : ''}</section>` : ''}
       <div class="actions">
         <button class="btn" type="button" data-nav="-1"${first}>← Anterior</button>
         ${manual ? `<button class="btn${isDone ? ' is-done' : ''}" id="toggle" type="button">${isDone ? '✓ Completada' : 'Marcar como completada'}</button>` : ''}
