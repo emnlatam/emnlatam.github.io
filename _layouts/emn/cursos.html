@@ -83,7 +83,8 @@
   .stage__nav button:hover{ color:var(--red); }
   .stage__nav button:disabled{ opacity:.3; cursor:default; color:inherit; }
   .stage__nav button:focus-visible{ outline:2px solid var(--blue); }
-  .stage__body{ box-sizing:border-box; width:100%; max-width:none; margin:0; padding:32px clamp(12px,2vw,30px) 60px; }
+  .stage__body{ box-sizing:border-box; width:100%; max-width:none; margin:0; padding:32px 20px 60px; }
+  .desc{ max-width:none; }
   .stage__body h1{ font-family:var(--font-body); font-weight:700; font-size:clamp(28px,4vw,46px); line-height:1.15; letter-spacing:-.01em; margin:0 0 30px; }
   .player{ aspect-ratio:16/9; border-radius:16px; overflow:hidden; background:#111; border:1px solid var(--gray-300); }
   .player iframe, .player video{ width:100%; height:100%; border:0; display:block; background:#000; }
@@ -102,6 +103,9 @@
   .shortcuts__platform h3{ margin:0; font-size:14px; }
   .shortcuts__platform .shortcuts__platform-buttons{ display:flex; flex-direction:column; align-items:flex-start; gap:4px; }
   .shortcuts__platform-row{ display:flex; align-items:center; gap:4px; }
+  .faq{ margin-top:24px; }
+  .faq__title{ font-family:var(--font-display); font-size:20px; margin:0 0 8px; }
+  .faq__empty{ margin:0; font-size:14px; color:var(--gray-500); }
   .player--locked{ background:var(--gray-100); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center; padding:24px; }
   .player--locked svg{ width:44px; height:44px; color:var(--red); }
   .player--locked h2{ font-family:var(--font-display); font-size:22px; margin:0; }
@@ -313,7 +317,8 @@ function renderLesson(){
   const isAuto = /\.(mp4|webm)(\?|$)|youtu\.?be/i.test(current.video_url || '');
   const manual = canTrack() && !isQuiz && !isAuto && current.video_url;
   const first = i === 0 ? ' disabled' : '', last = i === lessons.length - 1 ? ' disabled' : '';
-  const isDomainLesson = current.title.trim().toLocaleLowerCase().replace(/\s+/g, ' ') === 'conecta tu dominio y próximos pasos';
+  const isVibe = course.id === '4ce37d75-aaa0-46aa-ab43-0f21ece1a635';
+  const isDomainLesson = isVibe && i === 3;
   const shortcutsHTML = isQuiz ? '' : `<section class="shortcuts${isDomainLesson ? ' shortcuts--platforms' : ''}" aria-label="ShortCuts">
     <h2 class="shortcuts__title">ShortCuts:</h2>
     ${isDomainLesson ? `
@@ -326,7 +331,7 @@ function renderLesson(){
         <div class="shortcuts__platform-row"><a class="btn" href="https://brew.sh/" target="_blank" rel="noopener noreferrer">HomeBrew</a>${copyShortcut('Ruby', '$ brew install ruby ')}</div>
         ${copyShortcut('Jekyll Bundler', 'gem install jekyll bundler')}
         ${copyShortcut('Jekyll Folder', 'jekyll new --skip-bundle .')}
-      </div></div>` : `${i === 1 ? `<a class="btn" href="https://github.com/signup?ref_cta=Sign+up&ref_loc=header+logged+out&ref_page=%2F&source=header-home" target="_blank" rel="noopener noreferrer">GitHub</a>${copyShortcut('.github.io', '.github.io')}` : ''}${/^publica tu (?:p[aá]gina|pg) gratis$/i.test(current.title.trim()) ? `<a class="btn" href="https://desktop.github.com/download/" target="_blank" rel="noopener noreferrer">GitHub Desktop</a>` : ''}`}
+      </div></div>` : `${i === 1 ? `<a class="btn" href="https://github.com/signup?ref_cta=Sign+up&ref_loc=header+logged+out&ref_page=%2F&source=header-home" target="_blank" rel="noopener noreferrer">GitHub</a>${copyShortcut('.github.io', '.github.io')}` : ''}${isVibe && i === 2 ? `<a class="btn" href="https://desktop.github.com/download/" target="_blank" rel="noopener noreferrer">GitHub Desktop</a>` : ''}`}
   </section>`;
   if(isQuiz) quizRun = { i: 0, answers: [] };
   $('#stage').innerHTML = `
@@ -344,6 +349,7 @@ function renderLesson(){
         <span class="grow"></span>
         <button class="btn primary" type="button" data-nav="1"${last}>Siguiente →</button>
       </div>
+      ${isQuiz ? '' : '<section class="faq" aria-label="FAQ"><h2 class="faq__title">FAQ</h2><p class="faq__empty">Questions coming soon.</p></section>'}
       ${current.description ? `<div class="desc">${esc(current.description)}</div>` : ''}
     </div>`;
   const lesson = current;
@@ -384,11 +390,7 @@ async function showViewer(courseId, lessonId){
     if(error) console.error(error);
     lessons = (data || []).map(l => {
       const v = Array.isArray(l.lesson_videos) ? l.lesson_videos[0] : l.lesson_videos;
-      const title = courseId === '4ce37d75-aaa0-46aa-ab43-0f21ece1a635'
-        ? (/^empieza aqu[ií]$/i.test(l.title.trim()) ? 'What are we building and how?'
-          : /^construye tu p[aá]gina$/i.test(l.title.trim()) ? 'Meet GitHub' : l.title)
-        : l.title;
-      return { ...l, title, video_url: v?.video_url || null, quiz: v?.quiz || [] };
+      return { ...l, video_url: v?.video_url || null, quiz: v?.quiz || [] };
     });
   }
   if(!lessons.length){

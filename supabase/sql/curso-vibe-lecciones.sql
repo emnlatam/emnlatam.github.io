@@ -1,57 +1,32 @@
--- Set the eight requested lesson titles in the Vibe Tools course.
--- Run in Supabase SQL Editor. Safe to rerun: the first three lessons are
--- renamed by order, and lessons 4–8 are inserted only when their title is absent.
+-- Vibe Tools course: 8 sections, one video each. Run in Supabase SQL Editor.
+-- Rewrites the course outline by lesson id (the original six lessons) and
+-- inserts sections 5-8 only when absent. Safe to rerun.
 begin;
 
-with target as (
-  select '4ce37d75-aaa0-46aa-ab43-0f21ece1a635'::uuid as course_id
-), first_three as (
-  select l.id,
-         row_number() over (order by l.position, l.id) as n
-  from public.course_lessons l
-  join target t on t.course_id = l.course_id
-  order by l.position, l.id
-  limit 3
-), names(n, title) as (
-  values
-    (1, 'What are we building and how?'),
-    (2, 'Meet GitHub'),
-    (3, 'GitHub Desktop')
-)
-update public.course_lessons l
-set title = names.title
-from first_three f
-join names using (n)
-where l.id = f.id;
+-- Drop "Arma la estructura…" and "Diseño, fotos y contenido".
+delete from public.course_lessons
+where id in ('5a352ca1-0f57-458c-b156-8afe80a701f6','879888ec-f110-48ba-bb4b-529529caad19');
 
-with target as (
-  select '4ce37d75-aaa0-46aa-ab43-0f21ece1a635'::uuid as course_id
-), desired(title, n) as (
-  values
-    ('Install your vibe tools', 4),
-    ('Launching your web', 5),
-    ('Editing your website with AI', 6),
-    ('Enhancing your workflow with AI', 7),
-    ('Create your web domain!', 8)
-), missing as (
-  select d.title, d.n
-  from desired d
-  cross join target t
-  where not exists (
-    select 1 from public.course_lessons l
-    where l.course_id = t.course_id and l.title = d.title
-  )
-), base as (
-  select coalesce(max(l.position), 0) as max_position,
-         (array_agg(l.section order by l.position) filter (where l.id is not null))[1] as section
-  from target t
-  left join public.course_lessons l on l.course_id = t.course_id
-)
+update public.course_lessons set section='What are we building and how?', title='What are we building and how?', position=1
+  where id='1b24f8a7-9e55-41c8-9bc4-ece16aa70fea';
+update public.course_lessons set section='Meet GitHub', title='Meet GitHub', position=2
+  where id='5b5babdb-3721-4b7d-905e-bc978ac71682';
+update public.course_lessons set section='GitHub Desktop', title='GitHub Desktop', position=3
+  where id='c1350eea-7449-4c6a-a989-4d027d7d16f2';
+update public.course_lessons set section='Install your Vibe tools', title='Install your Vibe tools', position=4
+  where id='4b268c5f-c842-45c1-a3a3-0a3bd8e259f4';
+
 insert into public.course_lessons (course_id, section, title, position, kind, is_free)
-select t.course_id, b.section, m.title, b.max_position + row_number() over (order by m.n), 'video', false
-from target t
-cross join base b
-cross join missing m
-order by m.n;
+select '4ce37d75-aaa0-46aa-ab43-0f21ece1a635', v.t, v.t, v.p, 'video', false
+from (values
+  ('Launching your web', 5),
+  ('Editing your website with AI', 6),
+  ('Enhancing your workflow with AI', 7),
+  ('Create your web domain!', 8)
+) v(t, p)
+where not exists (
+  select 1 from public.course_lessons l
+  where l.course_id = '4ce37d75-aaa0-46aa-ab43-0f21ece1a635' and l.title = v.t
+);
 
 commit;
