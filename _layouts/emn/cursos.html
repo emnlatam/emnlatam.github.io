@@ -12,6 +12,8 @@
 <style>
   body{ background:var(--gray-100); font-family:var(--font-body); color:var(--ink); margin:0; }
   button{ font-family:inherit; }
+  /* emn.css caps every <main> at --max-width; this dashboard uses the full screen */
+  .emn-landing main#app{ max-width:none; padding:0; }
 
   /* Own slim top bar — this dashboard deliberately doesn't use the site header */
   .c-top{ position:sticky; top:0; z-index:20; background:var(--paper); border-bottom:1px solid var(--gray-300); display:flex; align-items:center; gap:16px; height:60px; padding:0 20px 0 0; }
