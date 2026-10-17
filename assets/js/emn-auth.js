@@ -435,7 +435,10 @@ function emnRenderNav(st){
   // Keep the "Cursos" button right beside the account/login link, after the
   // dropdowns injected above.
   const cursos = nav.querySelector('.emn-nav__link--cta');
-  if(cursos) cursos.parentElement.appendChild(cursos);
+  if(cursos){
+    cursos.parentElement.appendChild(cursos);
+    cursos.hidden = !st.in;   // Cursos is for signed-in users only
+  }
   emnInjectAuthLink(st);
   emnNavDrawn = key;
 }

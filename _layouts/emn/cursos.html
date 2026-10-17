@@ -333,7 +333,7 @@ function renderLesson(){
         <div class="shortcuts__platform-row"><a class="btn" href="https://brew.sh/" target="_blank" rel="noopener noreferrer">HomeBrew</a>${copyShortcut('Ruby', '$ brew install ruby ')}</div>
         ${copyShortcut('Jekyll Bundler', 'gem install jekyll bundler')}
         ${copyShortcut('Jekyll Folder', 'jekyll new --skip-bundle .')}
-      </div></div>` : `${i === 1 ? `<a class="btn" href="https://github.com/signup?ref_cta=Sign+up&ref_loc=header+logged+out&ref_page=%2F&source=header-home" target="_blank" rel="noopener noreferrer">GitHub</a>${copyShortcut('.github.io', '.github.io')}` : ''}${isVibe && i === 2 ? `<a class="btn" href="https://desktop.github.com/download/" target="_blank" rel="noopener noreferrer">GitHub Desktop</a>` : ''}`}
+      </div></div>` : `${i === 1 ? `<a class="btn" href="https://github.com/signup?ref_cta=Sign+up&ref_loc=header+logged+out&ref_page=%2F&source=header-home" target="_blank" rel="noopener noreferrer">GitHub</a>${copyShortcut('.github.io', '.github.io')}` : ''}${isVibe && i === 2 ? `<a class="btn" href="https://desktop.github.com/download/" target="_blank" rel="noopener noreferrer">GitHub Desktop</a>` : ''}${isVibe && i === 4 ? copyShortcut('Jekyll Folder', 'jekyll new --skip-bundle .') : ''}`}
   </section>`;
   if(isQuiz) quizRun = { i: 0, answers: [] };
   $('#stage').innerHTML = `

@@ -3379,3 +3379,6 @@
   .emn-landing .n-person { grid-template-columns: 1fr; }
   .emn-landing .n-person__photo { max-width: 200px; }
 }
+
+/* Cursos is shown only to signed-in users (toggled in emn-auth.js) */
+.emn-nav__link--cta[hidden] { display: none !important; }
