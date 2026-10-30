@@ -104,7 +104,7 @@
   .shortcuts__platform{ display:flex; flex-direction:column; align-items:flex-start; gap:10px; }
   .shortcuts__platform h3{ margin:0; font-size:14px; }
   .shortcuts__platform .shortcuts__platform-buttons{ display:flex; flex-direction:column; align-items:flex-start; gap:4px; }
-  .shortcuts__platform-row{ display:flex; align-items:center; gap:4px; }
+  .shortcuts__platform-row{ display:flex; flex-wrap:wrap; align-items:center; gap:4px; }
   .faq{ margin-top:24px; }
   .faq__title{ font-family:var(--font-display); font-size:20px; margin:0 0 8px; }
   .faq__empty{ margin:0; font-size:14px; color:var(--gray-500); }
@@ -330,7 +330,8 @@ function renderLesson(){
         ${copyShortcut('Jekyll Folder', 'jekyll new --skip-bundle .')}
       </div></div>
       <div class="shortcuts__platform"><h3>For Mac</h3><div class="shortcuts__platform-buttons">
-        <div class="shortcuts__platform-row"><a class="btn" href="https://brew.sh/" target="_blank" rel="noopener noreferrer">HomeBrew</a>${copyShortcut('Ruby', '$ brew install ruby ')}</div>
+        <div class="shortcuts__platform-row"><a class="btn" href="https://brew.sh/" target="_blank" rel="noopener noreferrer">HomeBrew</a>${copyShortcut('Homebrew Install', `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`)}${copyShortcut('Homebrew Path', `(echo; echo 'eval "$(/opt/homebrew/bin/brew shellenv)" ') >> /Users/easyosx/.zprofile && eval "$(/opt/homebrew/bin/brew shellenv)"`)}</div>
+        ${copyShortcut('Ruby', '$ brew install ruby ')}
         ${copyShortcut('Jekyll Bundler', 'gem install jekyll bundler')}
         ${copyShortcut('Jekyll Folder', 'jekyll new --skip-bundle .')}
       </div></div>` : `${i === 1 ? `<a class="btn" href="https://github.com/signup?ref_cta=Sign+up&ref_loc=header+logged+out&ref_page=%2F&source=header-home" target="_blank" rel="noopener noreferrer">GitHub</a>${copyShortcut('.github.io', '.github.io')}` : ''}${isVibe && i === 2 ? `<a class="btn" href="https://desktop.github.com/download/" target="_blank" rel="noopener noreferrer">GitHub Desktop</a>` : ''}${isVibe && i === 4 ? `<a class="btn" href="https://code.visualstudio.com/download?_exp_download=d53503e735" target="_blank" rel="noopener noreferrer">VS Code</a>` + copyShortcut('bundle install', 'bundle install') + copyShortcut('bundle exec jekyll serve', 'bundle exec jekyll serve') : ''}`}
