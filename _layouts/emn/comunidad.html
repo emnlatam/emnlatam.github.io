@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="/assets/css/emn.css?v={{ site.time | date: '%s' }}">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/assets/js/emn-auth.js?v={{ site.time | date: '%s' }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   body{ background:var(--gray-100); font-family:var(--font-body); color:var(--ink); margin:0; }
   button, input, select, textarea{ font-family:inherit; }
@@ -97,6 +98,19 @@
   .hint{ font-size:12.5px; color:var(--gray-500); margin:6px 0 0; line-height:1.45; }
   .msg{ font-size:13px; font-weight:600; color:var(--red); margin:10px 0 0; }
   .m .acts{ display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+  .opts{ display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px; margin-bottom:6px; }
+  .opt{ border:1px solid var(--gray-300); border-radius:10px; padding:14px; background:#fff; }
+  .opt.rec{ border-color:var(--red); box-shadow:0 0 0 1px var(--red); }
+  .opt__top{ display:flex; gap:8px; align-items:center; margin-bottom:10px; }
+  .opt__top input[type=text]{ flex:1; min-width:0; padding:8px 10px; border:1px solid var(--gray-300); border-radius:8px; font-weight:700; font-size:14px; }
+  .opt__top .x{ border:0; background:none; cursor:pointer; color:var(--gray-500); font-size:18px; }
+  .opt .course-row label.ck{ flex:1 1 100%; }
+  .opt .course-row select.cpm{ flex:1 1 100%; }
+  .opt .rec-ck{ display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; margin:10px 0 0; cursor:pointer; }
+  .opt .rec-ck input{ accent-color:var(--red); width:16px; height:16px; }
+  .price-row{ display:flex; align-items:center; gap:8px; margin-top:10px; font-size:13px; color:var(--gray-700); }
+  .price-row input{ width:110px; padding:8px 10px; border:1px solid var(--gray-300); border-radius:8px; font-size:14px; }
+  .price-row .tot{ margin-left:auto; font-weight:700; color:var(--ink); }
 </style>
 </head>
 <body>
@@ -119,6 +133,7 @@
     </div>
     <div class="bar" id="mainbar">
       <button type="button" class="btn primary" id="add">+ Agregar alumno</button>
+      <button type="button" class="btn" id="prop">Propuesta</button>
       <button type="button" class="btn" id="sync">Sincronizar con Airtable</button>
       <span class="grow"></span>
       <span class="sync-state" id="sync-state" aria-live="polite"></span>
@@ -163,6 +178,29 @@
     <div class="acts">
       <button type="button" class="btn" data-cancel>Cancelar</button>
       <button type="submit" class="btn primary" id="psave">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="m" id="prdlg" aria-labelledby="prdlg-title" style="width:min(96vw,860px)">
+  <form id="prform" novalidate>
+    <h2 id="prdlg-title">Propuesta de paquete</h2>
+    <div class="fields">
+      <div class="f wide"><label for="pr-al">Alumno</label><select id="pr-al"></select></div>
+      <div class="f"><label for="pr-dur">Duración del programa</label><div class="with-suffix"><input id="pr-dur" type="number" min="1" step="1" value="6"><span>meses</span></div></div>
+      <div class="f"><label for="pr-cur">Moneda</label><select id="pr-cur"><option>USD</option><option>PEN</option></select></div>
+      <div class="f"><label for="pr-val">Propuesta válida por</label><div class="with-suffix"><input id="pr-val" type="number" min="1" step="1" value="15"><span>días</span></div></div>
+      <div class="f"><label for="pr-goal">Pensado para (opcional)</label><input id="pr-goal" type="text" placeholder="Ej. su audición a Berklee 2027"></div>
+    </div>
+    <span class="lbl">Opciones (2 o 3)</span>
+    <div class="opts" id="pr-opts"></div>
+    <div class="acts" style="justify-content:flex-start;margin:0 0 14px"><button type="button" class="btn" id="pr-addopt">+ Agregar opción</button></div>
+    <div class="f wide"><label for="pr-inc">Incluido en todas las opciones (una línea por punto)</label><textarea id="pr-inc"></textarea></div>
+    <div class="f wide"><label for="pr-notes">Notas (opcional)</label><textarea id="pr-notes" style="min-height:54px"></textarea></div>
+    <p class="msg" id="pr-msg" role="alert" hidden></p>
+    <div class="acts">
+      <button type="button" class="btn" data-cancel>Cancelar</button>
+      <button type="submit" class="btn primary" id="pr-go">Generar PDF</button>
     </div>
   </form>
 </dialog>
@@ -353,6 +391,7 @@ function setTab(t){
   for(const k of ['al', 'pr', 'po']) $('#tab-' + k).setAttribute('aria-pressed', String(t === k));
   $('#list').hidden = t !== 'al'; $('#plist').hidden = t !== 'pr'; $('#popanel').hidden = t !== 'po';
   $('#mainbar').hidden = t === 'po';
+  $('#prop').hidden = t !== 'al';
   $('#add').textContent = t === 'al' ? '+ Agregar alumno' : '+ Agregar profesor';
 }
 document.querySelector('.tabs').addEventListener('click', e => { const b = e.target.closest('.tab'); if(b) setTab(b.dataset.tab); });
@@ -587,6 +626,254 @@ async function boot(){
   renderAll();
   syncAll(true); // trae lo último de Airtable al abrir la página
 }
+/* ======================= Propuesta (PDF de 2 páginas) ======================= */
+const INC_DEFAULT = 'Mock Audition mensual (último domingo de cada mes)\nTutoring\nSeguimiento personalizado de tu progreso';
+const prPad = n => String(n).padStart(2, '0');
+const prYmd = d => `${d.getFullYear()}-${prPad(d.getMonth() + 1)}-${prPad(d.getDate())}`;
+const prDmy = d => `${prPad(d.getDate())}/${prPad(d.getMonth() + 1)}/${d.getFullYear()}`;
+const prMoney = (n, cur) => new Intl.NumberFormat('en-US', { style: 'currency', currency: cur || 'USD', currencyDisplay: 'code', maximumFractionDigits: 0 }).format(Number(n) || 0).replace(/ /g, ' ');
+const prSlug = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+let prLogo = null;
+async function prLogoData(){
+  if(prLogo) return prLogo;
+  const img = new Image(); img.src = '/assets/img/emn-logo.png'; await img.decode();
+  const c = document.createElement('canvas'); c.width = c.height = 600;
+  const x = c.getContext('2d'); x.drawImage(img, 0, 0, 600, 600);
+  const px = x.getImageData(3, 3, 1, 1).data;   // el rojo exacto del logo, para que la portada no tenga costuras
+  return (prLogo = { data: c.toDataURL('image/png'), rgb: [px[0], px[1], px[2]] });
+}
+
+function prOptionHTML(i, o, names){
+  const rows = names.map(c => {
+    const on = c in o.cursos;
+    return `<div class="course-row"><label class="ck"><input type="checkbox" data-c="${esc(c)}"${on ? ' checked' : ''}> ${esc(c)}</label>
+      <select class="cpm" data-n="${esc(c)}" aria-label="Clases por mes de ${esc(c)}"${on ? '' : ' hidden'}>${[1,2,3,4,5,6,7,8].map(n => `<option value="${n}"${o.cursos[c] === n ? ' selected' : ''}>${n} clases por mes</option>`).join('')}</select></div>`;
+  }).join('');
+  return `<div class="opt${o.rec ? ' rec' : ''}" data-i="${i}">
+    <div class="opt__top"><input type="text" data-name value="${esc(o.nombre)}" aria-label="Nombre de la opción"><button type="button" class="x" data-rm aria-label="Quitar opción">✕</button></div>
+    <div class="courses">${rows}</div>
+    <div class="price-row"><span>Costo por mes</span><input type="number" data-price min="0" step="any" value="${esc(o.precio)}"><span class="tot" data-tot></span></div>
+    <label class="rec-ck"><input type="radio" name="pr-rec" data-rec${o.rec ? ' checked' : ''}> Marcar como recomendada</label>
+  </div>`;
+}
+
+let prState = { names: [], opts: [] };
+function prRender(){
+  $('#pr-opts').innerHTML = prState.opts.map((o, i) => prOptionHTML(i, o, prState.names)).join('');
+  $('#pr-addopt').hidden = prState.opts.length >= 3;
+  document.querySelectorAll('#pr-opts [data-rm]').forEach(b => b.hidden = prState.opts.length <= 2);
+  prTotals();
+}
+function prRead(){   // lee el formulario hacia prState
+  document.querySelectorAll('#pr-opts .opt').forEach((el, i) => {
+    const o = prState.opts[i]; if(!o) return;
+    o.nombre = el.querySelector('[data-name]').value;
+    o.precio = el.querySelector('[data-price]').value;
+    o.rec = el.querySelector('[data-rec]').checked;
+    o.cursos = {};
+    el.querySelectorAll('input[data-c]').forEach(cb => { if(cb.checked) o.cursos[cb.dataset.c] = parseInt(el.querySelector(`select[data-n="${CSS.escape(cb.dataset.c)}"]`).value, 10); });
+  });
+}
+function prTotals(){
+  const dur = parseFloat($('#pr-dur').value) || 0, cur = $('#pr-cur').value;
+  document.querySelectorAll('#pr-opts .opt').forEach(el => {
+    const p = parseFloat(el.querySelector('[data-price]').value) || 0;
+    el.querySelector('[data-tot]').textContent = p && dur ? 'Total ' + prMoney(p * dur, cur) : '';
+  });
+}
+
+function openProposal(){
+  const list = [...alumnos].sort((a, b) => (a.activo === false) - (b.activo === false) || a.nombre.localeCompare(b.nombre));
+  if(!list.length) return emnAlert('Todavía no hay alumnos. Agrega uno primero.');
+  $('#pr-al').innerHTML = list.map(a => `<option value="${a.id}">${esc(a.nombre)}${a.activo === false ? ' (archivado)' : ''}</option>`).join('');
+  const act = list.find(a => a.activo !== false); if(act) $('#pr-al').value = act.id;
+  $('#pr-msg').hidden = true; $('#pr-inc').value = INC_DEFAULT; $('#pr-notes').value = '';
+  prFillStudent();
+  $('#prdlg').showModal();
+}
+// Al elegir alumno: duración, objetivo y las dos opciones se prellenan con sus cursos y clases por mes.
+function prFillStudent(){
+  const a = alumnos.find(x => x.id === $('#pr-al').value); if(!a) return;
+  const names = [...CURSOS, ...(a.cursos || []).filter(c => !CURSOS.includes(c))];
+  const base = {}; (a.cursos?.length ? a.cursos : [CURSOS[0]]).forEach(c => base[c] = Math.min(8, Math.max(1, a.clases_mes?.[c] || 4)));
+  const plus = {}; Object.keys(base).forEach(c => plus[c] = Math.min(8, base[c] * 2));
+  if(a.datos?.duracion) $('#pr-dur').value = a.datos.duracion;
+  $('#pr-goal').value = '';
+  prState = { names, opts: [{ nombre: 'Esencial', cursos: base, precio: '', rec: false }, { nombre: 'Recomendada', cursos: plus, precio: '', rec: true }] };
+  prRender();
+}
+$('#prop').addEventListener('click', openProposal);
+$('#pr-al').addEventListener('change', prFillStudent);
+$('#pr-dur').addEventListener('input', prTotals); $('#pr-cur').addEventListener('change', prTotals);
+$('#pr-opts').addEventListener('input', prTotals);
+$('#pr-opts').addEventListener('change', e => {
+  const cb = e.target.closest('input[data-c]');
+  if(cb) cb.closest('.course-row').querySelector('select').hidden = !cb.checked;
+  if(e.target.matches('[data-rec]')){ prRead(); prRender(); }
+});
+$('#pr-opts').addEventListener('click', e => {
+  if(!e.target.closest('[data-rm]')) return;
+  prRead(); prState.opts.splice(+e.target.closest('.opt').dataset.i, 1); prRender();
+});
+$('#pr-addopt').addEventListener('click', () => {
+  prRead();
+  const src = prState.opts[prState.opts.length - 1];
+  const c = {}; Object.keys(src.cursos).forEach(k => c[k] = Math.min(8, src.cursos[k] + 2));
+  prState.opts.push({ nombre: 'Intensiva', cursos: c, precio: '', rec: false }); prRender();
+});
+
+$('#prform').addEventListener('submit', async e => {
+  e.preventDefault();
+  const msg = $('#pr-msg'), btn = $('#pr-go'); msg.hidden = true;
+  prRead();
+  const a = alumnos.find(x => x.id === $('#pr-al').value);
+  const dur = parseFloat($('#pr-dur').value), val = parseInt($('#pr-val').value, 10) || 15;
+  const err = !a ? 'Elige un alumno.' : !(dur > 0) ? 'Escribe la duración en meses.'
+    : prState.opts.some(o => !o.nombre.trim()) ? 'Cada opción necesita un nombre.'
+    : prState.opts.some(o => !Object.keys(o.cursos).length) ? 'Cada opción necesita al menos un curso.'
+    : prState.opts.some(o => !(parseFloat(o.precio) > 0)) ? 'Escribe el costo por mes de cada opción.' : '';
+  if(err){ msg.textContent = err; msg.hidden = false; return; }
+  btn.disabled = true; btn.textContent = 'Generando…';
+  try{
+    const hoy = new Date(), vence = new Date(); vence.setDate(vence.getDate() + val);
+    const doc = await buildProposal({
+      alumno: a, dur, moneda: $('#pr-cur').value, goal: $('#pr-goal').value.trim(), notas: $('#pr-notes').value.trim(),
+      incluye: $('#pr-inc').value.split('\n').map(x => x.trim()).filter(Boolean),
+      opts: prState.opts.map(o => ({ ...o, nombre: o.nombre.trim(), precio: parseFloat(o.precio) })), hoy, vence,
+    });
+    doc.save(`Propuesta-EMN-${prSlug(a.nombre)}.pdf`);
+    $('#prdlg').close();
+  }catch(ex){ console.error(ex); msg.textContent = 'No se pudo generar el PDF: ' + ex.message; msg.hidden = false; }
+  btn.disabled = false; btn.textContent = 'Generar PDF';
+});
+
+async function buildProposal(P){
+  const { jsPDF } = window.jspdf, logo = await prLogoData();
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const W = 210, H = 297, M = 20, R = W - M;
+  const INK = [26, 26, 26], GRAY = [110, 115, 122], LIGHT = [244, 245, 246], LINE = [216, 219, 223], WHITE = [255, 255, 255];
+  const RED = logo.rgb;
+  const txt = (s, x, y, o) => doc.text(String(s), x, y, o);
+  const font = (fam, st, size, color) => { doc.setFont(fam, st).setFontSize(size).setTextColor(...color); };
+  const a = P.alumno, d = a.datos || {};
+  const meses = n => `${n} ${Number(n) === 1 ? 'mes' : 'meses'}`;
+
+  /* ---------- Página 1: portada roja ---------- */
+  doc.setFillColor(...RED); doc.rect(0, 0, W, H, 'F');
+  doc.addImage(logo.data, 'PNG', M - 0.39 * 96, 20 - 0.21 * 96, 96, 96);   // el símbolo queda alineado al margen izquierdo
+  font('helvetica', 'normal', 10, WHITE); txt('Escuela de Música y Negocios', R, 26, { align: 'right' });
+  txt('emnperu.com', R, 31.5, { align: 'right' });
+
+  font('times', 'bold', 44, WHITE); txt('Propuesta', M, 150);
+  txt('de programa', M, 166);
+  doc.setDrawColor(...WHITE); doc.setLineWidth(0.8); doc.line(M, 177, M + 24, 177);
+
+  font('helvetica', 'normal', 11, [255, 220, 224]); txt('Preparada para', M, 191);
+  let nameSize = 32; font('times', 'bold', nameSize, WHITE);
+  while(doc.getTextWidth(a.nombre) > R - M && nameSize > 16){ nameSize -= 2; font('times', 'bold', nameSize, WHITE); }
+  const nameLines = doc.splitTextToSize(a.nombre, R - M);
+  let y = 202; nameLines.forEach(l => { txt(l, M, y); y += nameSize * 0.42; });
+
+  y = Math.max(y + 6, 224);
+  const info = [
+    ['Instrumento', d.instrumento], ['País', d.pais], ['Aplicación a Berklee', d.fecha_aplicacion ? d.fecha_aplicacion.split('-').reverse().join('/') : ''],
+    ['Duración', meses(P.dur)], ['Fecha', prDmy(P.hoy)], ['Válida hasta', prDmy(P.vence)],
+  ].filter(r => r[1]);
+  const colW = (R - M) / 2;
+  info.forEach(([k, v], i) => {
+    const cx = M + (i % 2) * colW, cy = y + Math.floor(i / 2) * 15;
+    font('helvetica', 'normal', 8.5, [255, 220, 224]); txt(k, cx, cy);
+    font('helvetica', 'bold', 11.5, WHITE); txt(doc.splitTextToSize(String(v), colW - 6)[0], cx, cy + 5.5);
+  });
+
+  font('helvetica', 'normal', 8.5, [255, 220, 224]);
+  txt('admisiones@emnperu.com   |   +51 986 658 866', M, H - 14);
+
+  /* ---------- Página 2: opciones ---------- */
+  doc.addPage();
+  doc.addImage(logo.data, 'PNG', M, 14, 16, 16);
+  font('helvetica', 'bold', 11, INK); txt('EMN', M + 20, 21.5);
+  font('helvetica', 'normal', 8.5, GRAY); txt('Escuela de Música y Negocios', M + 20, 26.5);
+  font('helvetica', 'normal', 9, GRAY); txt(a.nombre, R, 21.5, { align: 'right' }); txt(`Válida hasta ${prDmy(P.vence)}`, R, 26.5, { align: 'right' });
+
+  font('times', 'bold', 28, INK); txt('Elige tu programa', M, 52);
+  font('helvetica', 'normal', 11, GRAY);
+  const sub = P.goal ? `Pensado para ${P.goal}. Programa de ${meses(P.dur)}.` : `Programa de ${meses(P.dur)}, con cursos y clases por mes a tu medida.`;
+  doc.splitTextToSize(sub, R - M).forEach((l, i) => txt(l, M, 60 + i * 5.5));
+
+  const n = P.opts.length, gap = 6, cw = (R - M - gap * (n - 1)) / n, top = 72, pad = 6;
+  // altura de los cursos (la misma para todas las tarjetas)
+  const courseBlock = o => Object.entries(o.cursos).map(([c, k]) => ({ lines: doc.splitTextToSize(c, cw - pad * 2 - 5), k }));
+  font('helvetica', 'bold', 10.5, INK);
+  const blocks = P.opts.map(o => { font('helvetica', 'bold', 10.5, INK); return courseBlock(o); });
+  const blockH = b => b.reduce((s, c) => s + c.lines.length * 4.8 + 5.2 + 7, 0);
+  const cardH = 26 + Math.max(...blocks.map(blockH)) + 2 + 38;
+
+  P.opts.forEach((o, i) => {
+    const x = M + i * (cw + gap), rec = o.rec;
+    doc.setDrawColor(...(rec ? RED : LINE)); doc.setLineWidth(rec ? 0.9 : 0.35);
+    doc.setFillColor(...WHITE); doc.roundedRect(x, top, cw, cardH, 2.5, 2.5, 'FD');
+    // cabecera
+    doc.setFillColor(...(rec ? RED : LIGHT)); doc.roundedRect(x, top, cw, 17, 2.5, 2.5, 'F'); doc.rect(x, top + 9, cw, 8, 'F');
+    font('times', 'bold', 16, rec ? WHITE : INK); txt(doc.splitTextToSize(o.nombre, cw - pad * 2)[0], x + pad, top + 11.2);
+    if(rec){
+      font('helvetica', 'bold', 7, WHITE); const tw = doc.getTextWidth('RECOMENDADA') + 6;
+      doc.setFillColor(...RED); doc.roundedRect(x + (cw - tw) / 2, top - 3, tw, 6, 3, 3, 'F');
+      font('helvetica', 'bold', 7, WHITE); txt('RECOMENDADA', x + cw / 2, top + 1.1, { align: 'center' });
+    }
+    // cursos
+    let cy = top + 26;
+    blocks[i].forEach(c => {
+      doc.setFillColor(...RED); doc.circle(x + pad + 1, cy - 1.3, 1, 'F');
+      font('helvetica', 'bold', 10.5, INK);
+      c.lines.forEach((l, j) => txt(l, x + pad + 5, cy + j * 4.8));
+      cy += (c.lines.length - 1) * 4.8 + 5.2;
+      font('helvetica', 'normal', 9, GRAY); txt(`${c.k} ${c.k === 1 ? 'clase' : 'clases'} al mes`, x + pad + 5, cy);
+      cy += 7;
+    });
+    // precio (alineado abajo en todas las tarjetas)
+    const py = top + cardH - 38;
+    doc.setDrawColor(...LINE); doc.setLineWidth(0.3); doc.line(x + pad, py, x + cw - pad, py);
+    const total = Object.values(o.cursos).reduce((s, k) => s + k, 0) * P.dur;
+    let ps = 24; font('helvetica', 'bold', ps, rec ? RED : INK);
+    while(doc.getTextWidth(prMoney(o.precio, P.moneda)) > cw - pad * 2 && ps > 12){ ps -= 1; font('helvetica', 'bold', ps, rec ? RED : INK); }
+    txt(prMoney(o.precio, P.moneda), x + pad, py + 13);
+    font('helvetica', 'normal', 9.5, GRAY); txt('por mes', x + pad, py + 19);
+    font('helvetica', 'normal', 8.8, GRAY);
+    txt(`${total} clases en ${meses(P.dur)}`, x + pad, py + 27);
+    font('helvetica', 'bold', 8.8, INK); txt(`Total ${prMoney(o.precio * P.dur, P.moneda)}`, x + pad, py + 32.5);
+  });
+
+  y = top + cardH + 11;
+  if(P.incluye.length){
+    font('helvetica', 'bold', 11, INK); txt('Incluido en todas las opciones', M, y); y += 7;
+    font('helvetica', 'normal', 10, INK);
+    P.incluye.forEach(t => doc.splitTextToSize(t, R - M - 6).forEach((l, j) => {
+      if(j === 0){ doc.setFillColor(...RED); doc.circle(M + 1, y - 1.2, 0.9, 'F'); }
+      txt(l, M + 5, y); y += 5.2;
+    }));
+    y += 3;
+  }
+  if(P.notas){
+    font('helvetica', 'bold', 11, INK); txt('Notas', M, y); y += 6.5;
+    font('helvetica', 'normal', 10, INK); doc.splitTextToSize(P.notas, R - M).forEach(l => { txt(l, M, y); y += 5.2; });
+    y += 3;
+  }
+  // cómo reservar
+  y = Math.max(y + 2, H - 52);
+  doc.setFillColor(...LIGHT); doc.roundedRect(M, y, R - M, 24, 2, 2, 'F'); doc.setFillColor(...RED); doc.rect(M, y, 2.2, 24, 'F');
+  font('helvetica', 'bold', 10.5, INK); txt('Cómo reservar tu cupo', M + 8, y + 8);
+  font('helvetica', 'normal', 9.5, GRAY);
+  doc.splitTextToSize('Elige la opción que prefieras y escríbenos. El cupo se confirma con el primer pago y recibirás un invoice con el enlace para pagar.', R - M - 16).forEach((l, i) => txt(l, M + 8, y + 14 + i * 4.8));
+
+  doc.setDrawColor(...LINE); doc.setLineWidth(0.3); doc.line(M, H - 16, R, H - 16);
+  font('helvetica', 'normal', 8, GRAY);
+  txt('Escuela de Música y Negocios (EMN)  |  admisiones@emnperu.com  |  +51 986 658 866', M, H - 11);
+  txt('Página 2 de 2', R, H - 11, { align: 'right' });
+  return doc;
+}
+
 emnInit().then(boot);
 </script>
 </body>
