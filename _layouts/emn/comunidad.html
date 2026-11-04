@@ -210,7 +210,6 @@
     <h2 id="prdlg-title">Propuesta de paquete</h2>
     <div class="fields">
       <div class="f wide"><label for="pr-al">Alumno</label><select id="pr-al"></select></div>
-      <div class="f"><label for="pr-dur">Duración del programa</label><div class="with-suffix"><input id="pr-dur" type="number" min="1" step="1" value="6"><span>meses</span></div></div>
       <div class="f"><label for="pr-cur">Moneda</label><select id="pr-cur"><option>USD</option><option>PEN</option></select></div>
       <div class="f"><label for="pr-val">Propuesta válida por</label><div class="with-suffix"><input id="pr-val" type="number" min="1" step="1" value="15"><span>días</span></div></div>
       <div class="f"><label for="pr-goal">Pensado para (opcional)</label><input id="pr-goal" type="text" placeholder="Ej. su audición a Berklee 2027"></div>
@@ -683,6 +682,7 @@ function prOptionHTML(i, o, names){
       <span class="cpmw"><input type="number" class="cpm" min="1" step="1" data-xk value="${esc(x.k)}" aria-label="Clases en total"> clases en total</span>
       <button type="button" class="x" data-xrm aria-label="Quitar curso">✕</button></div>`).join('')}</div>
     <button type="button" class="btn" data-xadd style="margin-top:8px;padding:6px 12px;font-size:12.5px">+ Otro curso</button>
+    <div class="price-row"><span>Duración de este paquete</span><input type="number" data-dur min="1" step="1" value="${esc(o.dur)}" aria-label="Duración en meses"><span>meses</span></div>
     <div class="priv" aria-label="Cálculo interno, no aparece en el PDF">
       <span class="priv__t">Cálculo interno · no aparece en el PDF</span>
       <div class="priv__r"><span>Clases en total</span><b data-ncl></b></div>
@@ -707,6 +707,7 @@ function prRead(){   // lee el formulario hacia prState
   document.querySelectorAll('#pr-opts .opt').forEach((el, i) => {
     const o = prState.opts[i]; if(!o) return;
     o.nombre = el.querySelector('[data-name]').value;
+    o.dur = el.querySelector('[data-dur]').value;
     o.rate = el.querySelector('[data-rate]').value;
     o.pct = el.querySelector('[data-pct]').value;
     o.rev = el.querySelector('[data-rev]').value;
@@ -722,12 +723,14 @@ function prCalc(o){
   const n = prClasses(o), sub = n * (parseFloat(o.rate) || 0), fee = sub * ((parseFloat(o.pct) || 0) / 100), rev = parseFloat(o.rev) || 0;
   return { n, sub, fee, rev, fin: sub + fee + rev };
 }
+const prOptDur = el => parseFloat(el.querySelector('[data-dur]').value) || 1;   // meses del paquete que contiene el elemento
 const prPerMonth = (n, dur) => dur > 0 ? new Intl.NumberFormat('es', { maximumFractionDigits: 1 }).format(n / dur) : '';
 function prTotals(){
   prRead();
-  const dur = parseFloat($('#pr-dur').value) || 0, cur = $('#pr-cur').value;
+  const cur = $('#pr-cur').value;
   document.querySelectorAll('#pr-opts .opt').forEach((el, i) => {
     const o = prState.opts[i]; if(!o) return;
+    const dur = parseFloat(o.dur) || 0;
     const c = prCalc(o), set = (s, t) => { el.querySelector(s).textContent = t; };
     set('[data-ncl]', c.n);
     set('[data-sub]', prMoney(c.sub, cur)); set('[data-fee]', prMoney(c.fee, cur));
@@ -749,26 +752,25 @@ function openProposal(){
 function prFillStudent(){
   const a = alumnos.find(x => x.id === $('#pr-al').value); if(!a) return;
   const names = [...CURSOS, ...(a.cursos || []).filter(c => !CURSOS.includes(c))];
-  if(a.datos?.duracion) $('#pr-dur').value = a.datos.duracion;
-  const dur = parseFloat($('#pr-dur').value) || 1;
+  const dur = parseFloat(a.datos?.duracion) || 6;   // duración inicial de cada paquete; después se edita por paquete
   // clases en total = clases por mes del alumno × duración del programa
   const base = {}; (a.cursos?.length ? a.cursos : [CURSOS[0]]).forEach(c => base[c] = Math.max(1, Math.round(Math.max(1, a.clases_mes?.[c] || 4) * dur)));
   const plus = {}; Object.keys(base).forEach(c => plus[c] = base[c] * 2);
   $('#pr-goal').value = '';
   prCur = null; prSavedRender();
-  prState = { names, opts: [{ nombre: 'Esencial', cursos: base, extras: [], rate: '30', pct: '5', rev: '', rec: false }, { nombre: 'Recomendada', cursos: plus, extras: [], rate: '30', pct: '5', rev: '', rec: false }] };
+  prState = { names, opts: [{ nombre: 'Esencial', dur: String(dur), cursos: base, extras: [], rate: '30', pct: '5', rev: '', rec: false }, { nombre: 'Recomendada', dur: String(dur), cursos: plus, extras: [], rate: '30', pct: '5', rev: '', rec: false }] };
   prRender();
 }
 $('#prop').addEventListener('click', openProposal);
 $('#prdlg').addEventListener('cancel', e => e.preventDefault());   // Esc no lo cierra: solo la X
 $('#pr-al').addEventListener('change', prFillStudent);
-$('#pr-dur').addEventListener('input', prTotals); $('#pr-cur').addEventListener('change', prTotals);
+$('#pr-cur').addEventListener('change', prTotals);
 $('#pr-opts').addEventListener('input', prTotals);
 $('#pr-opts').addEventListener('change', e => {
   const cb = e.target.closest('input[data-c]');
   if(cb){
     const w = cb.closest('.course-row').querySelector('.cpmw'), inp = w.querySelector('input');
-    w.hidden = !cb.checked; if(cb.checked && !(parseInt(inp.value, 10) > 0)) inp.value = Math.max(1, Math.round(4 * (parseFloat($('#pr-dur').value) || 1)));
+    w.hidden = !cb.checked; if(cb.checked && !(parseInt(inp.value, 10) > 0)) inp.value = Math.max(1, Math.round(4 * prOptDur(cb.closest('.opt'))));
   }
   if(e.target.matches('[data-rec]')){ prRead(); const k = +e.target.closest('.opt').dataset.i; if(e.target.checked) prState.opts.forEach((o, i) => o.rec = i === k); prRender(); }
 });
@@ -776,15 +778,15 @@ $('#pr-opts').addEventListener('click', e => {
   const opt = e.target.closest('.opt'); if(!opt) return;
   const o = () => prState.opts[+opt.dataset.i];
   if(e.target.closest('[data-rm]')){ prRead(); prState.opts.splice(+opt.dataset.i, 1); prRender(); }
-  else if(e.target.closest('[data-xadd]')){ prRead(); o().extras.push({ nombre: '', k: Math.max(1, Math.round(4 * (parseFloat($('#pr-dur').value) || 1))) }); prRender(); opt.parentNode.children[+opt.dataset.i].querySelector('[data-x]:last-of-type [data-xn]')?.focus(); }
+  else if(e.target.closest('[data-xadd]')){ prRead(); o().extras.push({ nombre: '', k: Math.max(1, Math.round(4 * prOptDur(opt))) }); prRender(); opt.parentNode.children[+opt.dataset.i].querySelector('[data-x]:last-of-type [data-xn]')?.focus(); }
   else if(e.target.closest('[data-xrm]')){ prRead(); o().extras.splice(+e.target.closest('[data-x]').dataset.x, 1); prRender(); }
 });
 $('#pr-addopt').addEventListener('click', () => {
   prRead();
   const src = prState.opts[prState.opts.length - 1];
-  const step = Math.max(1, Math.round(2 * (parseFloat($('#pr-dur').value) || 1)));   // +2 clases por mes, en total
+  const step = Math.max(1, Math.round(2 * (parseFloat(src.dur) || 1)));   // +2 clases por mes, en total
   const c = {}; Object.keys(src.cursos).forEach(k => c[k] = src.cursos[k] + step);
-  prState.opts.push({ nombre: 'Intensiva', cursos: c, extras: src.extras.map(x => ({ nombre: x.nombre, k: x.k + step })), rate: src.rate, pct: src.pct, rev: '', rec: false }); prRender();
+  prState.opts.push({ nombre: 'Intensiva', dur: src.dur, cursos: c, extras: src.extras.map(x => ({ nombre: x.nombre, k: x.k + step })), rate: src.rate, pct: src.pct, rev: '', rec: false }); prRender();
 });
 
 let prCur = null;   // id de la propuesta guardada que se está editando (null = nueva)
@@ -792,39 +794,38 @@ const prAl = () => alumnos.find(x => x.id === $('#pr-al').value);
 
 function prSnap(){
   prRead();
-  return { dur: $('#pr-dur').value, moneda: $('#pr-cur').value, val: $('#pr-val').value, goal: $('#pr-goal').value.trim(), notas: $('#pr-notes').value.trim(), inc: $('#pr-inc').value,
+  return { moneda: $('#pr-cur').value, val: $('#pr-val').value, goal: $('#pr-goal').value.trim(), notas: $('#pr-notes').value.trim(), inc: $('#pr-inc').value,
     v: 2,   // v2: clases en total + cálculo interno (valor por clase, %, revenue)
-    opts: prState.opts.map(o => ({ nombre: o.nombre, cursos: o.cursos, extras: o.extras, rate: o.rate, pct: o.pct, rev: o.rev, rec: o.rec })) };
+    opts: prState.opts.map(o => ({ nombre: o.nombre, dur: o.dur, cursos: o.cursos, extras: o.extras, rate: o.rate, pct: o.pct, rev: o.rev, rec: o.rec })) };
 }
 // Propuestas guardadas antes del cambio (v1) traían clases por mes y costo por mes: se pasan a total conservando el mismo precio final.
 function prNorm(sn){
-  if(sn.v === 2) return sn;
+  if(sn.v === 2) return { ...sn, opts: sn.opts.map(o => ({ ...o, dur: o.dur ?? sn.dur })) };   // por si quedó una duración global
   const dur = parseFloat(sn.dur) || 1;
   return { ...sn, v: 2, opts: sn.opts.map(o => {
     const cursos = Object.fromEntries(Object.entries(o.cursos || {}).map(([c, k]) => [c, Math.round(k * dur)]));
     const extras = (o.extras || []).map(x => ({ ...x, k: Math.round(x.k * dur) }));
     const n = prClasses({ cursos, extras }), fin = (parseFloat(o.precio) || 0) * dur;
-    return { nombre: o.nombre, cursos, extras, rate: n ? String(+(fin / n).toFixed(4)) : '0', pct: '0', rev: '', rec: o.rec };
+    return { nombre: o.nombre, dur: String(dur), cursos, extras, rate: n ? String(+(fin / n).toFixed(4)) : '0', pct: '0', rev: '', rec: o.rec };
   }) };
 }
 // Valida una propuesta (del formulario o guardada) y devuelve las opciones con los cursos extra ya integrados.
 function prCheck(sn){
   const full = sn.opts.map(o => ({ ...o, cursos: { ...o.cursos, ...Object.fromEntries((o.extras || []).filter(x => x.nombre.trim()).map(x => [x.nombre.trim(), x.k])) } }));
-  const dur = parseFloat(sn.dur);
   const err = sn.opts.some(o => (o.extras || []).some(x => !x.nombre.trim())) ? 'Escribe el nombre de cada curso que agregaste, o quítalo.'
-    : !(dur > 0) ? 'Escribe la duración en meses.'
+    : sn.opts.some(o => !(parseFloat(o.dur) > 0)) ? 'Escribe la duración en meses de cada paquete.'
     : sn.opts.some(o => !o.nombre.trim()) ? 'Cada opción necesita un nombre.'
     : full.some(o => !Object.keys(o.cursos).length) ? 'Cada opción necesita al menos un curso.'
     : sn.opts.some(o => !(prCalc(o).fin > 0)) ? 'Escribe el valor por clase de cada opción.' : '';
-  return { err, full, dur };
+  return { err, full };
 }
 async function prMake(a, sn){
   sn = prNorm(sn);
   const c = prCheck(sn); if(c.err) throw new Error(c.err);
   const hoy = new Date(), vence = new Date(); vence.setDate(vence.getDate() + (parseInt(sn.val, 10) || 15));
-  return buildProposal({ alumno: a, dur: c.dur, moneda: sn.moneda, goal: sn.goal, notas: sn.notas,
+  return buildProposal({ alumno: a, moneda: sn.moneda, goal: sn.goal, notas: sn.notas,
     incluye: String(sn.inc || '').split('\n').map(x => x.trim()).filter(Boolean),
-    opts: c.full.map((o, i) => ({ ...o, nombre: o.nombre.trim(), precio: prCalc(sn.opts[i]).fin })), hoy, vence });   // precio = cuota final total; el desglose interno no viaja al PDF
+    opts: c.full.map((o, i) => ({ ...o, nombre: o.nombre.trim(), dur: parseFloat(o.dur), precio: prCalc(sn.opts[i]).fin })), hoy, vence });   // precio = cuota final total; el desglose interno no viaja al PDF
 }
 function prMsg(t, ok){ const m = $('#pr-msg'); m.style.color = ok ? '#1E8E5A' : ''; m.textContent = t; m.hidden = !t; }
 
@@ -868,7 +869,7 @@ function prLoad(p){
   const a = prAl(), sn = prNorm(p.s);
   const used = sn.opts.flatMap(o => Object.keys(o.cursos));
   const names = [...CURSOS, ...(a.cursos || []), ...used].filter((c, i, arr) => arr.indexOf(c) === i);
-  $('#pr-dur').value = sn.dur; $('#pr-cur').value = sn.moneda; $('#pr-val').value = sn.val; $('#pr-goal').value = sn.goal || ''; $('#pr-notes').value = sn.notas || ''; $('#pr-inc').value = sn.inc || '';
+  $('#pr-cur').value = sn.moneda; $('#pr-val').value = sn.val; $('#pr-goal').value = sn.goal || ''; $('#pr-notes').value = sn.notas || ''; $('#pr-inc').value = sn.inc || '';
   prState = { names, opts: sn.opts.map(o => ({ ...o, extras: o.extras || [] })) };
   prCur = p.id; prRender(); prSavedRender();
 }
@@ -913,6 +914,9 @@ async function buildProposal(P){
   const font = (fam, st, size, color) => { doc.setFont(fam, st).setFontSize(size).setTextColor(...color); };
   const a = P.alumno, d = a.datos || {};
   const meses = n => `${n} ${Number(n) === 1 ? 'mes' : 'meses'}`;
+  // cada paquete tiene su duración; si difieren, portada y subtítulo muestran el rango
+  const dmin = Math.min(...P.opts.map(o => o.dur)), dmax = Math.max(...P.opts.map(o => o.dur));
+  const durTxt = dmin === dmax ? meses(dmin) : `${dmin} a ${dmax} meses`;
 
   /* ---------- Página 1: portada roja ---------- */
   doc.setFillColor(...RED); doc.rect(0, 0, W, H, 'F');
@@ -933,7 +937,7 @@ async function buildProposal(P){
   y = Math.max(y + 6, 224);
   const info = [
     ['Instrumento', d.instrumento], ['País', d.pais],
-    ['Duración', meses(P.dur)], ['Fecha', prDmy(P.hoy)], ['Válida hasta', prDmy(P.vence)],
+    ['Duración', durTxt],['Fecha', prDmy(P.hoy)], ['Válida hasta', prDmy(P.vence)],
   ].filter(r => r[1]);
   const colW = (R - M) / 2;
   info.forEach(([k, v], i) => {
@@ -954,7 +958,8 @@ async function buildProposal(P){
 
   font('times', 'bold', 28, INK); txt('Elige tu programa', M, 52);
   font('helvetica', 'normal', 11, GRAY);
-  const sub = P.goal ? `Pensado para ${P.goal}. Programa de ${meses(P.dur)}.` : `Programa de ${meses(P.dur)}, con cursos y clases a tu medida.`;
+  const prog = dmin === dmax ? `Programa de ${durTxt}` : `Programas de ${durTxt}`;
+  const sub = P.goal ? `Pensado para ${P.goal}. ${prog}.` : `${prog}, con cursos y clases a tu medida.`;
   doc.splitTextToSize(sub, R - M).forEach((l, i) => txt(l, M, 60 + i * 5.5));
 
   const n = P.opts.length, gap = 6, cw = (R - M - gap * (n - 1)) / n, top = 72, pad = 6;
@@ -991,13 +996,13 @@ async function buildProposal(P){
     const py = top + cardH - 38;
     doc.setDrawColor(...LINE); doc.setLineWidth(0.3); doc.line(x + pad, py, x + cw - pad, py);
     const total = Object.values(o.cursos).reduce((s, k) => s + k, 0);
-    const pm = new Intl.NumberFormat('es', { maximumFractionDigits: 1 }).format(total / P.dur);
+    const pm = new Intl.NumberFormat('es', { maximumFractionDigits: 1 }).format(total / o.dur);
     let ps = 24; font('helvetica', 'bold', ps, rec ? RED : INK);
     while(doc.getTextWidth(prMoney(o.precio, P.moneda)) > cw - pad * 2 && ps > 12){ ps -= 1; font('helvetica', 'bold', ps, rec ? RED : INK); }
     txt(prMoney(o.precio, P.moneda), x + pad, py + 13);   // cuota final: total del programa
     font('helvetica', 'normal', 9.5, GRAY); txt('total del programa', x + pad, py + 19);
     font('helvetica', 'normal', 8.8, GRAY);
-    txt(`${total} clases en ${meses(P.dur)}`, x + pad, py + 27);
+    txt(`${total} clases en ${meses(o.dur)}`, x + pad, py + 27);
     font('helvetica', 'bold', 8.8, INK); txt(`Equivale a ${pm} ${pm === '1' ? 'clase' : 'clases'} al mes`, x + pad, py + 32.5);
   });
 
