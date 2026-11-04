@@ -106,6 +106,8 @@
   .opt__top .x{ border:0; background:none; cursor:pointer; color:var(--gray-500); font-size:18px; }
   .opt .course-row label.ck{ flex:1 1 100%; }
   .opt .course-row select.cpm{ flex:1 1 100%; }
+  .opt .course-row input.xname{ flex:1 1 100%; padding:8px 10px; border:1px solid var(--gray-300); border-radius:8px; font-size:13.5px; width:auto; height:auto; }
+  .opt .course-row .x{ border:0; background:none; cursor:pointer; color:var(--gray-500); font-size:16px; }
   .opt .rec-ck{ display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; margin:10px 0 0; cursor:pointer; }
   .opt .rec-ck input{ accent-color:var(--red); width:16px; height:16px; }
   .price-row{ display:flex; align-items:center; gap:8px; margin-top:10px; font-size:13px; color:var(--gray-700); }
@@ -652,7 +654,10 @@ function prOptionHTML(i, o, names){
   }).join('');
   return `<div class="opt${o.rec ? ' rec' : ''}" data-i="${i}">
     <div class="opt__top"><input type="text" data-name value="${esc(o.nombre)}" aria-label="Nombre de la opción"><button type="button" class="x" data-rm aria-label="Quitar opción">✕</button></div>
-    <div class="courses">${rows}</div>
+    <div class="courses">${rows}${(o.extras || []).map((x, j) => `<div class="course-row" data-x="${j}"><input type="text" data-xn class="xname" placeholder="Nombre del curso" value="${esc(x.nombre)}" aria-label="Nombre del curso">
+      <select class="cpm" data-xk aria-label="Clases por mes">${[1,2,3,4,5,6,7,8].map(n => `<option value="${n}"${x.k === n ? ' selected' : ''}>${n} clases por mes</option>`).join('')}</select>
+      <button type="button" class="x" data-xrm aria-label="Quitar curso">✕</button></div>`).join('')}</div>
+    <button type="button" class="btn" data-xadd style="margin-top:8px;padding:6px 12px;font-size:12.5px">+ Otro curso</button>
     <div class="price-row"><span>Costo por mes</span><input type="number" data-price min="0" step="any" value="${esc(o.precio)}"><span class="tot" data-tot></span></div>
     <label class="rec-ck"><input type="radio" name="pr-rec" data-rec${o.rec ? ' checked' : ''}> Marcar como recomendada</label>
   </div>`;
@@ -672,6 +677,7 @@ function prRead(){   // lee el formulario hacia prState
     o.precio = el.querySelector('[data-price]').value;
     o.rec = el.querySelector('[data-rec]').checked;
     o.cursos = {};
+    o.extras = [...el.querySelectorAll('[data-x]')].map(r => ({ nombre: r.querySelector('[data-xn]').value, k: parseInt(r.querySelector('[data-xk]').value, 10) }));
     el.querySelectorAll('input[data-c]').forEach(cb => { if(cb.checked) o.cursos[cb.dataset.c] = parseInt(el.querySelector(`select[data-n="${CSS.escape(cb.dataset.c)}"]`).value, 10); });
   });
 }
@@ -700,7 +706,7 @@ function prFillStudent(){
   const plus = {}; Object.keys(base).forEach(c => plus[c] = Math.min(8, base[c] * 2));
   if(a.datos?.duracion) $('#pr-dur').value = a.datos.duracion;
   $('#pr-goal').value = '';
-  prState = { names, opts: [{ nombre: 'Esencial', cursos: base, precio: '', rec: false }, { nombre: 'Recomendada', cursos: plus, precio: '', rec: true }] };
+  prState = { names, opts: [{ nombre: 'Esencial', cursos: base, extras: [], precio: '', rec: false }, { nombre: 'Recomendada', cursos: plus, extras: [], precio: '', rec: true }] };
   prRender();
 }
 $('#prop').addEventListener('click', openProposal);
@@ -713,14 +719,17 @@ $('#pr-opts').addEventListener('change', e => {
   if(e.target.matches('[data-rec]')){ prRead(); prRender(); }
 });
 $('#pr-opts').addEventListener('click', e => {
-  if(!e.target.closest('[data-rm]')) return;
-  prRead(); prState.opts.splice(+e.target.closest('.opt').dataset.i, 1); prRender();
+  const opt = e.target.closest('.opt'); if(!opt) return;
+  const o = () => prState.opts[+opt.dataset.i];
+  if(e.target.closest('[data-rm]')){ prRead(); prState.opts.splice(+opt.dataset.i, 1); prRender(); }
+  else if(e.target.closest('[data-xadd]')){ prRead(); o().extras.push({ nombre: '', k: 4 }); prRender(); opt.parentNode.children[+opt.dataset.i].querySelector('[data-x]:last-of-type [data-xn]')?.focus(); }
+  else if(e.target.closest('[data-xrm]')){ prRead(); o().extras.splice(+e.target.closest('[data-x]').dataset.x, 1); prRender(); }
 });
 $('#pr-addopt').addEventListener('click', () => {
   prRead();
   const src = prState.opts[prState.opts.length - 1];
   const c = {}; Object.keys(src.cursos).forEach(k => c[k] = Math.min(8, src.cursos[k] + 2));
-  prState.opts.push({ nombre: 'Intensiva', cursos: c, precio: '', rec: false }); prRender();
+  prState.opts.push({ nombre: 'Intensiva', cursos: c, extras: src.extras.map(x => ({ nombre: x.nombre, k: Math.min(8, x.k + 2) })), precio: '', rec: false }); prRender();
 });
 
 $('#prform').addEventListener('submit', async e => {
@@ -729,9 +738,10 @@ $('#prform').addEventListener('submit', async e => {
   prRead();
   const a = alumnos.find(x => x.id === $('#pr-al').value);
   const dur = parseFloat($('#pr-dur').value), val = parseInt($('#pr-val').value, 10) || 15;
-  const err = !a ? 'Elige un alumno.' : !(dur > 0) ? 'Escribe la duración en meses.'
+  const full = prState.opts.map(o => ({ ...o, cursos: { ...o.cursos, ...Object.fromEntries(o.extras.filter(x => x.nombre.trim()).map(x => [x.nombre.trim(), x.k])) } }));
+  const err = prState.opts.some(o => o.extras.some(x => !x.nombre.trim())) ? 'Escribe el nombre de cada curso que agregaste, o quítalo.' : !a ? 'Elige un alumno.' : !(dur > 0) ? 'Escribe la duración en meses.'
     : prState.opts.some(o => !o.nombre.trim()) ? 'Cada opción necesita un nombre.'
-    : prState.opts.some(o => !Object.keys(o.cursos).length) ? 'Cada opción necesita al menos un curso.'
+    : full.some(o => !Object.keys(o.cursos).length) ? 'Cada opción necesita al menos un curso.'
     : prState.opts.some(o => !(parseFloat(o.precio) > 0)) ? 'Escribe el costo por mes de cada opción.' : '';
   if(err){ msg.textContent = err; msg.hidden = false; return; }
   btn.disabled = true; btn.textContent = 'Generando…';
@@ -740,7 +750,7 @@ $('#prform').addEventListener('submit', async e => {
     const doc = await buildProposal({
       alumno: a, dur, moneda: $('#pr-cur').value, goal: $('#pr-goal').value.trim(), notas: $('#pr-notes').value.trim(),
       incluye: $('#pr-inc').value.split('\n').map(x => x.trim()).filter(Boolean),
-      opts: prState.opts.map(o => ({ ...o, nombre: o.nombre.trim(), precio: parseFloat(o.precio) })), hoy, vence,
+      opts: full.map(o => ({ ...o, nombre: o.nombre.trim(), precio: parseFloat(o.precio) })), hoy, vence,
     });
     doc.save(`Propuesta-EMN-${prSlug(a.nombre)}.pdf`);
     $('#prdlg').close();
