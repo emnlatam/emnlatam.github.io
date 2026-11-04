@@ -110,6 +110,11 @@
   .opt .course-row .x{ border:0; background:none; cursor:pointer; color:var(--gray-500); font-size:16px; }
   .opt .rec-ck{ display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; margin:10px 0 0; cursor:pointer; }
   .opt .rec-ck input{ accent-color:var(--red); width:16px; height:16px; }
+  .pr-s{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:9px 12px; border:1px solid var(--gray-300); border-radius:8px; margin-bottom:6px; font-size:13px; background:var(--gray-100); }
+  .pr-s.cur{ border-color:var(--red); background:var(--red-tint); }
+  .pr-s .t{ flex:1; min-width:180px; }
+  .pr-s .btn{ padding:5px 10px; font-size:12px; }
+  #pr-saved{ margin-bottom:14px; }
   .price-row{ display:flex; align-items:center; gap:8px; margin-top:10px; font-size:13px; color:var(--gray-700); }
   .price-row input{ width:110px; padding:8px 10px; border:1px solid var(--gray-300); border-radius:8px; font-size:14px; }
   .price-row .tot{ margin-left:auto; font-weight:700; color:var(--ink); }
@@ -194,14 +199,18 @@
       <div class="f"><label for="pr-val">Propuesta válida por</label><div class="with-suffix"><input id="pr-val" type="number" min="1" step="1" value="15"><span>días</span></div></div>
       <div class="f"><label for="pr-goal">Pensado para (opcional)</label><input id="pr-goal" type="text" placeholder="Ej. su audición a Berklee 2027"></div>
     </div>
+    <div id="pr-saved"></div>
     <span class="lbl">Opciones (2 o 3)</span>
     <div class="opts" id="pr-opts"></div>
     <div class="acts" style="justify-content:flex-start;margin:0 0 14px"><button type="button" class="btn" id="pr-addopt">+ Agregar opción</button></div>
     <div class="f wide"><label for="pr-inc">Incluido en todas las opciones (una línea por punto)</label><textarea id="pr-inc"></textarea></div>
     <div class="f wide"><label for="pr-notes">Notas (opcional)</label><textarea id="pr-notes" style="min-height:54px"></textarea></div>
     <p class="msg" id="pr-msg" role="alert" hidden></p>
+    <p class="hint" id="pr-editing" hidden></p>
     <div class="acts">
-      <button type="button" class="btn" data-cancel>Cancelar</button>
+      <button type="button" class="btn" data-cancel>Cerrar</button>
+      <button type="button" class="btn" id="pr-saveas" hidden>Guardar como nueva</button>
+      <button type="button" class="btn" id="pr-save">Guardar propuesta</button>
       <button type="submit" class="btn primary" id="pr-go">Generar PDF</button>
     </div>
   </form>
@@ -453,6 +462,7 @@ $('#form').addEventListener('submit', async e => {
   const cursos = fd.getAll('curso');
   if(v.nombre.length < 2){ msg.textContent = 'Escribe el nombre del alumno.'; msg.hidden = false; return; }
   const datos = {}; CAMPOS.filter(c => !CORE.includes(c.key)).forEach(c => { if(v[c.key] !== '') datos[c.key] = v[c.key]; });
+  if(editing?.datos?._propuestas) datos._propuestas = editing.datos._propuestas;
   if(editing?.datos?._extras) datos._extras = editing.datos._extras;   // lo automático que ya tenía en Airtable
   const profes_curso = {}; cursos.forEach(c => { const p = (fd.get('prof::' + c) || '').toString(); if(p) profes_curso[c] = p; });
   const clases_mes = {}; cursos.forEach(c => { const n = parseInt(fd.get('cpm::' + c), 10); if(n >= 1 && n <= 8) clases_mes[c] = n; });
@@ -659,7 +669,7 @@ function prOptionHTML(i, o, names){
       <button type="button" class="x" data-xrm aria-label="Quitar curso">✕</button></div>`).join('')}</div>
     <button type="button" class="btn" data-xadd style="margin-top:8px;padding:6px 12px;font-size:12.5px">+ Otro curso</button>
     <div class="price-row"><span>Costo por mes</span><input type="number" data-price min="0" step="any" value="${esc(o.precio)}"><span class="tot" data-tot></span></div>
-    <label class="rec-ck"><input type="radio" name="pr-rec" data-rec${o.rec ? ' checked' : ''}> Marcar como recomendada</label>
+    <label class="rec-ck"><input type="checkbox" data-rec${o.rec ? ' checked' : ''}> Marcar como recomendada</label>
   </div>`;
 }
 
@@ -706,7 +716,8 @@ function prFillStudent(){
   const plus = {}; Object.keys(base).forEach(c => plus[c] = Math.min(8, base[c] * 2));
   if(a.datos?.duracion) $('#pr-dur').value = a.datos.duracion;
   $('#pr-goal').value = '';
-  prState = { names, opts: [{ nombre: 'Esencial', cursos: base, extras: [], precio: '', rec: false }, { nombre: 'Recomendada', cursos: plus, extras: [], precio: '', rec: true }] };
+  prCur = null; prSavedRender();
+  prState = { names, opts: [{ nombre: 'Esencial', cursos: base, extras: [], precio: '', rec: false }, { nombre: 'Recomendada', cursos: plus, extras: [], precio: '', rec: false }] };
   prRender();
 }
 $('#prop').addEventListener('click', openProposal);
@@ -716,7 +727,7 @@ $('#pr-opts').addEventListener('input', prTotals);
 $('#pr-opts').addEventListener('change', e => {
   const cb = e.target.closest('input[data-c]');
   if(cb) cb.closest('.course-row').querySelector('select').hidden = !cb.checked;
-  if(e.target.matches('[data-rec]')){ prRead(); prRender(); }
+  if(e.target.matches('[data-rec]')){ prRead(); const k = +e.target.closest('.opt').dataset.i; if(e.target.checked) prState.opts.forEach((o, i) => o.rec = i === k); prRender(); }
 });
 $('#pr-opts').addEventListener('click', e => {
   const opt = e.target.closest('.opt'); if(!opt) return;
@@ -732,29 +743,106 @@ $('#pr-addopt').addEventListener('click', () => {
   prState.opts.push({ nombre: 'Intensiva', cursos: c, extras: src.extras.map(x => ({ nombre: x.nombre, k: Math.min(8, x.k + 2) })), precio: '', rec: false }); prRender();
 });
 
+let prCur = null;   // id de la propuesta guardada que se está editando (null = nueva)
+const prAl = () => alumnos.find(x => x.id === $('#pr-al').value);
+
+function prSnap(){
+  prRead();
+  return { dur: $('#pr-dur').value, moneda: $('#pr-cur').value, val: $('#pr-val').value, goal: $('#pr-goal').value.trim(), notas: $('#pr-notes').value.trim(), inc: $('#pr-inc').value,
+    opts: prState.opts.map(o => ({ nombre: o.nombre, cursos: o.cursos, extras: o.extras, precio: o.precio, rec: o.rec })) };
+}
+// Valida una propuesta (del formulario o guardada) y devuelve las opciones con los cursos extra ya integrados.
+function prCheck(sn){
+  const full = sn.opts.map(o => ({ ...o, cursos: { ...o.cursos, ...Object.fromEntries((o.extras || []).filter(x => x.nombre.trim()).map(x => [x.nombre.trim(), x.k])) } }));
+  const dur = parseFloat(sn.dur);
+  const err = sn.opts.some(o => (o.extras || []).some(x => !x.nombre.trim())) ? 'Escribe el nombre de cada curso que agregaste, o quítalo.'
+    : !(dur > 0) ? 'Escribe la duración en meses.'
+    : sn.opts.some(o => !o.nombre.trim()) ? 'Cada opción necesita un nombre.'
+    : full.some(o => !Object.keys(o.cursos).length) ? 'Cada opción necesita al menos un curso.'
+    : sn.opts.some(o => !(parseFloat(o.precio) > 0)) ? 'Escribe el costo por mes de cada opción.' : '';
+  return { err, full, dur };
+}
+async function prMake(a, sn){
+  const c = prCheck(sn); if(c.err) throw new Error(c.err);
+  const hoy = new Date(), vence = new Date(); vence.setDate(vence.getDate() + (parseInt(sn.val, 10) || 15));
+  return buildProposal({ alumno: a, dur: c.dur, moneda: sn.moneda, goal: sn.goal, notas: sn.notas,
+    incluye: String(sn.inc || '').split('\n').map(x => x.trim()).filter(Boolean),
+    opts: c.full.map(o => ({ ...o, nombre: o.nombre.trim(), precio: parseFloat(o.precio) })), hoy, vence });
+}
+function prMsg(t, ok){ const m = $('#pr-msg'); m.style.color = ok ? '#1E8E5A' : ''; m.textContent = t; m.hidden = !t; }
+
+/* ---- propuestas guardadas: viven en alumnos.datos._propuestas (solo el personal las ve) ---- */
+function prSavedRender(){
+  const a = prAl(), list = a?.datos?._propuestas || [];
+  $('#pr-saved').innerHTML = list.length ? `<span class="lbl">Propuestas guardadas de ${esc(a.nombre)}</span>` + [...list].reverse().map(p => {
+    const d = new Date(p.fecha);
+    return `<div class="pr-s${p.id === prCur ? ' cur' : ''}" data-id="${esc(p.id)}"><span class="t"><strong>${prDmy(d)}</strong> · ${p.s.opts.map(o => esc(o.nombre)).join(' / ')}</span>
+      <button type="button" class="btn" data-open>Abrir</button><button type="button" class="btn" data-pdf>PDF</button><button type="button" class="btn" data-del>Eliminar</button></div>`;
+  }).join('') : '';
+  const ed = $('#pr-editing');
+  ed.hidden = !prCur;
+  if(prCur) ed.textContent = 'Estás editando una propuesta guardada. "Guardar propuesta" la actualiza; "Guardar como nueva" crea otra.';
+  $('#pr-saveas').hidden = !prCur;
+}
+async function prPersist(a, list){
+  const datos = { ...(a.datos || {}), _propuestas: list };
+  const { error } = await emnSupabase.from('alumnos').update({ datos }).eq('id', a.id);
+  if(error) throw error;
+  a.datos = datos;
+}
+async function prSave(asNew){
+  prMsg('');
+  const a = prAl(); if(!a) return;
+  const sn = prSnap(), list = [...(a.datos?._propuestas || [])];
+  try{
+    if(prCur && !asNew){
+      const i = list.findIndex(x => x.id === prCur);
+      if(i >= 0) list[i] = { ...list[i], s: sn }; else list.push({ id: prCur, fecha: new Date().toISOString(), s: sn });
+    } else {
+      prCur = 'p' + Date.now().toString(36);
+      list.push({ id: prCur, fecha: new Date().toISOString(), s: sn });
+    }
+    await prPersist(a, list);
+    prSavedRender();
+    prMsg('Propuesta guardada ✓', true);
+  }catch(err){ console.error(err); prMsg('No se pudo guardar: ' + err.message); }
+}
+function prLoad(p){
+  const a = prAl(), sn = p.s;
+  const used = sn.opts.flatMap(o => Object.keys(o.cursos));
+  const names = [...CURSOS, ...(a.cursos || []), ...used].filter((c, i, arr) => arr.indexOf(c) === i);
+  $('#pr-dur').value = sn.dur; $('#pr-cur').value = sn.moneda; $('#pr-val').value = sn.val; $('#pr-goal').value = sn.goal || ''; $('#pr-notes').value = sn.notas || ''; $('#pr-inc').value = sn.inc || '';
+  prState = { names, opts: sn.opts.map(o => ({ ...o, extras: o.extras || [] })) };
+  prCur = p.id; prRender(); prSavedRender();
+}
+$('#pr-save').addEventListener('click', () => prSave(false));
+$('#pr-saveas').addEventListener('click', () => prSave(true));
+$('#pr-saved').addEventListener('click', async e => {
+  const row = e.target.closest('.pr-s'); if(!row) return;
+  const a = prAl(), list = a.datos?._propuestas || [], p = list.find(x => x.id === row.dataset.id); if(!p) return;
+  if(e.target.closest('[data-open]')){ prMsg(''); return prLoad(p); }
+  if(e.target.closest('[data-pdf]')){
+    try{ (await prMake(a, p.s)).save(`Propuesta-EMN-${prSlug(a.nombre)}.pdf`); }
+    catch(err){ prMsg(err.message); }
+    return;
+  }
+  const del = e.target.closest('[data-del]');
+  if(del){
+    if(!del.dataset.sure){ del.dataset.sure = '1'; del.textContent = '¿Seguro?'; setTimeout(() => { if(del.isConnected){ del.dataset.sure = ''; del.textContent = 'Eliminar'; } }, 3500); return; }
+    try{ await prPersist(a, list.filter(x => x.id !== p.id)); if(prCur === p.id) prCur = null; prSavedRender(); }
+    catch(err){ console.error(err); prMsg('No se pudo eliminar: ' + err.message); }
+  }
+});
+
 $('#prform').addEventListener('submit', async e => {
   e.preventDefault();
-  const msg = $('#pr-msg'), btn = $('#pr-go'); msg.hidden = true;
-  prRead();
-  const a = alumnos.find(x => x.id === $('#pr-al').value);
-  const dur = parseFloat($('#pr-dur').value), val = parseInt($('#pr-val').value, 10) || 15;
-  const full = prState.opts.map(o => ({ ...o, cursos: { ...o.cursos, ...Object.fromEntries(o.extras.filter(x => x.nombre.trim()).map(x => [x.nombre.trim(), x.k])) } }));
-  const err = prState.opts.some(o => o.extras.some(x => !x.nombre.trim())) ? 'Escribe el nombre de cada curso que agregaste, o quítalo.' : !a ? 'Elige un alumno.' : !(dur > 0) ? 'Escribe la duración en meses.'
-    : prState.opts.some(o => !o.nombre.trim()) ? 'Cada opción necesita un nombre.'
-    : full.some(o => !Object.keys(o.cursos).length) ? 'Cada opción necesita al menos un curso.'
-    : prState.opts.some(o => !(parseFloat(o.precio) > 0)) ? 'Escribe el costo por mes de cada opción.' : '';
-  if(err){ msg.textContent = err; msg.hidden = false; return; }
+  const btn = $('#pr-go'); prMsg('');
+  const a = prAl(); if(!a) return prMsg('Elige un alumno.');
   btn.disabled = true; btn.textContent = 'Generando…';
   try{
-    const hoy = new Date(), vence = new Date(); vence.setDate(vence.getDate() + val);
-    const doc = await buildProposal({
-      alumno: a, dur, moneda: $('#pr-cur').value, goal: $('#pr-goal').value.trim(), notas: $('#pr-notes').value.trim(),
-      incluye: $('#pr-inc').value.split('\n').map(x => x.trim()).filter(Boolean),
-      opts: full.map(o => ({ ...o, nombre: o.nombre.trim(), precio: parseFloat(o.precio) })), hoy, vence,
-    });
+    const doc = await prMake(a, prSnap());
     doc.save(`Propuesta-EMN-${prSlug(a.nombre)}.pdf`);
-    $('#prdlg').close();
-  }catch(ex){ console.error(ex); msg.textContent = 'No se pudo generar el PDF: ' + ex.message; msg.hidden = false; }
+  }catch(ex){ console.error(ex); prMsg(ex.message); }
   btn.disabled = false; btn.textContent = 'Generar PDF';
 });
 
@@ -787,7 +875,7 @@ async function buildProposal(P){
 
   y = Math.max(y + 6, 224);
   const info = [
-    ['Instrumento', d.instrumento], ['País', d.pais], ['Aplicación a Berklee', d.fecha_aplicacion ? d.fecha_aplicacion.split('-').reverse().join('/') : ''],
+    ['Instrumento', d.instrumento], ['País', d.pais],
     ['Duración', meses(P.dur)], ['Fecha', prDmy(P.hoy)], ['Válida hasta', prDmy(P.vence)],
   ].filter(r => r[1]);
   const colW = (R - M) / 2;
