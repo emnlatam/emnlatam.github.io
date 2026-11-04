@@ -241,7 +241,7 @@ async function buildPdf(row){
   /* ---- header ---- */
   doc.addImage(await logoData(), 'PNG', M, 14, 22, 22);
   font('bold', 16, INK); txt('EMN', M + 27, 22);
-  font('normal', 9, GRAY); txt('Escuela de Música y Negocios', M + 27, 27.5); txt('admisiones@emnperu.com  |  +51 986 658 866', M + 27, 32.5);
+  font('normal', 9, GRAY); txt('Escuela de Música y Negocios', M + 27, 27.5); txt('admisiones@emnlatam.com  |  +51 986 658 866', M + 27, 32.5);
   font('bold', 27, BRAND); txt('INVOICE', R, 24, { align: 'right' });
   font('normal', 10, GRAY); txt('No. ' + numero(row), R, 31, { align: 'right' });
   if (split){
@@ -383,7 +383,7 @@ async function buildPdf(row){
     doc.setPage(i);
     doc.setDrawColor(...LINE); doc.setLineWidth(0.3); doc.line(M, H - 16, R, H - 16);
     font('normal', 8, GRAY);
-    txt('Escuela de Música y Negocios (EMN)  |  admisiones@emnperu.com  |  +51 986 658 866', M, H - 11);
+    txt('Escuela de Música y Negocios (EMN)  |  admisiones@emnlatam.com  |  +51 986 658 866', M, H - 11);
     txt(`${numero(row)}  |  Página ${i} de ${n}`, R, H - 11, { align: 'right' });
   }
   return doc;

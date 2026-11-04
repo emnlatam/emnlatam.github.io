@@ -69,9 +69,9 @@ begin
     if v_al.id is not null then update public.alumnos set student_id = uid where id = v_al.id; end if;
   end if;
   if v_al.id is null then
-    raise exception 'Tu cuenta todavía no está vinculada a tu ficha de alumno. Escríbenos a admisiones@emnperu.com.';
+    raise exception 'Tu cuenta todavía no está vinculada a tu ficha de alumno. Escríbenos a admisiones@emnlatam.com.';
   end if;
-  if v_al.activo is false then raise exception 'Tu ficha de alumno no está activa. Escríbenos a admisiones@emnperu.com.'; end if;
+  if v_al.activo is false then raise exception 'Tu ficha de alumno no está activa. Escríbenos a admisiones@emnlatam.com.'; end if;
 
   if exists (select 1 from public.mock_slots where fecha = p_fecha and alumno_id = v_al.id) then
     raise exception 'Ya tienes un horario reservado para esa fecha. Cancélalo si quieres elegir otro.';

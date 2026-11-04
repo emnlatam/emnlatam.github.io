@@ -865,7 +865,7 @@ async function buildProposal(P){
   doc.setFillColor(...RED); doc.rect(0, 0, W, H, 'F');
   doc.addImage(logo.data, 'PNG', M - 0.39 * 96, 20 - 0.21 * 96, 96, 96);   // el símbolo queda alineado al margen izquierdo
   font('helvetica', 'normal', 10, WHITE); txt('Escuela de Música y Negocios', R, 26, { align: 'right' });
-  txt('emnperu.com', R, 31.5, { align: 'right' });
+  txt('emnlatam.com', R, 31.5, { align: 'right' });
 
   font('times', 'bold', 44, WHITE); txt('Propuesta', M, 150);
   txt('de programa', M, 166);
@@ -890,7 +890,7 @@ async function buildProposal(P){
   });
 
   font('helvetica', 'normal', 8.5, [255, 220, 224]);
-  txt('admisiones@emnperu.com   |   +51 986 658 866', M, H - 14);
+  txt('admisiones@emnlatam.com   |   +51 986 658 866', M, H - 14);
 
   /* ---------- Página 2: opciones ---------- */
   doc.addPage();
@@ -971,7 +971,7 @@ async function buildProposal(P){
 
   doc.setDrawColor(...LINE); doc.setLineWidth(0.3); doc.line(M, H - 16, R, H - 16);
   font('helvetica', 'normal', 8, GRAY);
-  txt('Escuela de Música y Negocios (EMN)  |  admisiones@emnperu.com  |  +51 986 658 866', M, H - 11);
+  txt('Escuela de Música y Negocios (EMN)  |  admisiones@emnlatam.com  |  +51 986 658 866', M, H - 11);
   txt('Página 2 de 2', R, H - 11, { align: 'right' });
   return doc;
 }

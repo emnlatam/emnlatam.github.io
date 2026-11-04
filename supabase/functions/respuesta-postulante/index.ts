@@ -3,7 +3,7 @@
 // Se dispara cuando llega una postulación nueva a pregrado (Google Form vía
 // Airtable, o el botón "Postula" de la web). Hace dos cosas:
 //   1) Envía el correo de "recibimos tu postulación" al postulante, desde
-//      admisiones@emnperu.com, usando la API de Zoho Mail (no Gmail ni Zapier).
+//      admisiones@emnlatam.com, usando la API de Zoho Mail (no Gmail ni Zapier).
 //   2) Guarda una alerta en la tabla `alertas` para el tablero visual.
 //
 // Llamada (POST JSON, con header x-webhook-secret):
@@ -14,7 +14,7 @@
 //   ZOHO_CLIENT_ID             del "Self Client" creado en Zoho API Console
 //   ZOHO_CLIENT_SECRET         del mismo Self Client
 //   ZOHO_REFRESH_TOKEN         refresh token generado con scope ZohoMail.messages.CREATE
-//   ZOHO_ACCOUNT_ID            ID de la cuenta de correo admisiones@emnperu.com (GET /api/accounts)
+//   ZOHO_ACCOUNT_ID            ID de la cuenta de correo admisiones@emnlatam.com (GET /api/accounts)
 //   ZOHO_DOMAIN                opcional, por defecto "zoho.com" (usa zoho.eu / zoho.in / etc. si la cuenta está en otra región)
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY  (ya los pone Supabase)
 //
@@ -23,7 +23,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const FROM = 'admisiones@emnperu.com';
+const FROM = 'admisiones@emnlatam.com';
 const SUBJECT = 'Recibimos tu postulación a EMN';
 
 const cors = {
@@ -45,7 +45,7 @@ const bodyHtml = (nombre: string) => `
   <p>Saludos cordiales,</p>
   <p style="margin-top: 24px; margin-bottom: 0;"><strong>Maria Gracia Bustamante</strong><br>
   Secretaria | EMN<br>
-  admisiones@emnperu.com · (+51) 986 658 866<br>
+  admisiones@emnlatam.com · (+51) 986 658 866<br>
   <a href="https://academy.emnlatam.com" style="color: #C8102E;">academy.emnlatam.com</a></p>
 </div>`;
 
@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
   const accountId = Deno.env.get('ZOHO_ACCOUNT_ID');
   if (!accountId) return json({ error: 'Falta ZOHO_ACCOUNT_ID' }, 500);
 
-  // 1) Correo al postulante desde admisiones@emnperu.com.
+  // 1) Correo al postulante desde admisiones@emnlatam.com.
   let token: string;
   try { token = await zohoAccessToken(domain); } catch (e) { return json({ error: String(e) }, 502); }
   const mail = await fetch(`https://mail.${domain}/api/accounts/${accountId}/messages`, {
