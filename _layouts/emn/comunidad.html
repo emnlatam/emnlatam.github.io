@@ -110,6 +110,9 @@
   .opt .course-row .x{ border:0; background:none; cursor:pointer; color:var(--gray-500); font-size:16px; }
   .opt .rec-ck{ display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; margin:10px 0 0; cursor:pointer; }
   .opt .rec-ck input{ accent-color:var(--red); width:16px; height:16px; }
+  .prx-wrap{ position:sticky; top:0; height:0; z-index:5; text-align:right; margin:-14px -12px 0 0; }
+  .prx{ width:34px; height:34px; border:0; border-radius:50%; background:var(--gray-100); color:var(--ink); font-size:17px; line-height:1; cursor:pointer; }
+  .prx:hover{ background:var(--red); color:#fff; }
   .pr-s{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:9px 12px; border:1px solid var(--gray-300); border-radius:8px; margin-bottom:6px; font-size:13px; background:var(--gray-100); }
   .pr-s.cur{ border-color:var(--red); background:var(--red-tint); }
   .pr-s .t{ flex:1; min-width:180px; }
@@ -189,8 +192,9 @@
   </form>
 </dialog>
 
-<dialog class="m" id="prdlg" aria-labelledby="prdlg-title" style="width:min(96vw,860px)">
+<dialog class="m" id="prdlg" aria-labelledby="prdlg-title" data-keep-open style="width:min(96vw,860px)">
   <form id="prform" novalidate>
+    <div class="prx-wrap"><button type="button" class="prx" data-cancel aria-label="Cerrar propuesta">✕</button></div>
     <h2 id="prdlg-title">Propuesta de paquete</h2>
     <div class="fields">
       <div class="f wide"><label for="pr-al">Alumno</label><select id="pr-al"></select></div>
@@ -208,7 +212,6 @@
     <p class="msg" id="pr-msg" role="alert" hidden></p>
     <p class="hint" id="pr-editing" hidden></p>
     <div class="acts">
-      <button type="button" class="btn" data-cancel>Cerrar</button>
       <button type="button" class="btn" id="pr-saveas" hidden>Guardar como nueva</button>
       <button type="button" class="btn" id="pr-save">Guardar propuesta</button>
       <button type="submit" class="btn primary" id="pr-go">Generar PDF</button>
@@ -721,6 +724,7 @@ function prFillStudent(){
   prRender();
 }
 $('#prop').addEventListener('click', openProposal);
+$('#prdlg').addEventListener('cancel', e => e.preventDefault());   // Esc no lo cierra: solo la X
 $('#pr-al').addEventListener('change', prFillStudent);
 $('#pr-dur').addEventListener('input', prTotals); $('#pr-cur').addEventListener('change', prTotals);
 $('#pr-opts').addEventListener('input', prTotals);

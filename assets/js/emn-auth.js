@@ -391,7 +391,7 @@ function emnInjectCareerMenu(st){
 }
 
 // Click outside a floating panel closes it — everywhere on the site:
-//  - native <dialog> panels (clicking the dimmed backdrop, i.e. outside the box), and
+//  - native <dialog> panels (clicking the dimmed backdrop, i.e. outside the box; a <dialog data-keep-open> opts out), and
 //  - the page-made overlays that use `.overlay.open` (clicking the dimmed area).
 // (emnConfirm / emnAlert / the account modal already do this themselves.)
 document.addEventListener('click', (e) => {
@@ -399,7 +399,7 @@ document.addEventListener('click', (e) => {
   if(t instanceof HTMLDialogElement && t.open){
     const r = t.getBoundingClientRect();
     const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
-    if(!inside) t.close();
+    if(!inside && !t.hasAttribute('data-keep-open')) t.close();   // data-keep-open: only its own X closes it
   } else if(t.classList?.contains('overlay') && t.classList.contains('open')){
     t.classList.remove('open');
   }
