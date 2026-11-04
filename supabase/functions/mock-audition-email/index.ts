@@ -5,7 +5,7 @@
 // alumno dueño del slot (al reservar él mismo).
 //
 // Secrets necesarios (una sola vez; la clave sale de resend.com → API Keys, y el dominio debe estar verificado):
-//   supabase secrets set RESEND_API_KEY=re_... MAIL_FROM="EMN <admisiones@mail.emnperu.com>" MAIL_REPLY_TO=admisiones@emnlatam.com --project-ref gpoddvcrsdkpgfmyniqu
+//   supabase secrets set RESEND_API_KEY=re_... MAIL_FROM="EMN <admisiones@mail.emnlatam.com>" MAIL_REPLY_TO=admisiones@emnlatam.com --project-ref gpoddvcrsdkpgfmyniqu
 //
 // Deploy:  supabase functions deploy mock-audition-email --project-ref gpoddvcrsdkpgfmyniqu
 //
