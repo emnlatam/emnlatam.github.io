@@ -20,7 +20,7 @@ Own, separate Supabase project — never reuse AMBRA's credentials:
 - URL: `https://gpoddvcrsdkpgfmyniqu.supabase.co`
 - Anon key: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb2RkdmNyc2RrcGdmbXluaXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0Nzc3MzksImV4cCI6MjEwNTA1MzczOX0.N9XvN4xdln5GFlTcpv3nE3iThH7Jfoym23HPp97_fxc`
 
-**RLS gotcha**: Supabase now auto-enables Row Level Security on newly created tables by default. This app's convention is RLS **disabled** (frontend-only permission checks, matching everything else here) — after creating any new table, always run `alter table public.<name> disable row level security;` or writes will silently fail with a 42501 error that looks like a client bug but isn't.
+**RLS**: since 2026-11-04 every table has RLS on (Supabase flagged `rls_disabled_in_public` as critical). The student tables (`students`, `practice_activity`, `career_todos`, `career_progress`, `interview_prep_*_answers`) allow own rows or `public.emn_is_staff()`; see `supabase/sql/rls-student-tables.sql`. After creating any new table, always add RLS policies (never `disable row level security`).
 
 Key tables: `students` (id/email/full_name/role/status/avatar_url — role is `admin`/`professor`/`student`), `practice_activity`, `career_progress` (one JSONB `data` row per student_id), `interview_prep_prelim_answers`, `interview_prep_final_answers`.
 
