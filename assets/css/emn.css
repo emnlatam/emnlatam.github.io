@@ -3382,3 +3382,45 @@
 
 /* Cursos is shown only to signed-in users (toggled in emn-auth.js) */
 .emn-nav__link--cta[hidden] { display: none !important; }
+
+/* ---- Tools on a phone held sideways (short landscape screens) ----
+   Sight Melody and the other .emn-tool pages were laid out for tall screens.
+   In landscape a phone is only ~320-430px tall, so the header, brand line and
+   footer used to eat the whole screen. Compact everything and respect the notch. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .emn-tool body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+  .emn-tool .topbar { padding: 6px 14px; gap: 10px; flex-wrap: nowrap; }
+  .emn-tool .gear-btn { width: 36px; height: 36px; }
+  .emn-tool .brand .title { font-size: 18px; }
+  .emn-tool .brand .sub { font-size: 9.5px; margin-top: 0; }
+  .emn-tool .topbar-ad { flex-direction: row; align-items: center; gap: 10px; padding: 5px 10px; max-width: none; width: auto; margin-left: auto; flex: 0 1 auto; }
+  .emn-tool .topbar-ad .pitch { display: none; }
+  .emn-tool .topbar-ad a.cta { padding: 5px 10px; font-size: 11px; }
+  .emn-tool .brandline-below { padding: 6px 14px 8px; gap: 8px; flex-wrap: wrap; }
+  .emn-tool .brandline-below img.logo { width: 26px; height: 26px; }
+  .emn-tool .brandline-below .sublabel { display: none; }
+  .emn-tool .main { padding: 8px 10px; justify-content: flex-start; }
+  .emn-tool .stage-header { padding: 0 6px; margin-bottom: 8px; max-width: 100%; gap: 8px; }
+  .emn-tool .header-right-group { gap: 6px; }
+  .emn-tool .mode-btn, .emn-tool .dictation-btn, .emn-tool .play-btn, .emn-tool .record-btn { padding: 7px 12px; min-height: 34px; }
+  .emn-tool #staff-wrap { padding: 8px 6px; max-width: 100%; -webkit-overflow-scrolling: touch; }
+  .emn-tool .bpm-row { padding: 0 6px; margin-top: 8px; max-width: 100%; }
+  .emn-tool .bpm-btn { width: 32px; height: 32px; }
+  .emn-tool .meta-row { padding: 0 6px; margin-top: 8px; max-width: 100%; gap: 8px; }
+  .emn-tool .meta-stats { gap: 12px; }
+  .emn-tool .chord-picker { padding: 4px 6px; gap: 10px; max-width: 100%; }
+  .emn-tool .cp-fams { gap: 8px 12px; }
+  .emn-tool .cp-fam { padding: 6px 10px; }
+  .emn-tool .cp-answer { padding-top: 8px; }
+  .emn-tool .ans-btn { padding: 8px 14px; min-width: 60px; font-size: 15px; }
+  .emn-tool .live-console { padding: 4px 6px 8px; max-width: 100%; }
+  .emn-tool .live-listen { padding: 16px 12px; }
+  .emn-tool .ll-icon { font-size: 38px; }
+  .emn-tool footer { margin-top: 10px; padding-top: 8px; }
+  .emn-tool .footer--edge { padding: 8px 14px 10px; }
+  .emn-tool .panel { width: 360px; padding-left: env(safe-area-inset-left); }
+  .emn-tool .panel-header { padding: 8px 16px; }
+  .emn-tool .panel-body { padding: 4px 16px 20px; }
+  .emn-tool .close-btn { width: 36px; height: 36px; }
+  .emn-tool .section { padding: 10px 0; }
+}

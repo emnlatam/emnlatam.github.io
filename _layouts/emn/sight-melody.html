@@ -2,7 +2,7 @@
 <html lang="en" class="emn-tool">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 {% include emn-favicon.html %}
 <title>Sight Melody — EMN</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -862,6 +862,7 @@ function mulberry32(seed){
   };
 }
 let rngFn = Math.random;
+let lastSeed = null; // seed of the exercise on screen, so a rotation can redraw the SAME exercise
 
 /* ============================= UI BUILD ============================= */
 function el(tag, cls, txt){ const e=document.createElement(tag); if(cls) e.className=cls; if(txt!==undefined) e.textContent=txt; return e; }
@@ -2156,6 +2157,7 @@ function syncAllSettingsUI(){
 function liveApplyRemoteState(remoteState, seed){
   Object.assign(state, remoteState);
   syncAllSettingsUI();
+  lastSeed = seed;
   rngFn = mulberry32(seed);
   generateCore();
 }
@@ -2233,10 +2235,27 @@ function liveLeave(){
 // from matching settings, which would still pick different random notes.
 function generate(){
   const seed = Date.now() ^ Math.floor(Math.random()*1e9);
+  lastSeed = seed;
   rngFn = mulberry32(seed);
   generateCore();
   liveBroadcastState(seed);
 }
+
+// The staff is sized from the window width when it is drawn, so turning the
+// phone (portrait <-> landscape) must redraw it. Same seed = same exercise.
+let lastDrawWidth = window.innerWidth;
+let redrawTimer = null;
+function redrawForNewWidth(){
+  clearTimeout(redrawTimer);
+  redrawTimer = setTimeout(()=>{
+    if(window.innerWidth === lastDrawWidth || lastSeed === null) return;
+    lastDrawWidth = window.innerWidth;
+    rngFn = mulberry32(lastSeed);
+    generateCore();
+  }, 250);
+}
+window.addEventListener('resize', redrawForNewWidth);
+window.addEventListener('orientationchange', redrawForNewWidth);
 
 // bpm never calls generate() (it's playback-only — see the comment above
 // BPM_MIN), so it needs its own broadcast hook, added alongside the

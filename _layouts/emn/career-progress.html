@@ -43,8 +43,10 @@
   .meter[aria-current="true"]{ border-color:var(--red); box-shadow:inset 0 0 0 1px var(--red); }
   .meter .name{ font-family:var(--font-display); font-weight:600; font-size:14.5px; }
   .meter .count{ font-size:12px; color:var(--gray-500); margin-top:auto; }
-  .bars{ display:flex; gap:3px; height:7px; }
-  .bars span{ flex:1; border-radius:2px; background:var(--gray-300); }
+  /* one square per row; a square fills when that row reaches its last stage */
+  .bars{ display:flex; flex-wrap:wrap; gap:3px; min-height:10px; }
+  .bars span{ width:10px; height:10px; border-radius:2px; background:var(--gray-300); }
+  .bars span.start{ background:#F3B9C1; }
   .bars span.on{ background:var(--red); }
   .bars span.done{ background:#1E8E5A; }
 
@@ -287,9 +289,11 @@ function renderBoard(){
     const rows = state.rows[c.id], sf = stageField(c), n = sf.o.length;
     const done = rows.filter(r=>r[sf.k]===sf.o[n-1]).length;
     const total = rows.length;
-    const segs = 10;
-    const filled = total ? Math.round(done/total*segs) : 0;
-    const bars = Array.from({length:segs},(_,i)=>`<span class="${i<filled ? (done===total?'done':'on') : ''}"></span>`).join('');
+    const allDone = total>0 && done===total;
+    const bars = rows.map(r=>{
+      const reached = sf.o.indexOf(r[sf.k]) + 1;
+      return `<span class="${reached===n ? (allDone?'done':'on') : reached>1 ? 'start' : ''}"></span>`;
+    }).join('');
     const late = rows.filter(r=>isOverdue(c,r)).length;
     const count = total ? `${done} de ${total} · ${sf.o[n-1].toLowerCase()}` : 'Sin elementos';
     const lateTxt = late ? `<span class="late-count">${late} ${late===1?'fecha vencida':'fechas vencidas'}</span>` : '';
