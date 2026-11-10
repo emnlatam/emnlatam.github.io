@@ -1407,7 +1407,9 @@ function resolvePool(){
 /* ============================= RENDER ============================= */
 const VF = Vex.Flow;
 const NOTE_SPACING = 58; // px reserved per note/rest event — keeps the staff uncrowded
-const MEASURES_PER_ROW = 4; // wraps to a new line every 4 measures, like the Rhythm Randomizer
+const MEASURES_PER_ROW_DESKTOP = 4;
+const isPhonePortrait = () => window.innerWidth <= 640;
+let MEASURES_PER_ROW = 4; // wraps to a new line every 4 measures, like the Rhythm Randomizer
 
 // Picks the next note weighted toward smaller melodic intervals from the
 // previous note (leaps > a fifth still possible, just less frequent), AND
@@ -1623,9 +1625,14 @@ function generateCore(){
     }
   }
 
-  const rowMargin = 40; // 20px left + 20px right, per row
-  let available = Math.max(340, window.innerWidth - 140);
-  if(state.measures === 1) available = available / 2; // a single measure shouldn't stretch across the whole width
+  // Phone held upright: 2 measures per row and almost the full screen width,
+  // so each measure is ~2x wider than with 4 squeezed into 340px.
+  const phone = isPhonePortrait();
+  MEASURES_PER_ROW = phone ? 2 : MEASURES_PER_ROW_DESKTOP;
+  const rowMargin = phone ? 24 : 40; // left + right, per row
+  let available = phone ? Math.max(300, window.innerWidth - 16) : Math.max(340, window.innerWidth - 140);
+  if(phone){ /* use the full row */ }
+  else if(state.measures === 1) available = available / 2; // a single measure shouldn't stretch across the whole width
   else if(state.measures === 2) available = available * 0.65; // two measures dividing the full width each looked just as stretched
   const columnsUsed = Math.min(state.measures, MEASURES_PER_ROW);
 
@@ -1650,7 +1657,7 @@ function generateCore(){
     rowWidths.push(w + rowMargin);
   }
   const totalWidth = Math.max(...rowWidths);
-  const ROW_HEIGHT = 150;
+  const ROW_HEIGHT = phone ? 125 : 150;
   const height = 40 + rowCount*ROW_HEIGHT;
 
   const renderer = new VF.Renderer(outputSvg, VF.Renderer.Backends.SVG);
@@ -1658,14 +1665,14 @@ function generateCore(){
   const ctx = renderer.getContext();
   ctx.setFont('Inter', 10);
 
-  let x = 20;
+  let x = phone ? 12 : 20;
   let y = 30;
   let prevMidi = null; // carries melodic continuity across measures
   const usageCounts = {}; // midi -> times used so far, drives degree-coverage balancing
   for(let m=0; m<state.measures; m++){
     const isFirst = m===0;
     const isRowStart = (m % MEASURES_PER_ROW) === 0;
-    if(isRowStart && !isFirst){ x = 20; y += ROW_HEIGHT; }
+    if(isRowStart && !isFirst){ x = phone ? 12 : 20; y += ROW_HEIGHT; }
     const w = measureWidths[m];
     const stave = new VF.Stave(x, y, w);
     if(state.mode === 'rhythm'){

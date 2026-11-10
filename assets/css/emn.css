@@ -3435,3 +3435,23 @@
   .emn-tool .main { padding: 14px 10px; }
   .emn-tool .brandline-below { padding: 12px 14px 24px; flex-wrap: wrap; }
 }
+
+/* Sight Melody on a phone held upright: smaller chrome, more room for the staff */
+@media (max-width: 640px) {
+  .emn-tool .topbar { padding: 8px 12px; gap: 8px; }
+  .emn-tool .brand .title { font-size: 20px; }
+  .emn-tool .gear-btn { width: 34px; height: 34px; }
+  .emn-tool .topbar-ad { padding: 8px 12px; gap: 6px; border-radius: 12px; }
+  .emn-tool .topbar-ad .pitch { font-size: 13px; line-height: 1.3; }
+  .emn-tool .topbar-ad a.cta { padding: 5px 10px; font-size: 11px; }
+  .emn-tool .brandline-below { padding: 8px 12px 10px; gap: 8px; }
+  .emn-tool .brandline-below img.logo { width: 26px; height: 26px; }
+  .emn-tool .brandline-below .home-link { font-size: 10.5px; padding: 5px 10px; }
+  .emn-tool .stage-header { gap: 6px; margin-bottom: 6px; }
+  .emn-tool .mode-btn, .emn-tool .dictation-btn, .emn-tool .play-btn, .emn-tool .record-btn { padding: 6px 12px; font-size: 13px; }
+  .emn-tool #staff-wrap { padding: 4px 0; max-width: 100%; }
+  .emn-tool .main { padding: 8px 4px; }
+  .emn-tool .bpm-row, .emn-tool .meta-row { margin-top: 6px; }
+  .emn-tool .meta-stats { gap: 10px; font-size: 12px; }
+  .emn-tool .footer--edge { padding: 10px 12px; }
+}
