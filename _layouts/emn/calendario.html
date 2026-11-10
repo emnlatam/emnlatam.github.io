@@ -65,6 +65,16 @@
   .ses button{ border:0; background:none; color:var(--gray-500); font-size:16px; cursor:pointer; padding:2px 6px; border-radius:5px; }
   .ses button:hover{ color:var(--red); background:var(--gray-100); }
   .none{ color:var(--gray-500); font-size:13px; font-style:italic; }
+  .ev.tarea{ background:#FFF6D6; border-color:#E6C75A; color:#6B5407; font-weight:600; }
+  .tasks textarea.in{ resize:vertical; min-height:62px; font-family:inherit; }
+  .tasks .add{ margin-top:6px; border:0; background:var(--red); color:#fff; border-radius:8px; padding:8px 14px; font-size:13px; font-weight:600; cursor:pointer; }
+  .tasks .add:hover{ opacity:.9; }
+  .tk{ display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:8px; align-items:start; padding:7px 0; border-top:1px solid var(--gray-100); font-size:13px; line-height:1.4; }
+  .tk input{ margin-top:3px; accent-color:var(--red); }
+  .tk.done span{ text-decoration:line-through; color:var(--gray-500); }
+  .tk button{ border:0; background:none; color:var(--gray-500); font-size:16px; cursor:pointer; padding:2px 6px; border-radius:5px; }
+  .tk button:hover{ color:var(--red); background:var(--gray-100); }
+  .ses.next{ background:#FFFBEA; }
 </style>
 </head>
 <body>
@@ -115,6 +125,23 @@ const alumno = () => alumnos.find(a => a.id === cur);
 const finDe = a => /^\d{4}-\d{2}-\d{2}$/.test(a?.datos?.fin || '') ? a.datos.fin : null;   // "Fecha de fin" del alumno
 const fmt = k => `${k.slice(8)}/${k.slice(5, 7)}/${k.slice(0, 4)}`;
 
+/* ---------- tareas para la próxima clase ----------
+   Viven en alumnos.datos._tareas = [{id, curso, texto, hecha}] (solo el personal las ve, no hace falta tabla nueva).
+   No se guardan pegadas a una clase: se calculan contra la PRÓXIMA clase agendada de ese alumno y curso, así que
+   si no hay ninguna quedan "sin clase" y se enganchan solas cuando agendas una, y si la clase pasa sin hacerlas,
+   se pasan a la siguiente. */
+const tareasDe = (a, c) => (a?.datos?._tareas || []).filter(t => t.curso === c);
+function proxClase(a, c){
+  const hoy = ymd(new Date());
+  return clases.filter(x => x.alumno_id === a.id && x.curso === c && x.fecha >= hoy).sort((p, q) => (p.fecha + p.hora).localeCompare(q.fecha + q.hora))[0] || null;
+}
+async function saveTareas(a, list){
+  const datos = { ...(a.datos || {}), _tareas: list };
+  const { error } = await emnSupabase.from('alumnos').update({ datos }).eq('id', a.id);
+  if(error){ await emnAlert('No se pudo guardar la tarea: ' + error.message); return false; }
+  a.datos = datos; return true;
+}
+
 /* ---------- alumnos (colores) ---------- */
 function renderPeople(){
   $('#people').innerHTML = alumnos.map(a => `<button type="button" class="person" style="--c:${esc(a.color)}" data-id="${a.id}" aria-pressed="${a.id === cur}"><i></i>${esc(a.nombre)}</button>`).join('')
@@ -137,8 +164,13 @@ function renderCal(){
       const al = alumnos.find(x => x.id === c.alumno_id); if(!al) return '';
       return `<div class="ev${c.alumno_id === cur ? '' : ' dim'}" style="--c:${esc(al.color)}" title="${esc(al.nombre)} · ${esc(c.curso)} · ${esc(c.hora.slice(0,5))}">${esc(c.hora.slice(0,5))} ${esc(al.nombre.split(' ')[0])} · ${esc(c.curso)}</div>`;
     }).join('');
+    let tk = '';
+    if(a && curso && curso !== MOCK){
+      const nx = proxClase(a, curso), n = tareasDe(a, curso).filter(t => !t.hecha).length;
+      if(nx && nx.fecha === k && n) tk = `<div class="ev tarea" title="Tareas para esta clase">✎ ${n} ${n === 1 ? 'tarea' : 'tareas'}</div>`;
+    }
     const mk = k === lastSunday(d.getFullYear(), d.getMonth()) ? `<div class="ev mock">${MOCK}</div>` : '';
-    cells.push(`<button type="button" class="day${outside ? ' out' : ''}${k === today ? ' today' : ''}${canPick && !outside ? ' pick' : ''}${canPick && fin && k > fin ? ' past' : ''}" data-d="${k}"${canPick && fin && k > fin ? ` title="Después de la fecha final del alumno (${fmt(fin)})"` : ''}><b>${d.getDate()}</b>${mk}${evs}</button>`);
+    cells.push(`<button type="button" class="day${outside ? ' out' : ''}${k === today ? ' today' : ''}${canPick && !outside ? ' pick' : ''}${canPick && fin && k > fin ? ' past' : ''}" data-d="${k}"${canPick && fin && k > fin ? ` title="Después de la fecha final del alumno (${fmt(fin)})"` : ''}><b>${d.getDate()}</b>${mk}${evs}${tk}</button>`);
   }
   $('#grid').innerHTML = cells.join('');
 }
@@ -150,6 +182,20 @@ function renderSide(){
   const list = [...a.cursos, TUTORING, MOCK];
   if(!list.includes(curso)) curso = a.cursos[0] || TUTORING;
   const ses = curso && curso !== MOCK ? clases.filter(c => c.alumno_id === a.id && c.curso === curso).sort((p, q) => (p.fecha + p.hora).localeCompare(q.fecha + q.hora)) : [];
+  const nx = curso && curso !== MOCK ? proxClase(a, curso) : null;
+  const tks = curso && curso !== MOCK ? tareasDe(a, curso) : [];
+  const pend = tks.filter(t => !t.hecha), hechas = tks.filter(t => t.hecha);
+  const tasksHTML = curso && curso !== MOCK ? `
+    <div class="tasks">
+      <span class="lbl">Tareas para la próxima clase</span>
+      <p class="help" style="margin:0 0 8px">${nx
+        ? `Próxima clase de ${esc(curso)}: <strong>${fmt(nx.fecha)} · ${esc(nx.hora.slice(0, 5))}</strong>. Lo que no se haga pasa a la siguiente.`
+        : 'No hay clase agendada: las tareas quedan guardadas y se enganchan solas a la próxima que agendes.'}</p>
+      <textarea class="in" id="tkText" placeholder="Ej: repasar compases 12–24 con metrónomo a 80…"></textarea>
+      <button type="button" class="add" id="tkAdd">Agregar tarea</button>
+      ${pend.map(t => `<div class="tk" data-t="${esc(t.id)}"><input type="checkbox" aria-label="Hecha"><span>${esc(t.texto)}</span><button type="button" data-tdel aria-label="Quitar tarea">×</button></div>`).join('')}
+      ${hechas.map(t => `<div class="tk done" data-t="${esc(t.id)}"><input type="checkbox" checked aria-label="Hecha"><span>${esc(t.texto)}</span><button type="button" data-tdel aria-label="Quitar tarea">×</button></div>`).join('')}
+    </div>` : '';
   side.style.setProperty('--c', a.color);
   side.innerHTML = `
     <h3><i></i>Clases de ${esc(a.nombre)}</h3>
@@ -166,12 +212,13 @@ function renderSide(){
         ? '<p class="help">Se agenda solo el último domingo de cada mes (verde en el calendario). Aquí solo defines el link.</p>'
         : `<p class="help">Haz clic en los días del calendario para agendar <strong>${esc(curso)}</strong>. Cada clase queda con este link y puedes cambiar su hora o su link abajo.</p>
            <span class="lbl">Clases agendadas</span>
-           ${ses.length ? ses.map(s => `<div class="ses" data-id="${s.id}">
+           ${ses.length ? ses.map(s => `<div class="ses${nx && nx.id === s.id ? ' next' : ''}" data-id="${s.id}">
                <span>${esc(s.fecha.slice(8))}/${esc(s.fecha.slice(5, 7))}</span>
                <input class="in" type="time" value="${esc(s.hora.slice(0, 5))}" data-f="hora" aria-label="Hora">
                <input class="in" type="url" value="${esc(s.link || '')}" data-f="link" placeholder="Link de Meet" aria-label="Link">
                <button type="button" data-del aria-label="Quitar clase">×</button></div>`).join('') : '<p class="none">Aún no hay clases de este curso.</p>'}`}
-    ` : ''}`;
+    ` : ''}
+    ${tasksHTML}`;
 }
 
 function renderAll(){ renderPeople(); renderCal(); renderSide(); }
@@ -187,6 +234,18 @@ $('#next').addEventListener('click', () => { view.setMonth(view.getMonth() + 1);
 $('#today').addEventListener('click', () => { view = new Date(); view.setDate(1); renderCal(); });
 
 $('#side').addEventListener('click', async e => {
+  const a0 = alumno();
+  if(e.target.id === 'tkAdd'){
+    const ta = $('#tkText'), texto = ta.value.trim(); if(!texto) return;
+    const list = [...(a0.datos?._tareas || []), { id: crypto.randomUUID(), curso, texto, hecha: false }];
+    if(await saveTareas(a0, list)) renderAll();
+    return;
+  }
+  if(e.target.closest('[data-tdel]')){
+    const id = e.target.closest('.tk').dataset.t;
+    if(await saveTareas(a0, (a0.datos?._tareas || []).filter(t => t.id !== id))) renderAll();
+    return;
+  }
   const c = e.target.closest('.course');
   if(c){ curso = c.dataset.c; renderAll(); return; }
   if(e.target.closest('[data-del]')){
@@ -198,6 +257,13 @@ $('#side').addEventListener('click', async e => {
 });
 
 $('#side').addEventListener('change', async e => {
+  const tk = e.target.closest('.tk');
+  if(tk){
+    const a0 = alumno();
+    const list = (a0.datos?._tareas || []).map(t => t.id === tk.dataset.t ? { ...t, hecha: e.target.checked } : t);
+    if(await saveTareas(a0, list)) renderAll(); else e.target.checked = !e.target.checked;
+    return;
+  }
   if(e.target.id === 'meet'){
     const link = e.target.value.trim() || null;
     const { error } = await emnSupabase.from('cursos_meet').upsert({ curso, link });
@@ -244,7 +310,9 @@ async function boot(){
     emnSupabase.from('cursos_meet').select('*'),
   ]);
   if(a.error || c.error || m.error){ console.error(a.error || c.error || m.error); gate.textContent = 'No se pudo cargar el calendario.'; gate.style.display = 'block'; return; }
-  alumnos = a.data.filter(x => x.activo !== false);   // los archivados no salen clases = c.data.map(x => ({ ...x, hora: x.hora.slice(0, 8) })); (m.data || []).forEach(x => meet[x.curso] = x.link);
+  alumnos = a.data.filter(x => x.activo !== false);   // los archivados no salen
+  clases = c.data.map(x => ({ ...x, hora: x.hora.slice(0, 8) }));
+  (m.data || []).forEach(x => meet[x.curso] = x.link);
   const asked = new URLSearchParams(location.search).get('alumno');
   cur = alumnos.find(x => x.id === asked)?.id || alumnos[0]?.id || null;
   $('#body-c').style.display = 'block';

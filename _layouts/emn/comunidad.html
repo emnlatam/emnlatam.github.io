@@ -477,6 +477,7 @@ $('#form').addEventListener('submit', async e => {
   if(v.nombre.length < 2){ msg.textContent = 'Escribe el nombre del alumno.'; msg.hidden = false; return; }
   const datos = {}; CAMPOS.filter(c => !CORE.includes(c.key)).forEach(c => { if(v[c.key] !== '') datos[c.key] = v[c.key]; });
   if(editing?.datos?._propuestas) datos._propuestas = editing.datos._propuestas;
+  if(editing?.datos?._tareas) datos._tareas = editing.datos._tareas;   // tareas para la próxima clase (Calendario)
   if(editing?.datos?._extras) datos._extras = editing.datos._extras;   // lo automático que ya tenía en Airtable
   const profes_curso = {}; cursos.forEach(c => { const p = (fd.get('prof::' + c) || '').toString(); if(p) profes_curso[c] = p; });
   const clases_mes = {}; cursos.forEach(c => { const n = parseInt(fd.get('cpm::' + c), 10); if(n >= 1 && n <= 8) clases_mes[c] = n; });
