@@ -3424,3 +3424,14 @@
   .emn-tool .close-btn { width: 36px; height: 36px; }
   .emn-tool .section { padding: 10px 0; }
 }
+
+/* ---- Tools on a phone held upright (portrait) ----
+   The Sight Melody header (modes | key | Dictation + Play) was a 3-column grid
+   that pushed the page wider than the screen. Stack it and let it wrap. */
+@media (max-width: 640px) {
+  .emn-tool .stage-header { grid-template-columns: 1fr; justify-items: center; gap: 10px; padding: 0 8px; max-width: 100%; }
+  .emn-tool .mode-toggle-row { flex-wrap: wrap; justify-content: center; }
+  .emn-tool .header-right-group { justify-self: center; flex-wrap: wrap; justify-content: center; }
+  .emn-tool .main { padding: 14px 10px; }
+  .emn-tool .brandline-below { padding: 12px 14px 24px; flex-wrap: wrap; }
+}
