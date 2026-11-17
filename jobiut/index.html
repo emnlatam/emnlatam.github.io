@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Jobiut · Comparador de ofertas</title>
+<style>
+:root{
+  --bg:#0f1115; --card:#181b22; --card2:#1f232c; --line:#2b303b; --txt:#eef0f4; --mut:#9aa3b2;
+  --acc:#7c9cff; --good:#4ade80; --mid:#fbbf24; --bad:#f87171; --r:16px;
+}
+@media (prefers-color-scheme: light){
+  :root{--bg:#f4f5f8;--card:#fff;--card2:#f0f2f6;--line:#dde1e9;--txt:#14161b;--mut:#5f6877;--acc:#3b5bdb}
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:env(safe-area-inset-bottom)}
+header.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:12px}
+.mini-score{min-width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:20px;border:4px solid var(--acc);flex:none}
+.top .t{flex:1;min-width:0}
+.top .t b{display:block;font-size:15px}
+.top .t span{font-size:13px;color:var(--mut)}
+.top button{flex:none}
+main{max-width:1100px;margin:0 auto;padding:16px;display:grid;gap:16px}
+@media(min-width:900px){main{grid-template-columns:1fr 380px;align-items:start}aside{position:sticky;top:84px}.top .go{display:none}}
+section.card,aside .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+h2{margin:0 0 12px;font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:var(--acc);display:flex;justify-content:space-between;align-items:center}
+h2 small{color:var(--mut);letter-spacing:0;text-transform:none;font-weight:500}
+.q{margin:0 0 16px}
+.q:last-child{margin-bottom:0}
+.q label.l{display:block;font-size:14px;font-weight:600;margin-bottom:6px}
+.q .hint{font-weight:400;color:var(--mut);font-size:12.5px}
+input[type=text],input[type=number],input[type=date],input[type=email],input[type=password],select,textarea{width:100%;background:var(--card2);color:var(--txt);border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit;min-height:46px;appearance:none;-webkit-appearance:none}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:0}
+select{background-image:linear-gradient(45deg,transparent 50%,var(--mut) 50%),linear-gradient(135deg,var(--mut) 50%,transparent 50%);background-position:calc(100% - 20px) 20px,calc(100% - 14px) 20px;background-size:6px 6px;background-repeat:no-repeat;padding-right:36px}
+textarea{resize:vertical;min-height:70px}
+.row{display:flex;gap:8px;align-items:center}
+.row>*{flex:1;min-width:0}
+.row>.fix{flex:none;width:auto;color:var(--mut);font-size:14px}
+.tog{display:inline-flex;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:3px}
+.tog button{border:0;background:none;color:var(--mut);font:inherit;font-weight:600;padding:9px 20px;border-radius:9px;min-height:40px}
+.tog button.on{background:var(--acc);color:#fff}
+.tog button.on.no{background:#6b7280}
+.sub{margin-top:10px;padding:12px;border-left:3px solid var(--acc);background:var(--card2);border-radius:0 12px 12px 0}
+.hide{display:none!important}
+.bul{display:grid;gap:8px}
+.bul .b{display:flex;gap:8px;align-items:center}
+.bul .b:before{content:"•";color:var(--acc);font-size:22px;line-height:1}
+.add{margin-top:8px;background:none;border:1px dashed var(--line);color:var(--mut);border-radius:12px;padding:10px;width:100%;font:inherit}
+.unit{position:relative}
+.unit input{padding-right:54px}
+.unit i{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--mut);font-style:normal;font-size:14px;pointer-events:none}
+.kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+.kpi div{background:var(--card2);border-radius:12px;padding:12px}
+.kpi small{display:block;color:var(--mut);font-size:12px}
+.kpi b{font-size:22px}
+.kpi .net b{color:var(--good)}
+.note{font-size:12px;color:var(--mut);margin-top:8px}
+/* summary */
+.gauge{display:flex;align-items:center;gap:16px;margin-bottom:8px}
+.ring{width:110px;height:110px;flex:none}
+.ring text{font-weight:800}
+.verdict b{display:block;font-size:18px}
+.verdict span{color:var(--mut);font-size:13px}
+.radar{width:100%;max-width:320px;margin:4px auto 0;display:block}
+.legend{display:flex;gap:14px;justify-content:center;font-size:12px;color:var(--mut);margin:4px 0 10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.bars{display:grid;gap:8px;margin:6px 0 14px}
+.bar{display:grid;grid-template-columns:92px 1fr 34px;gap:8px;align-items:center;font-size:13px}
+.bar .t{height:8px;border-radius:99px;background:var(--card2);overflow:hidden}
+.bar .t i{display:block;height:100%;background:var(--acc);border-radius:99px;transition:width .3s}
+.bar em{font-style:normal;color:var(--mut);text-align:right}
+.sumlist{margin:0;padding:0;list-style:none;display:grid;gap:6px;font-size:13.5px}
+.sumlist li{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.sumlist li span:first-child{color:var(--mut)}
+.sumlist li span:last-child{text-align:right;font-weight:600;max-width:60%}
+.btn{border:0;background:var(--acc);color:#fff;font:inherit;font-weight:700;border-radius:12px;padding:13px 18px;min-height:46px;width:100%}
+.btn.s{width:auto;padding:9px 14px;min-height:40px;font-size:14px}
+.toast{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));background:var(--card);border:1px solid var(--acc);border-radius:12px;padding:12px 14px;z-index:50;box-shadow:0 10px 30px rgba(0,0,0,.4);font-size:14px}
+.eq{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.eq summary{cursor:pointer;font-weight:600;font-size:14px}
+.eq pre{white-space:pre-wrap;word-break:break-word;font:12px/1.55 ui-monospace,Consolas,monospace;color:var(--txt);margin:10px 0 0}
+:root{--c1:oklch(.74 .12 250);--c2:oklch(.74 .12 155);--c3:oklch(.74 .12 85);--c4:oklch(.74 .12 335);--c5:oklch(.74 .12 200)}
+@media (prefers-color-scheme: light){:root{--c1:oklch(.55 .12 250);--c2:oklch(.55 .12 155);--c3:oklch(.55 .12 85);--c4:oklch(.55 .12 335);--c5:oklch(.55 .12 200)}}
+.c1{--c:var(--c1)}.c2{--c:var(--c2)}.c3{--c:var(--c3)}.c4{--c:var(--c4)}.c5{--c:var(--c5)}
+section.card[class*=" c"]{border-left:5px solid var(--c);background:color-mix(in srgb,var(--c) 9%,var(--card))}
+section.card[class*=" c"] h2{color:var(--c)}
+section.card[class*=" c"] .sub{border-left-color:var(--c)}
+section.card[class*=" c"] input:focus,section.card[class*=" c"] select:focus,section.card[class*=" c"] textarea:focus{outline-color:var(--c)}
+section.card[class*=" c"] .tog button.on{background:var(--c);color:#111}
+section.card[class*=" c"] .tog button.on.no{background:#6b7280;color:#fff}
+.chips{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.chips button{border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:12px;min-height:46px;font:inherit;font-weight:700;padding:0}
+.chips button small{display:block;font-size:10px;font-weight:500;color:var(--mut);margin-top:-2px}
+.chips button.on{background:var(--c);border-color:var(--c);color:#111}
+.chips button.on small{color:#111}
+.burger{flex:none;width:44px;height:44px;border:1px solid var(--line);background:var(--card);border-radius:12px;display:grid;place-content:center;gap:5px;padding:0}
+.burger span{display:block;width:20px;height:2px;background:var(--txt);border-radius:2px}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:40;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;bottom:0;left:0;width:min(86vw,340px);background:var(--card);border-right:1px solid var(--line);z-index:41;transform:translateX(-102%);transition:transform .22s;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+.drawer.on{transform:none}
+.dh{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--line)}
+.dh .x{background:none;border:0;color:var(--mut);font-size:20px;min-width:44px;min-height:44px}
+.dlist{flex:1;overflow:auto;padding:8px}
+.orow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:1px solid transparent;color:var(--txt);font:inherit;border-radius:12px;padding:10px;min-height:56px}
+.orow.cur{background:var(--card2);border-color:var(--acc)}
+.orow .sc{flex:none;width:42px;height:42px;border-radius:50%;border:3px solid var(--acc);display:grid;place-items:center;font-weight:800;font-size:14px}
+.orow .tx{flex:1;min-width:0}
+.orow .tx b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:15px}
+.orow .tx small{color:var(--mut);font-size:12px}
+.orow.add{color:var(--acc);font-weight:700;border:1px dashed var(--line);margin-top:6px}
+.orow.add .sc{border-style:dashed;font-size:24px;font-weight:500}
+.df{display:flex;justify-content:space-between;align-items:center;padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);font-size:12px;color:var(--mut)}
+.lnk{background:none;border:0;color:var(--acc);font:inherit;padding:8px}
+.gate{position:fixed;inset:0;z-index:60;background:var(--bg);display:grid;place-items:center;padding:16px}
+.gbox{width:100%;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.btn.del{background:none;border:1px solid var(--bad);color:var(--bad);margin-top:10px}
+h3.sec{margin:22px 0 14px;padding-top:16px;border-top:1px solid var(--line);font-size:15px;font-weight:800;color:var(--txt)}
+.sumtitle{margin:14px 0 8px;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <button class="burger" id="burger" aria-label="Mis ofertas"><span></span><span></span><span></span></button>
+  <div class="mini-score" id="miniScore">0</div>
+  <div class="t"><b id="miniName">Nueva oferta</b><span id="miniNet">Neto: —</span></div>
+  <button class="btn s go" onclick="document.getElementById('resumen').scrollIntoView({behavior:'smooth'})">Resumen</button>
+</header>
+
+<div class="scrim" id="scrim"></div>
+<nav class="drawer" id="drawer" aria-label="Mis ofertas">
+  <div class="dh"><b>Mis ofertas</b><button class="x" id="dClose" aria-label="Cerrar">✕</button></div>
+  <div class="dlist" id="dlist"></div>
+  <div class="df"><span id="dUser"></span><button class="lnk" id="dOut">Salir</button></div>
+</nav>
+<div class="gate hide" id="gate">
+  <form class="card gbox" id="gform">
+    <h2>Jobiut · privado</h2>
+    <p class="note" style="margin:0 0 12px">Entra con tu cuenta de EMN (admin). Tus ofertas solo las ves tú.</p>
+    <div class="q"><label class="l">Correo</label><input type="email" id="gmail" autocomplete="username" required></div>
+    <div class="q"><label class="l">Contraseña</label><input type="password" id="gpass" autocomplete="current-password" required></div>
+    <button class="btn" type="submit">Entrar</button>
+    <p class="note" id="gmsg" style="color:var(--bad)"></p>
+  </form>
+</div>
+
+<main>
+<div id="form">
+
+  <section class="card c1" style="margin-bottom:16px">
+    <h2>Oferta</h2>
+    <div class="q"><label class="l">Empresa / puesto</label><input type="text" id="empresa" placeholder="Ej. Hotel Paradores · Recepcionista"></div>
+    <div class="q"><label class="l">Entrevistador / notas <span class="hint">(opcional)</span></label><input type="text" id="entrevistador" placeholder="Nombre y contacto"></div>
+  </section>
+
+  <section class="card c2" style="margin-bottom:16px">
+    <h2>Contrato y condiciones legales <small id="p1">0%</small></h2>
+
+    <div class="q"><label class="l">¿Qué tipo de contrato es?</label>
+      <select id="tipo" data-k="tipo">
+        <option value="">Selecciona…</option>
+        <option value="indefinido">Indefinido</option>
+        <option value="temporal">Temporal</option>
+        <option value="obra">Por obra o servicio</option>
+        <option value="fijo-discontinuo">Fijo-discontinuo</option>
+        <option value="practicas">Prácticas</option>
+        <option value="formacion">Formación en alternancia</option>
+        <option value="becario">Beca con cotización</option>
+      </select>
+      <div class="sub hide" id="tempBox">
+        <label class="l">Fecha de fin</label><input type="date" id="fin" data-k="fin">
+        <label class="l" style="margin-top:10px">¿Es renovable?</label>
+        <div class="tog" data-tog="renovable"><button data-v="si">Sí</button><button data-v="no" class="no">No</button></div>
+      </div>
+    </div>
+
+    <div class="q"><label class="l">¿Me dan de alta en la Seguridad Social desde el primer día?</label>
+      <div class="tog" data-tog="alta"><button data-v="si">Sí</button><button data-v="no" class="no">No</button></div>
+    </div>
+
+    <div class="q"><label class="l">Fecha exacta de inicio</label><input type="date" id="inicio" data-k="inicio"></div>
+
+    <div class="q"><label class="l">Tareas y roles <span class="hint">(un punto por línea)</span></label>
+      <div class="bul" id="tareas"></div>
+      <button class="add" onclick="addBullet()">+ Añadir tarea</button>
+    </div>
+
+    <div class="q"><label class="l">Formación inicial pagada <span class="hint">(horas · vacío = no hay)</span></label>
+      <div class="unit"><input type="number" inputmode="decimal" min="0" data-k="formacion" placeholder="0"><i>horas</i></div>
+    </div>
+
+    <div class="q"><label class="l">Preaviso para renunciar y para despido</label>
+      <textarea data-k="preaviso" placeholder="Ej. Renuncia 15 días · Despido según convenio"></textarea>
+    </div>
+  </section>
+
+  <section class="card c3" style="margin-bottom:16px">
+    <h2>Pago <small id="p2">0%</small></h2>
+
+    <div class="q"><label class="l">Salario ofrecido (bruto)</label>
+      <div class="row">
+        <div class="unit"><input type="number" inputmode="decimal" min="0" id="sal" data-k="sal" placeholder="0"><i>€</i></div>
+        <select id="per" data-k="per">
+          <option value="hora">por hora</option>
+          <option value="dia">por día</option>
+          <option value="semana">por semana</option>
+          <option value="mes" selected>por mes</option>
+          <option value="ano">por año</option>
+        </select>
+      </div>
+      <div class="sub" id="calcBox">
+        <div class="hide" id="hrsBox">
+          <div class="row"><span class="fix">Jornada</span>
+            <select id="jornada" data-k="jornada"><option value="full">Full time (40 h/sem)</option><option value="medio">Medio tiempo (20 h/sem)</option><option value="horas">Por horas</option></select></div>
+          <div class="row hide" id="hrsCustom" style="margin-top:8px"><span class="fix">Horas / semana</span><input type="number" inputmode="decimal" min="0" max="60" step="0.5" id="hrs" data-k="hrs" value="40"></div>
+        </div>
+        <div class="row hide" id="diasBox"><span class="fix">Días / semana</span><input type="number" inputmode="decimal" min="0" max="7" id="dias" data-k="dias" value="5"></div>
+        <div class="row" style="margin-top:8px"><span class="fix">Pagas al año</span>
+          <select id="pagas" data-k="pagas"><option value="12">12 pagas</option><option value="14">14 pagas (2 extras)</option></select></div>
+        <div class="kpi">
+          <div><small>Bruto mensual</small><b id="kBruto">—</b></div>
+          <div class="net"><small>Neto mensual (León)</small><b id="kNeto">—</b></div>
+          <div><small>Bruto anual</small><b id="kAnual" style="font-size:17px">—</b></div>
+          <div><small>Neto por paga</small><b id="kPaga" style="font-size:17px">—</b></div>
+          <div style="grid-column:1/-1"><small>IRPF · Seg. Social (mensual)</small><b id="kRet" style="font-size:17px">—</b></div>
+        </div>
+        <details class="eq" id="eq"><summary>Ver ecuaciones de este caso</summary><pre id="eqTxt"></pre></details>
+        <div class="note">Cálculo 2026: escala IRPF estatal + Castilla y León, SS trabajador 6,50 % (indef.) / 6,55 % (temporal), gastos 2.000 €, reducción por rendimientos del trabajo y deducción de salarios bajos (esta última se recupera en la Renta). No sustituye a una nómina.</div>
+      </div>
+    </div>
+
+    <div class="q"><label class="l">Horas extra · tarifa <span class="hint">(vacío = no se pagan / se compensan)</span></label>
+      <div class="unit"><input type="number" inputmode="decimal" min="0" data-k="extra" placeholder="0"><i>€/h</i></div>
+    </div>
+
+  </section>
+
+  <section class="card c4" style="margin-bottom:16px">
+    <h2>Cobro y beneficios <small id="p4">0%</small></h2>
+
+    <div class="q"><label class="l">Día del mes de cobro y medio</label>
+      <div class="row">
+        <div class="unit"><input type="number" inputmode="numeric" min="1" max="31" data-k="diacobro" placeholder="Día"><i>día</i></div>
+        <select data-k="medio"><option value="">Medio…</option><option>Transferencia</option><option>Efectivo</option><option>Cheque</option><option>Otro</option></select>
+      </div>
+    </div>
+
+    <div class="q"><label class="l">Pluses o complementos</label><textarea data-k="pluses" placeholder="Transporte, comida, nocturnidad…"></textarea></div>
+    <div class="q"><label class="l">Salario variable, comisiones o bonus · criterios</label><textarea data-k="variable" placeholder="Qué se cobra y con qué condiciones"></textarea></div>
+
+    <div class="q"><label class="l">Pago por festivo trabajado <span class="hint">(vacío = no)</span></label>
+      <div class="unit"><input type="number" inputmode="decimal" min="0" data-k="festivo" placeholder="0"><i>€</i></div>
+    </div>
+  </section>
+
+  <section class="card c5">
+    <h2>Días libres y vacaciones <small id="p3">0%</small></h2>
+
+    <div class="q"><label class="l">Días de vacaciones al año <span class="hint">(mínimo legal 30 naturales)</span></label>
+      <div class="row">
+        <div class="unit"><input type="number" inputmode="numeric" min="0" data-k="vac" placeholder="30"><i>días</i></div>
+      </div>
+      <label class="l" style="margin-top:10px">¿Las elijo yo?</label>
+      <div class="tog" data-tog="eligeyo"><button data-v="si">Sí, yo</button><button data-v="no" class="no">La empresa</button></div>
+    </div>
+
+    <div class="q"><label class="l">Días de descanso por semana</label>
+      <select id="desc" data-k="desc">
+        <option value="">Selecciona…</option>
+        <option value="finde">Fines de semana</option>
+        <option value="dias">Días específicos de la semana</option>
+        <option value="cada">Cada X días trabajados, Y libres</option>
+      </select>
+      <div class="sub hide" id="diasBox2">
+        <label class="l">Elige tus días libres</label>
+        <div class="chips" id="chips"></div>
+      </div>
+      <div class="sub hide" id="cadaBox">
+        <div class="row"><span class="fix">Trabajo</span><input type="number" min="1" inputmode="numeric" id="cx" data-k="cx" placeholder="x"><span class="fix">días, descanso</span><input type="number" min="1" inputmode="numeric" id="cy" data-k="cy" placeholder="y"><span class="fix">días</span></div>
+      </div>
+    </div>
+
+    <div class="q"><label class="l">¿Cómo se gestiona la baja por enfermedad?</label><textarea data-k="baja" placeholder="Complemento de la empresa, carencia…"></textarea></div>
+  </section>
+</div>
+
+<aside id="resumen">
+  <div class="card">
+    <h2>Puntuación <small>vs. trabajo ideal</small></h2>
+    <div class="gauge">
+      <svg class="ring" viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="52" fill="none" stroke="var(--card2)" stroke-width="12"/>
+        <circle id="arc" cx="60" cy="60" r="52" fill="none" stroke="var(--acc)" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 327" transform="rotate(-90 60 60)"/>
+        <text id="big" x="60" y="68" text-anchor="middle" font-size="34" fill="var(--txt)">0</text>
+      </svg>
+      <div class="verdict"><b id="vTxt">Sin datos</b><span id="vSub">Llena las preguntas para puntuar</span></div>
+    </div>
+
+    <svg class="radar" id="radar" viewBox="-130 -125 260 250"></svg>
+    <div class="legend"><span><i style="background:var(--line)"></i>Ideal</span><span><i style="background:var(--acc)"></i>Esta oferta</span></div>
+
+    <div class="bars" id="bars"></div>
+
+    <div class="sumtitle">Resumen</div>
+    <ul class="sumlist" id="sum"></ul>
+
+    <div style="margin-top:16px"><button class="btn" id="save">Guardar oferta</button><p class="note" id="saveSt" style="text-align:center">Sin guardar</p><button class="btn del hide" id="del">Eliminar esta oferta</button></div>
+  </div>
+</aside>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+/* ============ Ajustes del puntaje (tocar aquí) ============ */
+const IDEAL_NET = 2000;                  // neto mensual que da 100 en Salario
+const WEIGHTS = {Contrato:20, Salario:35, Extras:10, Vacaciones:20, Descanso:15};
+/* IRPF 2026 = escala estatal (9,5-12-15-18,5-22,5-24,5) + escala Castilla y León (9-12-14-18,5-21,5), sumadas por tramo.
+   Fuente: tributos.jcyl.es / AEAT. Tramos CyL: 12.450 · 20.200 · 35.200 · 53.407,20 */
+const SCALE = [[12450,.185],[20200,.24],[35200,.29],[53407.20,.37],[60000,.40],[300000,.44],[Infinity,.46]];
+/* Seguridad Social trabajador 2026 (Orden PJC/297/2026): CC 4,70 + MEI 0,15 + FP 0,10 + desempleo 1,55 indefinido / 1,60 temporal */
+const SS_BASE = 4.70+0.15+0.10;
+const SS_MAX_BASE = 5101.20*12, MIN_PERSONAL = 5550, GASTOS = 2000;
+const SMI_2026 = 17094;   /* deducción salarios bajos RDL 5/2026: 590,89 € hasta 17.094 €, 0 en 20.048,45 € */
+
+const S = {tog:{}, tareas:[''], libres:[]};
+const DIAS=[['L','Lun'],['M','Mar'],['X','Mié'],['J','Jue'],['V','Vie'],['S','Sáb'],['D','Dom']];
+function renderChips(){
+  const box=$('#chips'); box.innerHTML='';
+  DIAS.forEach((d,i)=>{const b=document.createElement('button');b.type='button';b.innerHTML=d[0]+'<small>'+d[1]+'</small>';
+    b.classList.toggle('on',S.libres.includes(i));
+    b.onclick=()=>{S.libres=S.libres.includes(i)?S.libres.filter(x=>x!==i):[...S.libres,i].sort();renderChips();update()};
+    box.appendChild(b)});
+}
+const $ = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const eur = n => isFinite(n)&&n!==null ? n.toLocaleString('es-ES',{maximumFractionDigits:0})+' €' : '—';
+const val = k => { const e=$(`[data-k="${k}"]`); return e? e.value.trim():''; };
+const num = k => parseFloat(val(k).replace(',','.'))||0;
+
+function taxScale(base){let t=0,prev=0;for(const [lim,r] of SCALE){if(base>prev){t+=(Math.min(base,lim)-prev)*r}prev=lim}return t}
+/* Cotización del trabajador según contrato */
+const SS_FIJA_MES = 11.51;  /* formación y becarios: cuota fija contingencias comunes (Asepeyo 2026) */
+function ssRule(tipo){
+  if(tipo==='formacion'||tipo==='becario') return {kind:'fija'};
+  const temp=['temporal','obra','practicas'].includes(tipo);
+  return {kind:'pct', pct:SS_BASE+(temp?1.60:1.55), desemp:temp?1.60:1.55};
+}
+function netFromAnnual(g, hijos, tipo){
+  const rule=ssRule(tipo);
+  const ss = rule.kind==='fija'? SS_FIJA_MES*12 : Math.min(g,SS_MAX_BASE)*rule.pct/100;
+  let rend = g-ss-GASTOS;
+  // reducción por rendimientos del trabajo
+  let red=0; if(rend<=14852)red=7302; else if(rend<17673.52)red=7302-1.75*(rend-14852); else if(rend<19747.5)red=2364.34-1.14*(rend-17673.52);
+  const base=Math.max(rend-Math.max(red,0),0);
+  const min = MIN_PERSONAL + (hijos>0? [2400,2700,4000][Math.min(hijos,3)-1] + Math.max(hijos-3,0)*4500 :0);
+  let irpf=Math.max(taxScale(base)-taxScale(min),0);
+  // deducción salarios bajos (se aplica en la Renta, no en nómina)
+  const ded = g<=SMI_2026?590.89 : g<20048.45? 590.89-0.2*(g-SMI_2026):0;
+  irpf=Math.max(irpf-ded,0);
+  return {ss,irpf,net:g-ss-irpf};
+}
+function salary(){
+  const s=num('sal'), per=val('per'), hrs=({full:40,medio:20}[val('jornada')])||num('hrs')||0, dias=num('dias')||0, pagas=+val('pagas')||12;
+  if(!s) return null;
+  let anual = per==='hora'? s*hrs*52 : per==='dia'? s*dias*52 : per==='semana'? s*52 : per==='mes'? s*pagas : s;
+  const n=netFromAnnual(anual, num('hijos'), val('tipo'));
+  return {anual, pagas, bruto:anual/12, neto:n.net/12, netoPaga:n.net/pagas, ss:n.ss/12, irpf:n.irpf/12};
+}
+
+/* ============ UI ============ */
+function addBullet(v=''){S.tareas.push(v);renderBullets()}
+function renderBullets(){
+  const box=$('#tareas');box.innerHTML='';
+  S.tareas.forEach((t,i)=>{
+    const d=document.createElement('div');d.className='b';
+    d.innerHTML=`<input type="text" placeholder="Tarea ${i+1}">`;
+    const inp=$('input',d);inp.value=t;inp.oninput=()=>{S.tareas[i]=inp.value;update()};
+    box.appendChild(d);
+  });
+}
+$$('.tog').forEach(t=>$$('button',t).forEach(b=>b.onclick=()=>{
+  const k=t.dataset.tog; S.tog[k]= S.tog[k]===b.dataset.v? '' : b.dataset.v;
+  $$('button',t).forEach(x=>x.classList.toggle('on',S.tog[k]===x.dataset.v)); update();
+}));
+$$('[data-k]').forEach(e=>e.addEventListener('input',update));
+
+function scores(){
+  const sal=salary(), k=(x)=>val(x);
+  const tareas=S.tareas.filter(x=>x.trim()).length;
+  // Contrato
+  const tipoPts={indefinido:50,'fijo-discontinuo':30,practicas:15,temporal:15,obra:10,formacion:10,becario:5}[k('tipo')]||0;
+  let c=tipoPts + (S.tog.alta==='si'?25:0) + (k('inicio')?5:0) + (tareas?5:0) + (num('formacion')>0?5:0) + (k('preaviso')?10:0);
+  // Salario
+  let s=(sal? Math.min(sal.neto/IDEAL_NET,1)*80:0) + (num('diacobro')?10:0) + (k('medio')?10:0);
+  // Extras
+  let e=(num('extra')>0?40:0)+(k('pluses')?30:0)+(k('variable')?30:0);
+  // Vacaciones
+  const v=num('vac');
+  let vac=Math.min(v/30,1)*70 + (v>30?Math.min((v-30)/5,1)*10:0) + (S.tog.eligeyo==='si'?20:0);
+  // Descanso
+  let d=0; if(k('desc')==='finde') d=60; else if(k('desc')==='dias') d=Math.min(S.libres.length/2,1)*60; else if(k('desc')==='cada'&&num('cx')&&num('cy')) d=Math.min((num('cy')/(num('cx')+num('cy')))/(2/7),1)*60;
+  d += (num('festivo')>0?25:0) + (k('baja')?15:0);
+  const o={Contrato:c,Salario:s,Extras:e,Vacaciones:vac,Descanso:d};
+  Object.keys(o).forEach(x=>o[x]=Math.round(Math.min(o[x],100)));
+  const tw=Object.values(WEIGHTS).reduce((a,b)=>a+b,0);
+  const total=Math.round(Object.keys(o).reduce((a,x)=>a+o[x]*WEIGHTS[x],0)/tw);
+  return {o,total,sal};
+}
+
+function progress(){
+  const q=(ks)=>Math.round(ks.filter(x=>x).length/ks.length*100)+'%';
+  $('#p1').textContent=q([val('tipo'),S.tog.alta,val('inicio'),S.tareas.some(x=>x.trim()),val('formacion'),val('preaviso')]);
+  $('#p2').textContent=q([val('sal'),val('extra')]);
+  $('#p4').textContent=q([val('diacobro')&&val('medio'),val('pluses'),val('variable'),val('festivo')]);
+  $('#p3').textContent=q([val('vac')&&S.tog.eligeyo,val('desc'),val('baja')]);
+}
+
+const AX=Object.keys(WEIGHTS), R=95;
+function pt(i,r){const a=-Math.PI/2+i*2*Math.PI/AX.length;return [Math.cos(a)*r,Math.sin(a)*r]}
+function drawRadar(o){
+  let h='';
+  [.25,.5,.75,1].forEach(f=>h+=`<polygon points="${AX.map((_,i)=>pt(i,R*f).join(',')).join(' ')}" fill="${f===1?'var(--card2)':'none'}" stroke="var(--line)" stroke-width="1" ${f===1?'stroke-dasharray="4 3"':''}/>`);
+  AX.forEach((_,i)=>{const [x,y]=pt(i,R);h+=`<line x1="0" y1="0" x2="${x}" y2="${y}" stroke="var(--line)"/>`});
+  h+=`<polygon points="${AX.map((a,i)=>pt(i,R*o[a]/100).join(',')).join(' ')}" fill="var(--acc)" fill-opacity=".35" stroke="var(--acc)" stroke-width="2.5" stroke-linejoin="round"/>`;
+  AX.forEach((a,i)=>{const [x,y]=pt(i,R+17);h+=`<text x="${x}" y="${y+4}" text-anchor="middle" font-size="11" fill="var(--mut)">${a}</text>`});
+  $('#radar').innerHTML=h;
+}
+
+const f2=n=>n.toLocaleString('es-ES',{maximumFractionDigits:2});
+function equations(sal){
+  const tipo=val('tipo'), rule=ssRule(tipo), per=val('per'), pagas=+val('pagas')||12;
+  const n = sal? netFromAnnual(sal.anual,num('hijos'),tipo) : null;
+  const rend = sal? sal.anual-n.ss-GASTOS : 0;
+  const L=[];
+  L.push('1) BRUTO ANUAL (G) según cómo te pagan');
+  L.push('   hora:    G = tarifa × horas/sem × 52');
+  L.push('   día:     G = tarifa × días/sem × 52');
+  L.push('   semana:  G = tarifa × 52');
+  L.push('   mes:     G = tarifa × nº de pagas');
+  L.push('   año:     G = tarifa');
+  if(sal) L.push('   → tu caso ('+per+'): G = '+f2(sal.anual)+' €');
+  L.push('');
+  L.push('2) SEGURIDAD SOCIAL del trabajador (SS) — contrato: '+(tipo||'sin elegir'));
+  L.push('   Indefinido / fijo-discontinuo:');
+  L.push('     SS = mín(G; 61.214,40) × (4,70+0,15+0,10+1,55)% = × 6,50%');
+  L.push('   Temporal / obra / prácticas:');
+  L.push('     SS = mín(G; 61.214,40) × (4,70+0,15+0,10+1,60)% = × 6,55%');
+  L.push('   Formación en alternancia / beca con cotización:');
+  L.push('     SS = 11,51 € × 12 = 138,12 € al año (cuota fija, sin %)');
+  if(sal) L.push('   → tu caso: SS = '+(rule.kind==='fija'?'11,51 × 12':f2(Math.min(sal.anual,SS_MAX_BASE))+' × '+f2(rule.pct)+'%')+' = '+f2(n.ss)+' €');
+  L.push('');
+  L.push('3) RENDIMIENTO NETO DEL TRABAJO (RN)');
+  L.push('   RN = G − SS − 2.000 (otros gastos)');
+  if(sal) L.push('   → RN = '+f2(sal.anual)+' − '+f2(n.ss)+' − 2.000 = '+f2(rend)+' €');
+  L.push('');
+  L.push('4) REDUCCIÓN POR RENDIMIENTOS DEL TRABAJO (RED)');
+  L.push('   RN ≤ 14.852:               RED = 7.302');
+  L.push('   14.852 < RN ≤ 17.673,52:   RED = 7.302 − 1,75 × (RN − 14.852)');
+  L.push('   17.673,52 < RN < 19.747,50: RED = 2.364,34 − 1,14 × (RN − 17.673,52)');
+  L.push('   RN ≥ 19.747,50:            RED = 0');
+  if(sal){const red=rend<=14852?7302:rend<=17673.52?7302-1.75*(rend-14852):rend<19747.5?2364.34-1.14*(rend-17673.52):0;
+    L.push('   → RED = '+f2(Math.max(red,0))+' €');}
+  L.push('');
+  L.push('5) BASE LIQUIDABLE (BL) y MÍNIMO PERSONAL Y FAMILIAR (MPF)');
+  L.push('   BL = RN − RED');
+  L.push('   MPF = 5.550 (sin hijos ni otras cargas)');
+  L.push('');
+  L.push('6) CUOTA IRPF');
+  L.push('   Cuota = Escala(BL) − Escala(MPF) − Deducción salarios bajos (mínimo 0)');
+  L.push('   Escala (estatal + Castilla y León), por tramo:');
+  L.push('     0–12.450: 18,5% · –20.200: 24% · –35.200: 29% · –53.407,20: 37%');
+  L.push('     –60.000: 40% · –300.000: 44% · más de 300.000: 46%');
+  L.push('   Deducción salarios bajos (2026):');
+  L.push('     G ≤ 17.094: 590,89 · entre 17.094 y 20.048,45: 590,89 − 0,20 × (G − 17.094) · después: 0');
+  if(sal) L.push('   → IRPF = '+f2(n.irpf)+' €');
+  L.push('');
+  L.push('7) NETO');
+  L.push('   Neto anual = G − SS − IRPF');
+  L.push('   Neto mensual = Neto anual ÷ 12');
+  L.push('   Neto por paga = Neto anual ÷ nº de pagas ('+pagas+')');
+  if(sal) L.push('   → '+f2(n.net)+' ÷ 12 = '+f2(n.net/12)+' €/mes  ·  ÷ '+pagas+' = '+f2(n.net/pagas)+' €/paga');
+  return L.join('\n');
+}
+function update(){
+  // visibilidad condicional
+  $('#tempBox').classList.toggle('hide',!['temporal','obra','practicas','formacion'].includes(val('tipo')));
+  $('#cadaBox').classList.toggle('hide',val('desc')!=='cada'); $('#diasBox2').classList.toggle('hide',val('desc')!=='dias');
+  const per=val('per'); $('#hrsBox').classList.toggle('hide',per!=='hora'); $('#hrsCustom').classList.toggle('hide',val('jornada')!=='horas'); $('#diasBox').classList.toggle('hide',per!=='dia');
+  
+  const {o,total,sal}=scores();
+  $('#kBruto').textContent=sal?eur(sal.bruto):'—'; $('#kNeto').textContent=sal?eur(sal.neto):'—';
+  $('#kAnual').textContent=sal?eur(sal.anual):'—'; $('#kPaga').textContent=sal?eur(sal.netoPaga)+' ×'+sal.pagas:'—'; $('#kRet').textContent=sal?`${eur(sal.irpf)} · ${eur(sal.ss)}`:'—';
+  $('#miniNet').textContent='Neto: '+(sal?eur(sal.neto)+'/mes':'—');
+  $('#miniName').textContent=$('#empresa').value||'Nueva oferta';
+  $('#miniScore').textContent=total;
+
+  const col= total>=75?'var(--good)':total>=50?'var(--mid)':total>0?'var(--bad)':'var(--acc)';
+  $('#arc').setAttribute('stroke',col); $('#arc').setAttribute('stroke-dasharray',`${total/100*327} 327`);
+  $('#miniScore').style.borderColor=col; $('#big').textContent=total;
+  $('#vTxt').textContent= total===0?'Sin datos': total>=75?'Muy buena oferta': total>=50?'Aceptable': 'Floja';
+  $('#vSub').textContent= total===0?'Llena las preguntas para puntuar':'Neto estimado '+(sal?eur(sal.neto)+'/mes':'pendiente');
+  $('#eqTxt').textContent=equations(sal);
+  drawRadar(o);
+  $('#bars').innerHTML=AX.map(a=>`<div class="bar"><span>${a}</span><div class="t"><i style="width:${o[a]}%"></i></div><em>${o[a]}</em></div>`).join('');
+
+  // resumen: solo lo que está lleno
+  const L=[]; const add=(a,b)=>{if(b!==''&&b!==undefined&&b!==null)L.push([a,b])};
+  add('Contrato',val('tipo')); if(['temporal','obra','practicas','formacion'].includes(val('tipo'))){add('Fin',val('fin'));add('Renovable',S.tog.renovable)}
+  add('Alta SS día 1',S.tog.alta); add('Inicio',val('inicio'));
+  const t=S.tareas.filter(x=>x.trim()); if(t.length)add('Tareas',t.join(' · '));
+  if(num('formacion'))add('Formación pagada',num('formacion')+' h'); add('Preaviso',val('preaviso'));
+  if(sal)add('Bruto / neto',`${eur(sal.bruto)} / ${eur(sal.neto)}`);
+  if(num('extra'))add('Hora extra',num('extra')+' €/h');
+  if(val('diacobro')||val('medio'))add('Cobro',[val('diacobro')&&'día '+val('diacobro'),val('medio')].filter(Boolean).join(' · '));
+  add('Pluses',val('pluses')); add('Variable',val('variable'));
+  if(num('vac'))add('Vacaciones',num('vac')+' días'+(S.tog.eligeyo?(S.tog.eligeyo==='si'?' · elijo yo':' · fija empresa'):''));
+  if(val('desc')==='finde')add('Descanso','Fines de semana'); if(val('desc')==='dias'&&S.libres.length)add('Descanso',S.libres.map(i=>DIAS[i][1]).join(' · ')); if(val('desc')==='cada'&&num('cx')&&num('cy'))add('Descanso',`${num('cx')} on / ${num('cy')} off`);
+  if(num('festivo'))add('Festivo trabajado',num('festivo')+' €'); add('Baja enfermedad',val('baja'));
+  $('#sum').innerHTML=L.length?L.map(([a,b])=>`<li><span>${a}</span><span>${String(b).replace(/</g,'&lt;')}</span></li>`).join(''):'<li><span>Nada todavía</span><span></span></li>';
+  progress();
+}
+
+function payload(){
+  const d={libresIdx:S.libres,empresa:$('#empresa').value,entrevistador:$('#entrevistador').value,tareas:S.tareas.filter(x=>x.trim()),toggles:S.tog};
+  $$('[data-k]').forEach(e=>d[e.dataset.k]=e.value);
+  const r=scores(); d.puntaje=r.total; d.ejes=r.o; d.salario=r.sal; return d;
+}
+function fill(d){
+  d=d||{};
+  $('#empresa').value=d.empresa||''; $('#entrevistador').value=d.entrevistador||'';
+  $$('[data-k]').forEach(e=>{const k=e.dataset.k; if(d[k]!==undefined) e.value=d[k]; else e.value=e.dataset.def!==undefined?e.dataset.def:(e.tagName==='SELECT'?e.options[0].value:'');});
+  S.tog=Object.assign({},d.toggles||{});
+  $$('.tog').forEach(t=>$$('button',t).forEach(x=>x.classList.toggle('on',S.tog[t.dataset.tog]===x.dataset.v)));
+  S.tareas=(d.tareas&&d.tareas.length)?[...d.tareas]:['']; renderBullets();
+  S.libres=d.libresIdx||[]; renderChips(); update();
+}
+/* ---------- Supabase (privado: RLS por usuario + staff) ---------- */
+const sb=window.supabase.createClient('https://gpoddvcrsdkpgfmyniqu.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb2RkdmNyc2RrcGdmbXluaXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0Nzc3MzksImV4cCI6MjEwNTA1MzczOX0.N9XvN4xdln5GFlTcpv3nE3iThH7Jfoym23HPp97_fxc');
+let curId=null, offers=[], timer=null, dirty=false, user=null;
+const st=t=>{$('#saveSt').textContent=t};
+const hasContent=()=>!!($('#empresa').value.trim()||num('sal'));
+function nameOf(){return $('#empresa').value.trim()||'Sin nombre'}
+async function save(){
+  clearTimeout(timer); if(!user||!hasContent()) return;
+  const row={name:nameOf(),score:scores().total,data:payload(),updated_at:new Date().toISOString()};
+  st('Guardando…');
+  const q = curId? sb.from('jobiut_offers').update(row).eq('id',curId).select('id').single()
+                 : sb.from('jobiut_offers').insert(row).select('id').single();
+  const {data,error}=await q;
+  if(error){st('Error al guardar: '+error.message);return}
+  curId=data.id; dirty=false; $('#del').classList.remove('hide'); st('Guardado ✓ '+new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}));
+  loadList();
+}
+function later(){dirty=true; st('Sin guardar…'); clearTimeout(timer); timer=setTimeout(save,1500)}
+async function loadList(){
+  const {data,error}=await sb.from('jobiut_offers').select('id,name,score,updated_at').order('updated_at',{ascending:false});
+  if(error){$('#dlist').innerHTML='<p class="note" style="padding:12px">'+error.message+'</p>';return}
+  offers=data; renderList();
+}
+function renderList(){
+  const colr=n=>n>=75?'var(--good)':n>=50?'var(--mid)':n>0?'var(--bad)':'var(--acc)';
+  $('#dlist').innerHTML=offers.map(o=>`<button class="orow ${o.id===curId?'cur':''}" data-id="${o.id}"><span class="sc" style="border-color:${colr(o.score)}">${o.score}</span><span class="tx"><b></b><small>${new Date(o.updated_at).toLocaleDateString('es-ES',{day:'numeric',month:'short'})}</small></span></button>`).join('')
+    +'<button class="orow add" id="addOffer"><span class="sc">+</span><span class="tx"><b>Nueva oferta</b></span></button>';
+  $$('#dlist .orow[data-id]').forEach((b,i)=>{$('b',b).textContent=offers[i].name; b.onclick=()=>openOffer(offers[i].id)});
+  $('#addOffer').onclick=newOffer;
+}
+function drawer(on){$('#drawer').classList.toggle('on',on);$('#scrim').classList.toggle('on',on)}
+async function openOffer(id){
+  if(dirty) await save();
+  const {data,error}=await sb.from('jobiut_offers').select('id,data').eq('id',id).single();
+  if(error){st(error.message);return}
+  curId=data.id; fill(data.data); dirty=false; $('#del').classList.remove('hide'); st('Guardado ✓'); renderList(); drawer(false); window.scrollTo(0,0);
+}
+async function newOffer(){
+  if(dirty) await save();
+  curId=null; fill({}); dirty=false; $('#del').classList.add('hide'); st('Sin guardar'); renderList(); drawer(false); window.scrollTo(0,0);
+}
+let delArm=false;
+$('#del').onclick=async()=>{
+  if(!delArm){delArm=true;$('#del').textContent='Toca otra vez para borrar';setTimeout(()=>{delArm=false;$('#del').textContent='Eliminar esta oferta'},3500);return}
+  delArm=false;$('#del').textContent='Eliminar esta oferta';
+  const {error}=await sb.from('jobiut_offers').delete().eq('id',curId);
+  if(error){st(error.message);return}
+  curId=null; fill({}); dirty=false; $('#del').classList.add('hide'); st('Oferta eliminada'); loadList();
+};
+$('#save').onclick=save;
+$('#burger').onclick=()=>{drawer(true);loadList()};
+$('#scrim').onclick=$('#dClose').onclick=()=>drawer(false);
+$('#dOut').onclick=async()=>{await sb.auth.signOut();location.reload()};
+document.addEventListener('input',e=>{if(e.target.closest('#form,#empresa'))later()},true);
+document.addEventListener('click',e=>{if(e.target.closest('.tog button,.chips button,.add'))later()},true);
+$('#gform').onsubmit=async e=>{
+  e.preventDefault(); $('#gmsg').textContent='';
+  const {error}=await sb.auth.signInWithPassword({email:$('#gmail').value.trim(),password:$('#gpass').value});
+  if(error){$('#gmsg').textContent='No se pudo entrar: '+error.message;return}
+  boot();
+};
+async function boot(){
+  const {data}=await sb.auth.getSession();
+  user=data.session&&data.session.user;
+  $('#gate').classList.toggle('hide',!!user);
+  if(!user) return;
+  $('#dUser').textContent=user.email;
+  await loadList();
+  if(offers.length) openOffer(offers[0].id); else st('Sin guardar');
+}
+$('#empresa').addEventListener('input',update);
+renderBullets(); renderChips(); update(); boot();
+</script>
+</body>
+</html>
