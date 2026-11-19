@@ -2088,13 +2088,18 @@ async function soundChord(midis){
 
 document.getElementById('btnPlay').onclick = (e) => {
   e.stopPropagation();
-  if(document.getElementById('btnPlay').classList.contains('playing')) stopMelody();
-  else {
+  if(document.getElementById('btnPlay').classList.contains('playing')){
+    stopMelody();
+    liveBroadcastTransport('stop'); // Live Mode: stop on the other screen too
+  } else {
     const view = dictView();
     if(view === 'console'){ if(lastLiveChord) liveSendChord(lastLiveChord); } // replays it on both screens
     else if(view === 'listen'){ if(lastLiveChord) soundChord(lastLiveChord.midis); }
     else if(view === 'solo') playChord();
-    else playMelody();
+    else {
+      playMelody();
+      liveBroadcastTransport('play'); // Live Mode: both screens play the same exercise
+    }
   }
 };
 
@@ -2129,6 +2134,13 @@ function liveBroadcastState(seed){
   if(!liveChannel) return;
   liveLastSeed = seed;
   liveChannel.send({ type:'broadcast', event:'state', payload:{ state, seed } });
+}
+// Play / Stop pressed on one screen -> the other screen does the same.
+// Remote handlers call playMelody()/stopMelody() directly (never the button
+// handler), so there is no echo back.
+function liveBroadcastTransport(action){
+  if(!liveChannel) return;
+  liveChannel.send({ type:'broadcast', event:'transport', payload:{ action, bpm: state.bpm } });
 }
 function liveBroadcastBpm(){
   if(!liveChannel) return;
@@ -2181,6 +2193,15 @@ function liveSetupChannelHandlers(){
   liveChannel.on('broadcast', { event: 'bpm' }, ({ payload }) => {
     state.bpm = payload.bpm;
     renderBpm();
+  });
+  liveChannel.on('broadcast', { event: 'transport' }, ({ payload }) => {
+    if(payload.action === 'play'){
+      if(payload.bpm){ state.bpm = payload.bpm; renderBpm(); }
+      // Only the normal melody/rhythm path (not Harmony Dictation chords), restarting if already running.
+      if(dictView() === null) playMelody();
+    } else if(payload.action === 'stop'){
+      stopMelody();
+    }
   });
   // Dictation + chords (Harmony): staff on the other side switched Dictation on/off, or
   // played a chord that has to sound here too.
