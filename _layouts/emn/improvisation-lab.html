@@ -14,6 +14,11 @@
 <style>
 .il-wrap{ max-width:none; margin:0; padding:32px 28px 70px; font-family:'Inter',system-ui,sans-serif; color:#1A1A1A; }
 .il-intro{ font-size:14px; line-height:1.6; color:#4B5563; margin:0 0 14px; }
+.il-how{ background:#fff; border:1px solid #D8DBDF; border-radius:12px; padding:16px 20px; margin:0 0 14px; }
+.il-how h2{ font-family:'Fraunces',serif; font-size:18px; margin:0 0 8px; }
+.il-how p{ font-size:14px; line-height:1.6; color:#4B5563; margin:0 0 8px; }
+.il-how ul{ margin:0; padding-left:20px; font-size:13.5px; line-height:1.65; color:#4B5563; }
+.il-how li{ margin-bottom:6px; }
 .il-notice{ font-size:12.5px; line-height:1.55; color:#6b2330; background:#FCE9EB; border-left:3px solid #C8102E; border-radius:6px; padding:10px 14px; margin:0 0 26px; }
 #genres{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:22px; align-items:start; }
 @media (max-width:900px){ #genres{ grid-template-columns:1fr; } .il-wrap{ padding:24px 20px 60px; } }
@@ -71,7 +76,14 @@
 </div>
 
 <div class="il-wrap">
-  <p class="il-intro">Elige un género, abre la pista y toca encima. Cada tema trae su audio de acompañamiento y su partitura.</p>
+  <div class="il-how">
+    <h2>Cómo usar esta página</h2>
+    <p>Estos son los posibles temas (tracks) de los que dependerá tu prueba de improvisación. Escoge el tema que prefieras y elige:</p>
+    <ul>
+      <li><b>El audio donde tu instrumento no esté.</b> Por ejemplo, si tocas guitarra, usa "No Guitar"; si tocas bajo, "No Bass". Así tocas tú esa parte sobre el resto de la banda. "Complete" es la versión con todos los instrumentos, para escuchar cómo suena.</li>
+      <li><b>La partitura que se acomode a tu instrumento.</b> Concert (instrumentos en Do: piano, flauta, violín, voz), B-flat (trompeta, clarinete, saxo tenor), E-flat (saxo alto y barítono), F (corno francés), Alto Clef (viola), Bass Clef (trombón, bajo, chelo) o Guitar.</li>
+    </ul>
+  </div>
   <p class="il-notice">Todos los audios y partituras de esta página pertenecen a Berklee College of Music. Se comparten aquí únicamente con fines educativos y de práctica.</p>
   <div id="genres"></div>
 </div>
@@ -80,27 +92,1496 @@
 /* Para cargar material: audio y pdf son listas de [nombre del archivo, ID de Drive]
    (el ID es la parte del link entre /d/ y /view). Sin lista, se muestra "Próximamente". */
 const GENRES = [
-  { name:'Blues Progressions', tracks:[
-    {t:'No Time Blues', d:'jazz blues in F',
-      audio:[['No_Time_Blues_full_Complete.mp3','1JgSQo_AsfLl0uBpAIo0VVpudJqLhqBU4'],['No_Time_Blues_no_melody.mp3','13f4-ifIm2cD0gyCLrwIseGQlVTXQyHDk'],['No_Time_Blues_no_comp.mp3','1wPa3yIAldHv7S8t7jY2q_Tf79qw6l1bf'],['No_Time_Blues_no_piano.mp3','1RhzOfxiIHqL5FscRKBIS2YxOIcT_gyIW'],['No_Time_Blues_no_guitar.mp3','16KTMzOrYrBngcLmmFmAad67FxT2nitJJ'],['No_Time_Blues_no_drums.mp3','18wfYEzSbswIwwrXgDEDkX_OFFRnO1lIW']],
-      pdf:[['No_Time_Blues_Concert.pdf','1l7VLqMogGxnukAtzgQuQObYyvslKlx6h'],['No_Time_Blues_Bb.pdf','1X2vB-3-U1KrK-oawetghLNwIAZOsIuDQ'],['No_Time_Blues_Eb.pdf','1i8IVhQbYZtSyamM-0viDBoLhENa8KmJ_'],['No_Time_Blues_F.pdf','1ZvOrxqv8WcmKYUwjTTo1_to39R1atYtQ'],['No_Time_Blues_AltoClef.pdf','1zUptlFVikN7FFtAMeIdmJaGIggf0hZCA'],['No_Time_Blues_BassClef.pdf','159nG8fuI7OeM4JzvDzEJycA6wEyaVUV7'],['No_Time_Blues_Guitar.pdf','1NFcqHHdXEb-LfoSwsQaStlV6ckXXUdu6']] }, {t:'Any Day', d:'in F'}, {t:'Any Day', d:'in C'},
-    {t:'Shuffle Blues', d:'in E'}, {t:'Shuffle Blues', d:'in A'}, {t:'Funk Blues', d:'in F'} ]},
-  { name:'Standard-Form Songs', tracks:[
-    {t:'KJC', d:'based on Killer Joe'}, {t:'Parquet', d:'rhythm changes'},
-    {t:'Aqua Girl', d:'based on Blue Bossa'}, {t:'Samba de Orbit', d:'based on Samba de Orpheus'} ]},
-  { name:'R&B Vamps', tracks:[
-    {t:'R&B Vamp 1', d:'eight-bar vamp in E-flat minor'}, {t:'R&B Vamp 2', d:'two-chord vamp in E-minor'} ]},
-  { name:'Rock Vamps', tracks:[
-    {t:'Rock Vamp 1', d:'two-chord vamp in E'}, {t:'Rock Vamp 2', d:'four-bar vamp in D-minor'},
-    {t:'Rock Vamp 3', d:'four-bar vamp in E-minor'}, {t:'Rock Vamp 4', d:'two-chord vamp in E'} ]},
-  { name:'Funk/Fusion Vamps', tracks:[
-    {t:'Funk/Fusion Vamp 1', d:'two-bar vamp in B-flat, based on Chameleon'},
-    {t:'Funk/Fusion Vamp 2', d:'vamp in B-flat, based on The Chicken'},
-    {t:'Funk/Fusion Vamp 3', d:'four-bar vamp in A-minor, based on Sunny'},
-    {t:'Funk/Fusion Vamp 4', d:'vamp in E, based on Beneath the Mask'} ]},
-  { name:'Jazz Vamps', tracks:[
-    {t:'Jazz Vamp 1', d:'medium swing'}, {t:'Jazz Vamp 2', d:'fast swing'}, {t:'Jazz Vamp 3', d:'jazz waltz'},
-    {t:'Jazz Vamp 4', d:'medium bossa'}, {t:'Jazz Vamp 5', d:'samba'}, {t:'Jazz Vamp 6', d:'jazz ballad'} ]}
+ {
+  "name": "Blues Progressions",
+  "tracks": [
+   {
+    "t": "No Time Blues",
+    "d": "jazz blues in F",
+    "audio": [
+     [
+      "No_Time_Blues_full_Complete.mp3",
+      "1JgSQo_AsfLl0uBpAIo0VVpudJqLhqBU4"
+     ],
+     [
+      "No_Time_Blues_no_comp.mp3",
+      "1wPa3yIAldHv7S8t7jY2q_Tf79qw6l1bf"
+     ],
+     [
+      "No_Time_Blues_no_drums.mp3",
+      "18wfYEzSbswIwwrXgDEDkX_OFFRnO1lIW"
+     ],
+     [
+      "No_Time_Blues_no_guitar.mp3",
+      "16KTMzOrYrBngcLmmFmAad67FxT2nitJJ"
+     ],
+     [
+      "No_Time_Blues_no_melody.mp3",
+      "13f4-ifIm2cD0gyCLrwIseGQlVTXQyHDk"
+     ],
+     [
+      "No_Time_Blues_no_piano.mp3",
+      "1RhzOfxiIHqL5FscRKBIS2YxOIcT_gyIW"
+     ]
+    ],
+    "pdf": [
+     [
+      "No_Time_Blues_Concert.pdf",
+      "1l7VLqMogGxnukAtzgQuQObYyvslKlx6h"
+     ],
+     [
+      "No_Time_Blues_Bb.pdf",
+      "1X2vB-3-U1KrK-oawetghLNwIAZOsIuDQ"
+     ],
+     [
+      "No_Time_Blues_Eb.pdf",
+      "1i8IVhQbYZtSyamM-0viDBoLhENa8KmJ_"
+     ],
+     [
+      "No_Time_Blues_F.pdf",
+      "1ZvOrxqv8WcmKYUwjTTo1_to39R1atYtQ"
+     ],
+     [
+      "No_Time_Blues_AltoClef.pdf",
+      "1zUptlFVikN7FFtAMeIdmJaGIggf0hZCA"
+     ],
+     [
+      "No_Time_Blues_BassClef.pdf",
+      "159nG8fuI7OeM4JzvDzEJycA6wEyaVUV7"
+     ],
+     [
+      "No_Time_Blues_Guitar.pdf",
+      "1NFcqHHdXEb-LfoSwsQaStlV6ckXXUdu6"
+     ]
+    ]
+   },
+   {
+    "t": "Any Day",
+    "d": "in F",
+    "audio": [
+     [
+      "Any_Day_in_F_full.mp3",
+      "1RQuIR-DYDeDXKcB5cMZdBk2dUsszOZ0j"
+     ],
+     [
+      "Any_Day_in_F_no_bass.mp3",
+      "1MPejM4ZZqkOO-4UJ-uZXo6AkM4tUdB_d"
+     ],
+     [
+      "Any_Day_in_F_no_comp.mp3",
+      "1xqRLcLfeRARLmUDzaOlEBGn7kfHMUh2o"
+     ],
+     [
+      "Any_Day_in_F_no_drums.mp3",
+      "12kQLNFbvggJwYCmpwYgfzggLEiVDqP-D"
+     ],
+     [
+      "Any_Day_in_F_no_guitar.mp3",
+      "1rAucrT78Kcx4VSq7i5XKjJXtGj7tlzQv"
+     ],
+     [
+      "Any_Day_in_F_no_melody.mp3",
+      "1GQwfISMn7WrBi818GaPpWyW3EojSXbMz"
+     ],
+     [
+      "Any_Day_in_F_no_piano.mp3",
+      "1e7LgTJQKAeXJs37jY6qnUtpO2cGL-zso"
+     ]
+    ],
+    "pdf": [
+     [
+      "Any_Day_in_F_Concert.pdf",
+      "1w0ITPnZkV9xrNgYY6_E7hSjILaPVrics"
+     ],
+     [
+      "Any_Day_in_F_Bb.pdf",
+      "1FQL1o_io51i_Z37SCWrnVbsdXz4oSoIv"
+     ],
+     [
+      "Any_Day_in_F_Eb.pdf",
+      "1rRQtFeHpQzLNA0LEgelP-x0FGgytJZaa"
+     ],
+     [
+      "Any_Day_in_F_F.pdf",
+      "1vEhktDhY4dLepV3wCOTWZcrX3pScrrsF"
+     ],
+     [
+      "Any_Day_in_F_AltoClef.pdf",
+      "1w7_aoh-cMA3gcLCala-8d_hJPU9xX9sY"
+     ],
+     [
+      "Any_Day_in_F_BassClef.pdf",
+      "1cceSkgqIe1Dgtj0s_LEQ6zggCp00gV7G"
+     ],
+     [
+      "Any_Day_in_F_Guitar.pdf",
+      "1a4sq08TXmOjq0BRAncoHkZNp0KDnYs2d"
+     ]
+    ]
+   },
+   {
+    "t": "Any Day",
+    "d": "in C",
+    "audio": [
+     [
+      "Any_Day_C_Complete.mp3",
+      "17I-2i2j_VHDwuToyj7wmN1A-cX_F7yvv"
+     ],
+     [
+      "Any_Day_C_NoBass.mp3",
+      "1XziOfLkrU-jOGUmVnKsXJisZ8SOojPQD"
+     ],
+     [
+      "Any_Day_C_NoComping.mp3",
+      "1wzQsxvqDT-Uv2k7-3oDevipB1azbMZaA"
+     ],
+     [
+      "Any_Day_C_NoDrums.mp3",
+      "1jcPDo5jwYhhfH6U2OWbOYDeUJW31X1bE"
+     ],
+     [
+      "Any_Day_C_NoGuitar.mp3",
+      "1e7dZYESEUUM9hG3-kRrlEC7m6cqF4r4d"
+     ],
+     [
+      "Any_Day_C_NoMelody.mp3",
+      "1F1pl6BQbQmWelD67yZuBSAQfveAIG35N"
+     ],
+     [
+      "Any_Day_C_NoPiano.mp3",
+      "1ztcnwHeK_trwhXhYMtOKKhJnll0_DLkQ"
+     ]
+    ],
+    "pdf": [
+     [
+      "Any_Day_C_Concert.pdf",
+      "1UnbrBhL2bHidfYSrDf5SHtUDJydJCZAN"
+     ],
+     [
+      "Any_Day_C_Bflat.pdf",
+      "1J1nerL-DZ8Q5XfDses4ETaVzfpuYAX8q"
+     ],
+     [
+      "Any_Day_C_Eflat.pdf",
+      "11Alh-pSWYbVK0sI7an8T8XBfcNuLn6Yc"
+     ],
+     [
+      "Any_Day_C_F.pdf",
+      "1r23g879DOpWOiVIgAXrYX56Np7hlg8X6"
+     ],
+     [
+      "Any_Day_C_AltoClef.pdf",
+      "1PgFhtXFbUZUA1RRVO0X1AxAPiYLIBD_I"
+     ],
+     [
+      "Any_Day_C_BassClef.pdf",
+      "1bPV3_Fr1mBUQA7u0p7TmhhipGFd9mlRE"
+     ],
+     [
+      "Any_Day_C_Guitar.pdf",
+      "1mXMw7twzUB5tJwqN6W7vfWB7MKWRwDSR"
+     ]
+    ]
+   },
+   {
+    "t": "Shuffle Blues",
+    "d": "in E",
+    "audio": [
+     [
+      "Shuffle_Blues_E_Complete.mp3",
+      "1601WphBYxYf11KYKtn-wyyTYWlc69Dom"
+     ],
+     [
+      "Shuffle_Blues_E_NoBass.mp3",
+      "1x42-x2MxYJq0TRj9_vnvLNY-sBnUj0xS"
+     ],
+     [
+      "Shuffle_Blues_E_NoComping.mp3",
+      "1PSYNaMfrIp4y8Tic0efvA4jukjZVYl8t"
+     ],
+     [
+      "Shuffle_Blues_E_NoDrums.mp3",
+      "1G8dQ-nynS8cqfTE5t8UoiJseg5i3bilA"
+     ],
+     [
+      "Shuffle_Blues_E_NoGuitar.mp3",
+      "1_qOJ5ZKXu-eH_Mrpv2rSGi0VZ7uLn1zu"
+     ],
+     [
+      "Shuffle_Blues_E_NoMelody.mp3",
+      "1NThNIw08i1quTpvsmEBB5NIbJyXwMusi"
+     ],
+     [
+      "Shuffle_Blues_E_NoPiano.mp3",
+      "1vK4IFEizUfREc250VEWd4xDRexYx15RZ"
+     ]
+    ],
+    "pdf": [
+     [
+      "Shuffle_Blues_E_Concert.pdf",
+      "1Nv6FOP7Xfo5M-3mg8-FdL0eNXvmMt3Fa"
+     ],
+     [
+      "Shuffle_Blues_E_Bflat.pdf",
+      "1vvCPUvubDP3cCiavtSFrClJrVhcu2rL-"
+     ],
+     [
+      "Shuffle_Blues_E_Eflat.pdf",
+      "1aZ6KVEw488gcDQqpIk1JR8O4BAv81Obm"
+     ],
+     [
+      "Shuffle_Blues_E_F.pdf",
+      "1wrKnLIDw3PV5dEGvo87xkdPSJSMMBPOe"
+     ],
+     [
+      "Shuffle_Blues_E_AltoClef.pdf",
+      "1WtYU81URsTcYZBKiDjp9ok0_vpiCSyCp"
+     ],
+     [
+      "Shuffle_Blues_E_BassClef.pdf",
+      "1BGflh7baDnFdvacqpfcFhOgO2__EcUre"
+     ],
+     [
+      "Shuffle_Blues_E_Guitar.pdf",
+      "1bZHb_2bieVAK6wl4Mm60DR-IXHartEya"
+     ]
+    ]
+   },
+   {
+    "t": "Shuffle Blues",
+    "d": "in A",
+    "audio": [
+     [
+      "Shuffle_Blues_A_Complete.mp3",
+      "1Ns8f7G2IXT49xH0HhaF514HrwvNNnJnv"
+     ],
+     [
+      "Shuffle_Blues_A_NoBass.mp3",
+      "1b0rJgXfNRAt4dt1F50kxhHU-TmioH6Gc"
+     ],
+     [
+      "Shuffle_Blues_A_NoComping.mp3",
+      "1cW-rvvxLWJZ-JGUW4dEvjWlwApdPBYQ4"
+     ],
+     [
+      "Shuffle_Blues_A_NoDrums.mp3",
+      "1RetJTfV8ujvYOZYdEaCjsuU33BG4VJuA"
+     ],
+     [
+      "Shuffle_Blues_A_NoGuitar.mp3",
+      "1OadJYftOzRodHBrOBuSF75vY61FaqTp6"
+     ],
+     [
+      "Shuffle_Blues_A_NoMelody.mp3",
+      "1uJSAtyBgWRCfT_F5AMZNo6qfwJQ1JZcJ"
+     ],
+     [
+      "Shuffle_Blues_A_NoPiano.mp3",
+      "1q3B_IiTNFNcoui4f0Aqylm5D5xt0jisC"
+     ]
+    ],
+    "pdf": [
+     [
+      "Shuffle_Blues_A_Concert.pdf",
+      "1OmaiofYncMfx5UV7Y3wlymRWUbOkJ3vx"
+     ],
+     [
+      "Shuffle_Blues_A_Bflat.pdf",
+      "1RQ0tMRA0VDjm3dTrShTFVp-gx2GE5mNW"
+     ],
+     [
+      "Shuffle_Blues_A_Eflat.pdf",
+      "1g6i0jYuf6Dz6PIuoFfoobfSXrpKYnQ7u"
+     ],
+     [
+      "Shuffle_Blues_A_F.pdf",
+      "1B0HEldm-eses2yaj6PelCOMO7zRghXly"
+     ],
+     [
+      "Shuffle_Blues_A_AltoClef.pdf",
+      "1PaC652ZTyRS8A1NMV4upXZvhQtCJXh1p"
+     ],
+     [
+      "Shuffle_Blues_A_BassClef.pdf",
+      "1sW_m1sRkd7M40qpa9WRnKqiVzVfmgyw-"
+     ],
+     [
+      "Shuffle_Blues_A_Guitar.pdf",
+      "1ScNLW78Pi2pwm8xitaVoVodc5WLZvwy1"
+     ]
+    ]
+   },
+   {
+    "t": "Funk Blues",
+    "d": "in F",
+    "audio": [
+     [
+      "Funk_Blues_F_Complete.mp3",
+      "12r4wUqO-GU4a25JpcVfC-ZYHPhpfZncg"
+     ],
+     [
+      "Funk_Blues_F_NoBass.mp3",
+      "1M6Hnkn6ATgpjlKCnCrukj5_d8lKQiSsN"
+     ],
+     [
+      "Funk_Blues_F_NoDrums.mp3",
+      "1Ba5wl2Qhz6kQXKKVKlmZdaWtw0MOqdu-"
+     ],
+     [
+      "Funk_Blues_F_NoGuitar.mp3",
+      "1taVt1OInD1xjRpT38bDYupx_0jUTOJjH"
+     ],
+     [
+      "Funk_Blues_F_NoKeyboard.mp3",
+      "1C2TBm69PAyEIGqPhIcDv-1jW4xLePky1"
+     ]
+    ],
+    "pdf": [
+     [
+      "Funk_Blues_F_Concert.pdf",
+      "1WX23T66Rp-yXICfcvq-N50a-NaiYwLf2"
+     ],
+     [
+      "Funk_Blues_F_Bflat.pdf",
+      "1Os1ZiV3I6m4PK0qZV26cPsKxmFTgHyfZ"
+     ],
+     [
+      "Funk_Blues_F_Eflat.pdf",
+      "1jPGz4Kh7itsQfJd1EpW01JsyGbtkqsms"
+     ],
+     [
+      "Funk_Blues_F_F.pdf",
+      "15rJDOc8FpnbPTVbIvMgnmVhIGURv3Aom"
+     ],
+     [
+      "Funk_Blues_F_AltoClef.pdf",
+      "1K9jy3OdUkDlICtLtPp-zfw2linzbEIX5"
+     ],
+     [
+      "Funk_Blues_F_BassClef.pdf",
+      "1FE810M13xrH20k1FB59nI7PQJzCmfrj_"
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "name": "Standard-Form Songs",
+  "tracks": [
+   {
+    "t": "KJC",
+    "d": "based on Killer Joe",
+    "audio": [
+     [
+      "KJC_Complete.mp3",
+      "1-8LNFWaWritjAsVrlNeO1InW-TmTH2QB"
+     ],
+     [
+      "KJC_NoBass.mp3",
+      "1hdIPdQ6_VRKQEbGKbBLB5XZaTdzTWEmd"
+     ],
+     [
+      "KJC_NoComping.mp3",
+      "1H5VFyM5vpQegmHjKvk2i4k66NcDE8Iih"
+     ],
+     [
+      "KJC_NoDrums.mp3",
+      "1hga7HqFecizlmGsQ7Dho4_TROqbc2vJN"
+     ],
+     [
+      "KJC_NoGuitar.mp3",
+      "1YzabV09q3wA9r56Is84HybSQhigI5U_N"
+     ],
+     [
+      "KJC_NoMelody.mp3",
+      "1QJMCCxrysPOw1Rb66LkcmZMQKC_kajs5"
+     ],
+     [
+      "KJC_NoPiano.mp3",
+      "1_TdBCH1h7suX1I7ak0m92NwAkK8MCVGK"
+     ]
+    ],
+    "pdf": [
+     [
+      "KJC_Concert.pdf",
+      "16Gdz1m71p5imzZtBFjUm77alD-74Nh9N"
+     ],
+     [
+      "KJC_Bflat.pdf",
+      "1Up1jqmR1CXroTF0g7IxvCCK-yE2Obbyo"
+     ],
+     [
+      "KJC_Eflat.pdf",
+      "1cse9v5Ij_EWt0dntrThOXOMCwwAI47RZ"
+     ],
+     [
+      "KJC_F.pdf",
+      "1RtN0YI_XpuBtDm68KIY_pwwxI10VNWse"
+     ],
+     [
+      "KJC_AltoClef.pdf",
+      "1hGRLJbFMUeLXtW23NNkw_uNsBLTe6r41"
+     ],
+     [
+      "KJC_BassClef.pdf",
+      "1Aa_-6IwFFexPNsUpB1gKIvYbmpWKXN9n"
+     ],
+     [
+      "KJC_Guitar.pdf",
+      "1EpHZIO3QBQDUGLH5DhkrBIjADRBRwFJx"
+     ]
+    ]
+   },
+   {
+    "t": "Parquet",
+    "d": "rhythm changes",
+    "audio": [
+     [
+      "Parquet_Complete.mp3",
+      "1-llYe47S2aeOfigIm2bRMr9YV52kRZdZ"
+     ],
+     [
+      "Parquet_NoBass.mp3",
+      "10_lA5c_Cue_aorZHDc7jvd2wneEbtmlp"
+     ],
+     [
+      "Parquet_NoComping.mp3",
+      "1YZEC2rbK0lbOeMX-a6p0oBRZJtNCigmE"
+     ],
+     [
+      "Parquet_NoDrums.mp3",
+      "1ok68O2hhb38VZqi-QowliIQ0htshk4_U"
+     ],
+     [
+      "Parquet_NoGuitar.mp3",
+      "1CZbF3Iy7we2vbm8T6c90t-9a8aXWOjJE"
+     ],
+     [
+      "Parquet_NoMelody.mp3",
+      "1V18MtlacDzGtlQC56lBw1rDUA8O6dzLZ"
+     ],
+     [
+      "Parquet_NoPiano.mp3",
+      "1AqhzXz_3Gx8gfQTpj8aZ1ixWAcOoevj-"
+     ]
+    ],
+    "pdf": [
+     [
+      "Parquet_Concert.pdf",
+      "1BT-StMTzKpAQ3sjzGICgMVANXlQxg_fO"
+     ],
+     [
+      "Parquet_Bflat.pdf",
+      "1BJUal7llT97qjN1RmGO8IlXUZZ8wY3RH"
+     ],
+     [
+      "Parquet_Eflat.pdf",
+      "1IuphQXA8eXcW9UyIUTX5RZitcG-XpHpU"
+     ],
+     [
+      "Parquet_F.pdf",
+      "11ANxwHqxkWadQmxJEo-xjK8Sx3s7g_92"
+     ],
+     [
+      "Parquet_AltoClef.pdf",
+      "18PRv1kr-LHkbEpyQBMjUZO_vtUw-FsAM"
+     ],
+     [
+      "Parquet_BassClef.pdf",
+      "1R6pZGRWGLeoUS7k2nN5HoJXk7hiCXqTf"
+     ],
+     [
+      "Parquet_Guitar.pdf",
+      "1zKduw48BgmL8QCD4ZT7VZuta7SOtvYTH"
+     ]
+    ]
+   },
+   {
+    "t": "Aqua Girl",
+    "d": "based on Blue Bossa",
+    "audio": [
+     [
+      "Aqua_Girl_Complete.mp3",
+      "1OCrEcYmA2i6a2qh5godLE4rfWeeh2jAg"
+     ],
+     [
+      "Aqua_Girl_NoBass.mp3",
+      "1aFKMr8eEqpmrrMCFJsizXhlDM7ypf6v8"
+     ],
+     [
+      "Aqua_Girl_NoComping.mp3",
+      "1kPg_dAaAPgzJG4z_7RH9DeBd7PLkIsMN"
+     ],
+     [
+      "Aqua_Girl_NoDrums.mp3",
+      "1fnaXjtTBwZpD_8ynB5jKmpNHGOXDtT2H"
+     ],
+     [
+      "Aqua_Girl_NoGuitar.mp3",
+      "12OEzXiisK3JXgSQDb9GgPONsVThKYmbY"
+     ],
+     [
+      "Aqua_Girl_NoMelody.mp3",
+      "1ilRhWvOsA0m73cyfD3JKCIJDa4kXyWAV"
+     ],
+     [
+      "Aqua_Girl_NoPiano.mp3",
+      "1Y-2NnlsOduwYbrw6VFuo1XkNMT2Aa_Jf"
+     ]
+    ],
+    "pdf": [
+     [
+      "Aqua_Girl_Concert.pdf",
+      "1rRN1w9gz8H6nFr8U4vlY2l_xzk3Kz5eG"
+     ],
+     [
+      "Aqua_Girl_Bflat.pdf",
+      "1ZW42ijmiO52tKTDHHD2iEBDO1n-zqNBZ"
+     ],
+     [
+      "Aqua_Girl_Eflat.pdf",
+      "1lDnEtWWDQUYJGY1Yd_O40KUMplfmRcZ_"
+     ],
+     [
+      "Aqua_Girl_F.pdf",
+      "1pw_zeo_GGYSW5fgGLDDCqGBXtxO_nWO8"
+     ],
+     [
+      "Aqua_Girl_AltoClef.pdf",
+      "1qkRl7tlZ5WV1ySKJFAoFAESpavwxWnkK"
+     ],
+     [
+      "Aqua_Girl_BassClef.pdf",
+      "1HaRtj_2Tnih859MIecTvOMVMwJLEOQop"
+     ],
+     [
+      "Aqua_Girl_Guitar.pdf",
+      "1IGfny0ckPUKzRCxMxaiBTbtc86PRPO2T"
+     ]
+    ]
+   },
+   {
+    "t": "Samba de Orbit",
+    "d": "based on Samba de Orpheus",
+    "audio": [
+     [
+      "Samba_de_Orbit_Complete.mp3",
+      "1tl-t_yBYnX-OTiO4U_zZXbwpntZD10tE"
+     ],
+     [
+      "Samba_de_Orbit_NoBass.mp3",
+      "1rQQiQGj0LvPuvxqIPLxwM1FD9kHFaFJA"
+     ],
+     [
+      "Samba_de_Orbit_NoComping.mp3",
+      "11hQm0OIes3jXh91PvUu9WW-_JR4WCN9h"
+     ],
+     [
+      "Samba_de_Orbit_NoDrums.mp3",
+      "16d4Uwn-FpQJRB2EwIdBS4DFxNXrx8-IS"
+     ],
+     [
+      "Samba_de_Orbit_NoGuitar.mp3",
+      "1zM_UrQ5VK5bVe_W9HAlWB8ACyKAbY2gL"
+     ],
+     [
+      "Samba_de_Orbit_NoMelody.mp3",
+      "1HWkph9ZhuXKVoO88sLLOpIYz3mU88_VY"
+     ],
+     [
+      "Samba_de_Orbit_NoPiano.mp3",
+      "1ckmq4sxauoxmsjlXN0WVWciGVQ0w-9cm"
+     ]
+    ],
+    "pdf": [
+     [
+      "Samba_de_Orbit_Concert.pdf",
+      "1bOm7tbmpdV-39Zn_-Ip72hWN0K5DIGhj"
+     ],
+     [
+      "Samba_de_Orbit_Bflat.pdf",
+      "12zPTiq1zesbKHu3lQ2FY9T3PPmq_FXDv"
+     ],
+     [
+      "Samba_de_Orbit_Eflat.pdf",
+      "1JczakT89OCDb3cG_0nFX9zPQ500RceYS"
+     ],
+     [
+      "Samba_de_Orbit_F.pdf",
+      "1599DR9fxK9ahM1NALN3qcBUfrKQsjCOH"
+     ],
+     [
+      "Samba_de_Orbit_AltoClef.pdf",
+      "1oPir9qrTV60q1FLz59rcKGMEZw-wszgG"
+     ],
+     [
+      "Samba_de_Orbit_BassClef.pdf",
+      "1xZeB5wg7iJ7weVawc-wyrruxZMBar87x"
+     ],
+     [
+      "Samba_de_Orbit_Guitar.pdf",
+      "1p9MX-dfsZCjjBXGr_-6TrZaFPby2Ggii"
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "name": "R&B Vamps",
+  "tracks": [
+   {
+    "t": "R&B Vamp 1",
+    "d": "eight-bar vamp in E-flat minor",
+    "audio": [
+     [
+      "RB_Vamp_1_Complete.mp3",
+      "1wkRCiC8hBqMrJFYK0MfDTRXMShPDU-Hy"
+     ],
+     [
+      "RB_Vamp_1_NoBass.mp3",
+      "14xqxXKToElehjIVVrHkXWB0rjwHSHum6"
+     ],
+     [
+      "RB_Vamp_1_NoDrums.mp3",
+      "1lMjtmJLKTjhf10ZQvpB9mNiRkYJlkZYy"
+     ],
+     [
+      "RB_Vamp_1_NoGuitar.mp3",
+      "1g2wrkz_IykpQDCm6cs1GREMdWeeh2hM4"
+     ],
+     [
+      "RB_Vamp_1_NoKeyboard.mp3",
+      "18crIXsTIeghTZ62NqTd0uOzUtlMEdbaf"
+     ]
+    ],
+    "pdf": [
+     [
+      "RB_Vamp_1_Concert.pdf",
+      "1cA9BtqItob3JNmxkLQ1ayQ7JUzf6GiRD"
+     ],
+     [
+      "RB_Vamp_1_Bflat.pdf",
+      "1_jNoWsT5UFL_9EVAkHgMbcSxLYr5XLaN"
+     ],
+     [
+      "RB_Vamp_1_Eflat.pdf",
+      "1DG8wZJTPWntGAJ2bPvd8GwfBtqB_K90q"
+     ],
+     [
+      "RB_Vamp_1_F.pdf",
+      "1Njesd0PRPCWySw_WdttgeASBfaX_ywqz"
+     ],
+     [
+      "RB_Vamp_1_AltoClef.pdf",
+      "1deFNMtL0IdsTBtAp0wAS4qay68gcWRAC"
+     ],
+     [
+      "RB_Vamp_1_BassClef.pdf",
+      "1N4qn3lFqWgQzWs2id7kO-K5HfRSQKJH0"
+     ]
+    ]
+   },
+   {
+    "t": "R&B Vamp 2",
+    "d": "two-chord vamp in E-minor",
+    "audio": [
+     [
+      "RB_Vamp_2_Complete.mp3",
+      "1z_ply41V5U2DhdqQhoGeFI9uepuFP0jL"
+     ],
+     [
+      "RB_Vamp_2_NoBass.mp3",
+      "1p1vrRvfdvqQI2Lobr9rtZaMOWJol5YDU"
+     ],
+     [
+      "RB_Vamp_2_NoDrums.mp3",
+      "1ZlT62j9_4BpRxUA2V7zuQ4cXtAhJF8y8"
+     ],
+     [
+      "RB_Vamp_2_NoGuitar.mp3",
+      "1iGDJuFPjalwsvSW_uPiAIDX7yb9m9pJX"
+     ],
+     [
+      "RB_Vamp_2_NoKeyboard.mp3",
+      "1_HHYK71yBMQ9qhgL8BrtYpziY5D7tUL6"
+     ]
+    ],
+    "pdf": [
+     [
+      "RB_Vamp_2_Concert.pdf",
+      "1XME-hZiHgqQs9KKdm0GPoGdpvU7uH30t"
+     ],
+     [
+      "RB_Vamp_2_Bflat.pdf",
+      "1KTXY88jgj-R4LWQ3VYJ1g54gR9qLXONA"
+     ],
+     [
+      "RB_Vamp_2_Eflat.pdf",
+      "1xG5vARCKJrvdWN4tC2fio9Cco3JgAra7"
+     ],
+     [
+      "RB_Vamp_2_F.pdf",
+      "1h-yhMvhvzbDr1Zq8VVEEdRPCk0Mb8X5x"
+     ],
+     [
+      "RB_Vamp_2_AltoClef.pdf",
+      "1V2M1RqmH0SuN46O5W2b2hIx6vpakTsyG"
+     ],
+     [
+      "RB_Vamp_2_BassClef.pdf",
+      "1oXaooxGvIWGWIRgBLcfBODMVTpEGvgR8"
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "name": "Rock Vamps",
+  "tracks": [
+   {
+    "t": "Rock Vamp 1",
+    "d": "two-chord vamp in E",
+    "audio": [
+     [
+      "Rock_Vamp_1_Complete.mp3",
+      "1II1ieUvBiaTA64Q9eHT45IgMb9paWbll"
+     ],
+     [
+      "Rock_Vamp_1_NoBass.mp3",
+      "1C_Npvw4P8EkJw_MYiv4YFAwHylk28vC9"
+     ],
+     [
+      "Rock_Vamp_1_NoDrums.mp3",
+      "1_i5ow0hRmTb9KTAO4o61Bls1J93YGUF5"
+     ],
+     [
+      "Rock_Vamp_1_NoGuitar.mp3",
+      "1Bc4ohyn4B6eO58AeqGleoMfe2CrDtCjw"
+     ],
+     [
+      "Rock_Vamp_1_NoKeyboard.mp3",
+      "18O2CifTM7wq7PIlwYaxNvtvzdjXZXBzn"
+     ]
+    ],
+    "pdf": [
+     [
+      "Rock_Vamp_1_Concert.pdf",
+      "1st8s7Bac2ZMpEfjMUJ01Cu2VwJJIp2hJ"
+     ],
+     [
+      "Rock_Vamp_1_Bflat.pdf",
+      "1vr97C1wta8mCSLSB8D6wQ2LduIXFd8ly"
+     ],
+     [
+      "Rock_Vamp_1_Eflat.pdf",
+      "1Q7GI2Z0T5cnjFnSzEoNq-XOTimgiYxND"
+     ],
+     [
+      "Rock_Vamp_1_F.pdf",
+      "196UdBee14jQeECxiZNYABttNHYDj7TM4"
+     ],
+     [
+      "Rock_Vamp_1_AltoClef.pdf",
+      "1kz9OoOTHo9uYMwxPSsnxWrQ1KNPKBt1B"
+     ],
+     [
+      "Rock_Vamp_1_BassClef.pdf",
+      "1c4W_sjZ-_1k9M8EMpdQmwj4KTGp7P_dH"
+     ]
+    ]
+   },
+   {
+    "t": "Rock Vamp 2",
+    "d": "four-bar vamp in D-minor",
+    "audio": [
+     [
+      "Rock_Vamp_2_Complete.mp3",
+      "1C4UDnEmfjvLXMMJrzHESquMjeRI0aH8_"
+     ],
+     [
+      "Rock_Vamp_2_NoBass.mp3",
+      "1cc5faL6UjLj-N5WN1WAXpyd1U515yxdg"
+     ],
+     [
+      "Rock_Vamp_2_NoDrums.mp3",
+      "1Y1TM93SJ2kuYGjoTG-rTtWS1EcPJPA4L"
+     ],
+     [
+      "Rock_Vamp_2_NoGuitar.mp3",
+      "1cHCWazc8purL-WVynhxRVC92J46j-hYx"
+     ],
+     [
+      "Rock_Vamp_2_NoKeyboard.mp3",
+      "1DL8Ii0JkAdKXtocZeJp9zd01dkqG46Mk"
+     ]
+    ],
+    "pdf": [
+     [
+      "Rock_Vamp_2_Concert.pdf",
+      "1hCfj16dMrCdj631swI_04yZu7jWV_Krq"
+     ],
+     [
+      "Rock_Vamp_2_Bflat.pdf",
+      "1PhleyGvne99pGETsDI1uuCi6fUWNyxxU"
+     ],
+     [
+      "Rock_Vamp_2_Eflat.pdf",
+      "1iOp8-l0R0oNQzRUI8AUiVfxXdgTF7XXa"
+     ],
+     [
+      "Rock_Vamp_2_F.pdf",
+      "1lrPgILBreL7zYLUJU_iD5V_iuYLTSH_z"
+     ],
+     [
+      "Rock_Vamp_2_AltoClef.pdf",
+      "1ED-jespYV0E6LyBhmjplqWagdyjbVgvO"
+     ],
+     [
+      "Rock_Vamp_2_BassClef.pdf",
+      "1aEaYB6R63Xy8EefuUaQg13exSnQxSN2e"
+     ]
+    ]
+   },
+   {
+    "t": "Rock Vamp 3",
+    "d": "four-bar vamp in E-minor",
+    "audio": [
+     [
+      "Rock_Vamp_3_Complete.mp3",
+      "1ToVyht-C_g37ePMw8NzR_Gd6twzqYehH"
+     ],
+     [
+      "Rock_Vamp_3_NoBass.mp3",
+      "1ucoznejbT6eoBcj5swz9qS-6Z0Lz7x0v"
+     ],
+     [
+      "Rock_Vamp_3_NoDrums.mp3",
+      "1xw6fcFdQm04V6UATZlOD43Yy2y6NfL_R"
+     ],
+     [
+      "Rock_Vamp_3_NoGuitar.mp3",
+      "1YTmcxNaAjGaiLnEKb8gKqLqov5NsxYDe"
+     ],
+     [
+      "Rock_Vamp_3_NoKeyboard.mp3",
+      "1I-BCjtaJLI9bHPqu8ukc_MIvsTqRpxq1"
+     ]
+    ],
+    "pdf": [
+     [
+      "Rock_Vamp_3_Concert.pdf",
+      "1CzReoH_JXrfsqxkYxkBMbnkfG8KxuVoq"
+     ],
+     [
+      "Rock_Vamp_3_BassClef.pdf",
+      "1S-9vu8VqUlfTRlfra3jwKiBlAc7rRXxA"
+     ],
+     [
+      "Rock_Vamp_3_Guitar.pdf",
+      "1ghNcMvnzSXklY66hmJ3rHbrX58zBWj1r"
+     ]
+    ]
+   },
+   {
+    "t": "Rock Vamp 4",
+    "d": "two-chord vamp in E",
+    "audio": [
+     [
+      "Rock_Vamp_4_Complete.mp3",
+      "1m0mzAk0VJgvzgHOmUX2AeBe_CJvYSw2w"
+     ],
+     [
+      "Rock_Vamp_4_NoBass.mp3",
+      "1uHfXDA2e5rZOg805itnYNOzYh7PUW7Dq"
+     ],
+     [
+      "Rock_Vamp_4_NoDrums.mp3",
+      "1QdPJcNXk3kp7LPT9iHfIbQTbGFvoUVgN"
+     ],
+     [
+      "Rock_Vamp_4_NoGuitar.mp3",
+      "1PyHTowZnK53nLSLkD3LOkl2WVAMJfc5H"
+     ],
+     [
+      "Rock_Vamp_4_NoKeyboard.mp3",
+      "1BFKVjK2wZROPrm-gVzwtXcGFfih6hKN8"
+     ]
+    ],
+    "pdf": [
+     [
+      "Rock_Vamp_4_Concert.pdf",
+      "1b0hGDSBAyGqyKcEFtIZS8gA3ZnDIwRu3"
+     ],
+     [
+      "Rock_Vamp_4_Bflat.pdf",
+      "1Gn8oPX1hy4NjtcXeDF-S386FzwD-pJHP"
+     ],
+     [
+      "Rock_Vamp_4_Eflat.pdf",
+      "1ZbD7dvCqK-uEpNO26g0jBeTYSzduLrx-"
+     ],
+     [
+      "Rock_Vamp_4_F.pdf",
+      "1_Aioxtw28Jm05aMeYvAVl8His5aULyaF"
+     ],
+     [
+      "Rock_Vamp_4_AltoClef.pdf",
+      "1I7vFaSDy7gJt41mUl1b5p7HPoTqEqSwc"
+     ],
+     [
+      "Rock_Vamp_4_BassClef.pdf",
+      "1wzCPQSFbhKbur8Tx_mfwkoY-kg8ZtM0h"
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "name": "Funk/Fusion Vamps",
+  "tracks": [
+   {
+    "t": "Funk/Fusion Vamp 1",
+    "d": "two-bar vamp in B-flat, based on Chameleon",
+    "audio": [
+     [
+      "Funk_Fusion_Vamp_1_Complete.mp3",
+      "1V95KG895jR-tcDS4mpmPeOzB8V0RiuLl"
+     ],
+     [
+      "Funk_Fusion_Vamp_1_NoBass.mp3",
+      "1_bWZKO0j32S1lILHtD1nnR0uJi_Sb_dW"
+     ],
+     [
+      "Funk_Fusion_Vamp_1_NoDrums.mp3",
+      "17hGtSLiLTsbcb26q18NozJiIVb23Glj6"
+     ],
+     [
+      "Funk_Fusion_Vamp_1_NoGuitar.mp3",
+      "1NNfgz8gKzczu8wEjme8Topb5z4ywJYDr"
+     ],
+     [
+      "Funk_Fusion_Vamp_1_NoKeyboard.mp3",
+      "1NOvKL0TUhib78PYu4_4FtLdnYERSXQl1"
+     ]
+    ],
+    "pdf": [
+     [
+      "Funk_Fusion_Vamp_1_Concert.pdf",
+      "1QCyCyYEHRnmgpf9WQbF4xPKMNTJDN6Qr"
+     ],
+     [
+      "Funk_Fusion_Vamp_1_Bflat.pdf",
+      "1yX27eVh0FvbKQiyQZAf6UTUgcdD8Fi-3"
+     ],
+     [
+      "Funk_Fusion_Vamp_1_Eflat.pdf",
+      "1XiciXRLJzurPG3zXfJMU7SxjVm7Al208"
+     ],
+     [
+      "Funk_Fusion_Vamp_1_F.pdf",
+      "1Nd6-a2jdyLU7QaY4T5utvq_WI3uNDiCv"
+     ],
+     [
+      "Funk_Fusion_Vamp_1_AltoClef.pdf",
+      "1mb2xVBc-nm5gmuQKECi9A3RMfNJANHSg"
+     ],
+     [
+      "Funk_Fusion_Vamp_1_BassClef.pdf",
+      "1E1Ti9ku3dFin45OHKD6qVZIS8i6vJ-pX"
+     ],
+     [
+      "Funk_Fusion_Vamp_1_BassLine.pdf",
+      "1FX5zusSMhbfoCXS0hwGzdFo-54d-ce91"
+     ]
+    ]
+   },
+   {
+    "t": "Funk/Fusion Vamp 2",
+    "d": "vamp in B-flat, based on The Chicken",
+    "audio": [
+     [
+      "Funk_Fusion_Vamp_2_Complete.mp3",
+      "1s58p8EWOIDMch3n8bN9626mPukJUnUu4"
+     ],
+     [
+      "Funk_Fusion_Vamp_2_NoBass.mp3",
+      "1oNv00tTo6KomM2d2wj4HuWDAMkt8qMgW"
+     ],
+     [
+      "Funk_Fusion_Vamp_2_NoDrums.mp3",
+      "1KFwhRXfejktjEmP1OIMDcCgaz9G6JlYM"
+     ],
+     [
+      "Funk_Fusion_Vamp_2_NoGuitar.mp3",
+      "1fRdJFrG76hFXhXBqp5No63SiI1-mMTh2"
+     ],
+     [
+      "Funk_Fusion_Vamp_2_NoKeyboard.mp3",
+      "15wSpyEUvMd7RCaRhw2S57QT5yy04OQcA"
+     ]
+    ],
+    "pdf": [
+     [
+      "Funk_Fusion_Vamp_2_Concert.pdf",
+      "1GICHb-PBY_zsY5UmUD-My0lhlQDgiU4x"
+     ],
+     [
+      "Funk_Fusion_Vamp_2_Bflat.pdf",
+      "1HIy_O7ayibShPmfLkia79nK3X4hnxgJp"
+     ],
+     [
+      "Funk_Fusion_Vamp_2_Eflat.pdf",
+      "1IKLfgcCtmDvR24gKt2MYSYFFfckfBm8g"
+     ],
+     [
+      "Funk_Fusion_Vamp_2_F.pdf",
+      "187yc9OGrpgG2AGTp-ptkn6HTtYbavxwl"
+     ],
+     [
+      "Funk_Fusion_Vamp_2_AltoClef.pdf",
+      "1efKOJOkb3xv1iN9j0Zg_9cD75_Hi8t5n"
+     ],
+     [
+      "Funk_Fusion_Vamp_2_BassClef.pdf",
+      "1OKaq4ewDOW3-scFTVc5LwK4nTEd7h_4W"
+     ],
+     [
+      "Funk_Fusion_Vamp_2_BassLine.pdf",
+      "1h_qN4ndAusGHgKsId6qPmRHFRYkXnn0o"
+     ]
+    ]
+   },
+   {
+    "t": "Funk/Fusion Vamp 3",
+    "d": "four-bar vamp in A-minor, based on Sunny",
+    "audio": [
+     [
+      "Funk_Fusion_Vamp_3_Complete.mp3",
+      "1Z5cZZtBB-1EJVWw8uMJ3quaxeJy8xai8"
+     ],
+     [
+      "Funk_Fusion_Vamp_3_NoBass.mp3",
+      "1fEezvSA8YwCRZg-A73MEvmfQbNK9CLWk"
+     ],
+     [
+      "Funk_Fusion_Vamp_3_NoDrums.mp3",
+      "1xmAIuhM_eoGN0v-fJQChVexACVDKpj4l"
+     ],
+     [
+      "Funk_Fusion_Vamp_3_NoGuitar.mp3",
+      "1o-rZXFypiaf6MjF8N8Q26nQzPigarasJ"
+     ],
+     [
+      "Funk_Fusion_Vamp_3_NoKeyboard.mp3",
+      "1vG2wFfqyEH9RZhbnw8JXiBG2hIf81ncC"
+     ]
+    ],
+    "pdf": [
+     [
+      "Funk_Fusion_Vamp_3_Concert.pdf",
+      "1Rw2jvkg18oQXshjyUTW5giQJcI59HGL3"
+     ],
+     [
+      "Funk_Fusion_Vamp_3_Bflat.pdf",
+      "1dFxdQUMlpOtMvYILsuJ5253s1ge9OT-p"
+     ],
+     [
+      "Funk_Fusion_Vamp_3_Eflat.pdf",
+      "1WU5GWLsPY16D3BkWDuPq01sbx6wvu1KN"
+     ],
+     [
+      "Funk_Fusion_Vamp_3_F.pdf",
+      "1shl2glNhK1G9ZPu1mz9mpil09MIQMPZQ"
+     ],
+     [
+      "Funk_Fusion_Vamp_3_AltoClef.pdf",
+      "18IkRDW3_X0MfoVv85oBv5j5n3tjkon83"
+     ],
+     [
+      "Funk_Fusion_Vamp_3_BassClef.pdf",
+      "1fBs6L7aR3q74FD3CSpRQ2iyrE5l0PYrP"
+     ]
+    ]
+   },
+   {
+    "t": "Funk/Fusion Vamp 4",
+    "d": "vamp in E, based on Beneath the Mask",
+    "audio": [
+     [
+      "Funk_Fusion_Vamp_4_Complete.mp3",
+      "1IyJc5tz1Nl7SsN7VxWjFr_ATYYn4gcOk"
+     ],
+     [
+      "Funk_Fusion_Vamp_4_NoBass.mp3",
+      "1xhouBYdxj42dvuRIgBLXoF9LDZO4YBZ8"
+     ],
+     [
+      "Funk_Fusion_Vamp_4_NoDrums.mp3",
+      "11H0HvPZqvCZX44U-pYuMwm_CyA1po2VO"
+     ],
+     [
+      "Funk_Fusion_Vamp_4_NoGuitar.mp3",
+      "1q4kQ6fffYx3BbzP9rXst8t36vwxBCO7c"
+     ],
+     [
+      "Funk_Fusion_Vamp_4_NoKeyboard.mp3",
+      "1AWQWUeFgIR-tnn_MZSehbuHwZluV1_UD"
+     ]
+    ],
+    "pdf": [
+     [
+      "Funk_Fusion_Vamp_4_Concert.pdf",
+      "1TNw4C-W96DRjXH0DGHhPGlKdaIkAfPqS"
+     ],
+     [
+      "Funk_Fusion_Vamp_4_Bflat.pdf",
+      "1U-EbRKviC5BQcyptQRU3UlceY8ETmrNE"
+     ],
+     [
+      "Funk_Fusion_Vamp_4_Eflat.pdf",
+      "11OVwA4Sl6DZ3cFWMuOZglIknafu1-8hn"
+     ],
+     [
+      "Funk_Fusion_Vamp_4_F.pdf",
+      "1laJ0FScytsXb86FQnBc-h-K3G09p0mdk"
+     ],
+     [
+      "Funk_Fusion_Vamp_4_AltoClef.pdf",
+      "19yMcazlWYEPCrqMqg1Ym_aOgb-8eSwRU"
+     ],
+     [
+      "Funk_Fusion_Vamp_4_BassClef.pdf",
+      "1LUQwKTNYug1veNcyeY3YN46_QB-GL4sM"
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "name": "Jazz Vamps",
+  "tracks": [
+   {
+    "t": "Jazz Vamp 1",
+    "d": "medium swing",
+    "audio": [
+     [
+      "Jazz_Vamp_1_Complete.mp3",
+      "1DQkbviudrezONbMXjDF5Q6EUAOXNITu8"
+     ],
+     [
+      "Jazz_Vamp_1_NoBass.mp3",
+      "1M0CNAP78mNzLwbArLeEN68ZdOi6G1yjI"
+     ],
+     [
+      "Jazz_Vamp_1_NoDrums.mp3",
+      "1jl1khuqsTxb-3fWRobhbQBxhCVMvNcbT"
+     ],
+     [
+      "Jazz_Vamp_1_NoGuitar.mp3",
+      "1xPEq7lX0WDpXBxRw3PyMARLVIcA4dHIV"
+     ],
+     [
+      "Jazz_Vamp_1_NoPiano.mp3",
+      "1SUPJbF37qcHZ7816ePZuAKjpTdff-m7D"
+     ]
+    ],
+    "pdf": [
+     [
+      "Jazz_Vamp_1_Concert.pdf",
+      "1pODJFO47KTLDidNfRhBPgu-gmA_849kB"
+     ],
+     [
+      "Jazz_Vamp_1_Bflat.pdf",
+      "1elV8j5VC49BJ0ZzCrJC_ruHmLwkG_OWX"
+     ],
+     [
+      "Jazz_Vamp_1_Eflat.pdf",
+      "1ZvyY3Z4kCxHeO5FPksKEqngnTGnebZU5"
+     ],
+     [
+      "Jazz_Vamp_1_F.pdf",
+      "1EglGh1BvX8klo4Od7K6WfeUmPGOm8Pvw"
+     ],
+     [
+      "Jazz_Vamp_1_AltoClef.pdf",
+      "16xCYDBLx6vtxaJGYDtN1MORPGxVk4X05"
+     ],
+     [
+      "Jazz_Vamp_1_BassClef.pdf",
+      "1Q7BBQna05yblHjT5wNbaDmUMlJORHqSp"
+     ],
+     [
+      "Jazz_Vamp_1_BassLine.pdf",
+      "1WxjCIlzUZkYjQt6pSNNYBTW2AHJi-0wq"
+     ]
+    ]
+   },
+   {
+    "t": "Jazz Vamp 2",
+    "d": "fast swing",
+    "audio": [
+     [
+      "Jazz_Vamp_2_Complete.mp3",
+      "1xgK24ZnYzkoc9HrbERjVpQrdPnlMmA9r"
+     ],
+     [
+      "Jazz_Vamp_2_NoBass.mp3",
+      "1KAtVi5DuVNyXObmbiVuuU_h1Zuz3lliL"
+     ],
+     [
+      "Jazz_Vamp_2_NoComping.mp3",
+      "1SAapibVjULAM2ERO59PepxMzJf4z5fAB"
+     ],
+     [
+      "Jazz_Vamp_2_NoDrums.mp3",
+      "14HUUT4_o-aXCLl6Kib8fzks58w3NDcEI"
+     ],
+     [
+      "Jazz_Vamp_2_NoGuitar.mp3",
+      "1nUVAZxxlq8QThGGSlnPBIzp5QImVNhom"
+     ],
+     [
+      "Jazz_Vamp_2_NoPiano.mp3",
+      "1kSuiy9AKZAclZwZJrQYkNb0UFXodAKZu"
+     ]
+    ],
+    "pdf": [
+     [
+      "Jazz_Vamp_2_Concert.pdf",
+      "1L2OQn6iebA44W7QaKr49iS--6NlIvQMa"
+     ],
+     [
+      "Jazz_Vamp_2_Bflat.pdf",
+      "16TBryB-6RnuKMIIyNONHwSr7IsCkXJEx"
+     ],
+     [
+      "Jazz_Vamp_2_Eflat.pdf",
+      "1p56cmLuiAZKdPo0tZoi2_kcGrlFJ64Yt"
+     ],
+     [
+      "Jazz_Vamp_2_F.pdf",
+      "1IUggFQ3dDAKEpx1Ywh7N9oq65BWrpeQy"
+     ],
+     [
+      "Jazz_Vamp_2_AltoClef.pdf",
+      "1XjWWWX8LMK3U61mk1jeosIw7AK-QEgip"
+     ],
+     [
+      "Jazz_Vamp_2_BassClef.pdf",
+      "1KYv2eFLmwCcjEp3LTxo-QTU6dVYdyOyY"
+     ]
+    ]
+   },
+   {
+    "t": "Jazz Vamp 3",
+    "d": "jazz waltz",
+    "audio": [
+     [
+      "Jazz_Vamp_3_Complete.mp3",
+      "11lthpp2EmfzmYyc5T2GucLFCm9lZrHxW"
+     ],
+     [
+      "Jazz_Vamp_3_NoBass.mp3",
+      "1V06p0YBDyUwOiid3C1YP5ycCWdxuHxhl"
+     ],
+     [
+      "Jazz_Vamp_3_NoDrums.mp3",
+      "169h8yky6zzdkPgqCdo-L0WzHzM6bxvu0"
+     ],
+     [
+      "Jazz_Vamp_3_NoGuitar.mp3",
+      "1CDNB0Mm1bOUMyK2ujy-6p89qkYsGmtpj"
+     ],
+     [
+      "Jazz_Vamp_3_NoPiano.mp3",
+      "1ADxbQXcubqH1pIx6HpdMM14zmf9RwGRA"
+     ]
+    ],
+    "pdf": [
+     [
+      "Jazz_Vamp_3_Concert.pdf",
+      "1zAfFWs0y2p2uBEVa78Lzb0UUEWzLwTtq"
+     ],
+     [
+      "Jazz_Vamp_3_Bflat.pdf",
+      "1pGugKfuCbq21OY3gFTM65FU-7cFaJPRP"
+     ],
+     [
+      "Jazz_Vamp_3_Eflat.pdf",
+      "15tZQG4CZSeygppK6zA1lvdgto19PX7ho"
+     ],
+     [
+      "Jazz_Vamp_3_F.pdf",
+      "1gbzJ0itcOsHs0XTovVAz-C21tz6VNH3j"
+     ],
+     [
+      "Jazz_Vamp_3_AltoClef.pdf",
+      "16-qKs8RTdmcWVn1aZNwyVLq_iBRCujo_"
+     ],
+     [
+      "Jazz_Vamp_3_BassClef.pdf",
+      "17J5w_4VnNTgFO-Zj1MLSvhNusx58_m8G"
+     ]
+    ]
+   },
+   {
+    "t": "Jazz Vamp 4",
+    "d": "medium bossa",
+    "audio": [
+     [
+      "Jazz_Vamp_4_Complete.mp3",
+      "1eKVlW_8zTarIIJUYn2mu91I3qqdruToH"
+     ],
+     [
+      "Jazz_Vamp_4_NoBass.mp3",
+      "1AC6FOmK7XqqV3osFqvXsUcnvooTP_WHs"
+     ],
+     [
+      "Jazz_Vamp_4_NoDrums.mp3",
+      "1zFGd8KAUG31iM1fk16seuoDi7jWCDREk"
+     ],
+     [
+      "Jazz_Vamp_4_NoGuitar.mp3",
+      "1rP7ddnPozckhD7_biP_Go2b6zsVmkQgD"
+     ],
+     [
+      "Jazz_Vamp_4_NoPiano.mp3",
+      "128TRayQHna3fAfKDL88s-dL1X-4FGgOx"
+     ]
+    ],
+    "pdf": [
+     [
+      "Jazz_Vamp_4_Concert.pdf",
+      "1JvZTjJpzck1dYxx8nH0JSeCi6_ou_Lo6"
+     ],
+     [
+      "Jazz_Vamp_4_Bflat.pdf",
+      "1alJOd6_i8iDKxa97HOj9XELWton9FZbu"
+     ],
+     [
+      "Jazz_Vamp_4_Eflat.pdf",
+      "1EmQwMmoVxnFeCNK3LipGClireo6wWYSz"
+     ],
+     [
+      "Jazz_Vamp_4_F.pdf",
+      "1BsvRNjH1FBDhkPVvdl7Rd-n5irlElk6U"
+     ],
+     [
+      "Jazz_Vamp_4_AltoClef.pdf",
+      "1UNNQAHlkZeddubeqIgLh7LgLXPFdFQ1w"
+     ],
+     [
+      "Jazz_Vamp_4_BassClef.pdf",
+      "1dp-lYQYsQlPeH6yNXqqzB6C9VVJhpycR"
+     ]
+    ]
+   },
+   {
+    "t": "Jazz Vamp 5",
+    "d": "samba",
+    "audio": [
+     [
+      "Jazz_Vamp_5_Complete.mp3",
+      "1oImDYjq8EwTBKYKitinhmlnzStbWpHUb"
+     ],
+     [
+      "Jazz_Vamp_5_NoBass.mp3",
+      "1J-C4413JzMp301czivQ9dgfuDxAieuIz"
+     ],
+     [
+      "Jazz_Vamp_5_NoDrums.mp3",
+      "1mK8YZDjh5JIvSGnd10N72e4PYcJ9wilg"
+     ],
+     [
+      "Jazz_Vamp_5_NoGuitar.mp3",
+      "1kw7Ykdv2Yib6CwgWuGOSgwAH4cL2EM6U"
+     ],
+     [
+      "Jazz_Vamp_5_NoPiano.mp3",
+      "1SdDzqAM508NcjP3cq-jGgLxfdag-0Gwt"
+     ]
+    ],
+    "pdf": [
+     [
+      "Jazz_Vamp_5_Concert.pdf",
+      "1cKuGiPYi4VmGTbsQrcxxtungKGck4mlP"
+     ],
+     [
+      "Jazz_Vamp_5_Bflat.pdf",
+      "1H7vPMwZMvuSBn9243HIPwgeCIziCsKFd"
+     ],
+     [
+      "Jazz_Vamp_5_Eflat.pdf",
+      "1nvklCsOdmdJRDEOvgcPz0a7UhkDs9FD6"
+     ],
+     [
+      "Jazz_Vamp_5_F.pdf",
+      "1l--nI0QEXRNQ5lDffkdFN-rajGhkMFTW"
+     ],
+     [
+      "Jazz_Vamp_5_AltoClef.pdf",
+      "1KwSrohMlpJYthpXF_QjFXPtcOtj2MMRL"
+     ],
+     [
+      "Jazz_Vamp_5_BassClef.pdf",
+      "1eRtTEe239-uHNEOMrBKop1bqD6qxRkk9"
+     ]
+    ]
+   },
+   {
+    "t": "Jazz Vamp 6",
+    "d": "jazz ballad",
+    "audio": [
+     [
+      "Jazz_Vamp_6_Complete.mp3",
+      "1BJnMzigyoJESpmo1-8W40K9ctHeJn-cu"
+     ],
+     [
+      "Jazz_Vamp_6_NoBass.mp3",
+      "1g8SaLwg5eQ26pH-Chf0r_-nj1dxs-qMB"
+     ],
+     [
+      "Jazz_Vamp_6_NoDrums.mp3",
+      "1n3XVZAybc0NOlecQObSH5pteQRR0JkLJ"
+     ],
+     [
+      "Jazz_Vamp_6_NoGuitar.mp3",
+      "18UCR8MQDhdk_jTsh-tw4L9-7Z7dsOHSX"
+     ],
+     [
+      "Jazz_Vamp_6_NoPiano.mp3",
+      "1XAYp5xMafopbChuZZwz0r4rShJoZHukD"
+     ]
+    ],
+    "pdf": [
+     [
+      "Jazz_Vamp_6_Concert.pdf",
+      "1O6LF2EF_BjGDFqw4SKrwNiOiaze5Nqk_"
+     ],
+     [
+      "Jazz_Vamp_6_Bflat.pdf",
+      "1VHdUjEls0-z6rOPT2X7FCXEVNy74-Jlg"
+     ],
+     [
+      "Jazz_Vamp_6_Eflat.pdf",
+      "1EMwC170kI3sflHj-NtrNvO9fW5wOva9k"
+     ],
+     [
+      "Jazz_Vamp_6_F.pdf",
+      "1snYV2m8yblOu4BeFCXTmHd0M7mo8pyzL"
+     ],
+     [
+      "Jazz_Vamp_6_AltoClef.pdf",
+      "18MTZ8c04BVy-e6-dksWfKLlzDd1kv-uv"
+     ],
+     [
+      "Jazz_Vamp_6_BassClef.pdf",
+      "1RNEuNpNkJ_87aNx3Ebp5_v8ZqPFh5g5K"
+     ]
+    ]
+   }
+  ]
+ }
 ];
 
 const driveOpen = (id) => `https://drive.google.com/file/d/${encodeURIComponent(id)}/view`;
