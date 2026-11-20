@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es" class="emn-tool">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% include emn-favicon.html %}
+<title>Improvisation Lab by EMN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,600;1,9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/emn.css?v={{ site.time | date: '%s' }}">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/assets/js/emn-auth.js?v={{ site.time | date: '%s' }}"></script>
+<style>
+.il-wrap{ max-width:none; margin:0; padding:32px 28px 70px; font-family:'Inter',system-ui,sans-serif; color:#1A1A1A; }
+.il-intro{ font-size:14px; line-height:1.6; color:#4B5563; margin:0 0 14px; }
+.il-notice{ font-size:12.5px; line-height:1.55; color:#6b2330; background:#FCE9EB; border-left:3px solid #C8102E; border-radius:6px; padding:10px 14px; margin:0 0 26px; }
+#genres{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:22px; align-items:start; }
+@media (max-width:900px){ #genres{ grid-template-columns:1fr; } .il-wrap{ padding:24px 20px 60px; } }
+.il-genre{ border:1px solid #D8DBDF; border-radius:12px; background:#fff; overflow:hidden; }
+.il-genre > summary{ list-style:none; cursor:pointer; padding:16px 18px; font-family:'Fraunces',serif; font-weight:600; font-size:19px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.il-genre > summary::-webkit-details-marker{ display:none; }
+.il-genre > summary::after{ content:'▾'; color:#C8102E; font-size:16px; transition:transform .15s; }
+.il-genre[open] > summary::after{ transform:rotate(180deg); }
+.il-genre > summary .n{ font-family:'Inter',sans-serif; font-size:11.5px; font-weight:600; color:#8A8F98; margin-left:auto; }
+.il-list{ border-top:1px solid #EEE; }
+.il-track{ border-bottom:1px solid #F0F0F0; }
+.il-track:last-child{ border-bottom:none; }
+.il-track > summary{ list-style:none; cursor:pointer; padding:12px 18px; font-size:14px; font-weight:500; }
+.il-track > summary::-webkit-details-marker{ display:none; }
+.il-track > summary:hover{ background:#FAFAFA; }
+.il-track > summary small{ color:#8A8F98; font-weight:400; }
+.il-body{ padding:4px 18px 16px; }
+.il-body h4{ font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:#8A8F98; margin:12px 0 6px; }
+.il-body iframe{ width:100%; border:1px solid #D8DBDF; border-radius:8px; background:#F4F5F6; }
+.il-audio iframe{ height:90px; }
+.il-pdf iframe{ height:520px; }
+.il-files{ list-style:none; margin:0; padding:0; }
+.il-files li{ padding:5px 0; font-size:13px; }
+.il-files a{ color:#C8102E; text-decoration:none; font-weight:500; word-break:break-all; }
+.il-files a:hover{ text-decoration:underline; }
+.il-actions{ display:flex; gap:8px; margin:0 0 8px; }
+.il-actions a{ font-size:12px; font-weight:600; text-decoration:none; padding:5px 12px; border-radius:999px; border:1px solid #C8102E; color:#C8102E; background:#fff; }
+.il-actions a{ background:#C8102E; color:#fff; }
+.il-actions a:hover{ opacity:.85; }
+.il-soon{ font-size:12.5px; color:#8A8F98; font-style:italic; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="title">Improvisation <em>Lab</em></div>
+    <div class="sub">by EMN</div>
+  </div>
+  <div class="topbar-ad">
+    <div class="pitch">En EMN te preparamos individualmente para audicionar con beca a Berklee.</div>
+    <div class="links">
+      <a class="cta" href="https://emnlatam.com/" target="_blank" rel="noopener">Aprende cómo</a>
+    </div>
+  </div>
+</div>
+
+<div class="brandline-below">
+  <img class="logo" src="/assets/img/emn-logo.png" alt="Logo de Escuela de Música y Negocios">
+  <div class="brandtext">
+    <div class="byline">EMN</div>
+    <div class="sublabel">Escuela de Música y Negocios</div>
+  </div>
+  <a class="home-link" href="/practice-lab">Ir a Página Principal</a>
+</div>
+
+<div class="il-wrap">
+  <p class="il-intro">Elige un género, abre la pista y toca encima. Cada tema trae su audio de acompañamiento y su partitura.</p>
+  <p class="il-notice">Todos los audios y partituras de esta página pertenecen a Berklee College of Music. Se comparten aquí únicamente con fines educativos y de práctica.</p>
+  <div id="genres"></div>
+</div>
+
+<script>
+/* Para cargar material: audio y pdf son listas de [nombre del archivo, ID de Drive]
+   (el ID es la parte del link entre /d/ y /view). Sin lista, se muestra "Próximamente". */
+const GENRES = [
+  { name:'Blues Progressions', tracks:[
+    {t:'No Time Blues', d:'jazz blues in F',
+      audio:[['No_Time_Blues_full_Complete.mp3','1JgSQo_AsfLl0uBpAIo0VVpudJqLhqBU4'],['No_Time_Blues_no_melody.mp3','13f4-ifIm2cD0gyCLrwIseGQlVTXQyHDk'],['No_Time_Blues_no_comp.mp3','1wPa3yIAldHv7S8t7jY2q_Tf79qw6l1bf'],['No_Time_Blues_no_piano.mp3','1RhzOfxiIHqL5FscRKBIS2YxOIcT_gyIW'],['No_Time_Blues_no_guitar.mp3','16KTMzOrYrBngcLmmFmAad67FxT2nitJJ'],['No_Time_Blues_no_drums.mp3','18wfYEzSbswIwwrXgDEDkX_OFFRnO1lIW']],
+      pdf:[['No_Time_Blues_Concert.pdf','1l7VLqMogGxnukAtzgQuQObYyvslKlx6h'],['No_Time_Blues_Bb.pdf','1X2vB-3-U1KrK-oawetghLNwIAZOsIuDQ'],['No_Time_Blues_Eb.pdf','1i8IVhQbYZtSyamM-0viDBoLhENa8KmJ_'],['No_Time_Blues_F.pdf','1ZvOrxqv8WcmKYUwjTTo1_to39R1atYtQ'],['No_Time_Blues_AltoClef.pdf','1zUptlFVikN7FFtAMeIdmJaGIggf0hZCA'],['No_Time_Blues_BassClef.pdf','159nG8fuI7OeM4JzvDzEJycA6wEyaVUV7'],['No_Time_Blues_Guitar.pdf','1NFcqHHdXEb-LfoSwsQaStlV6ckXXUdu6']] }, {t:'Any Day', d:'in F'}, {t:'Any Day', d:'in C'},
+    {t:'Shuffle Blues', d:'in E'}, {t:'Shuffle Blues', d:'in A'}, {t:'Funk Blues', d:'in F'} ]},
+  { name:'Standard-Form Songs', tracks:[
+    {t:'KJC', d:'based on Killer Joe'}, {t:'Parquet', d:'rhythm changes'},
+    {t:'Aqua Girl', d:'based on Blue Bossa'}, {t:'Samba de Orbit', d:'based on Samba de Orpheus'} ]},
+  { name:'R&B Vamps', tracks:[
+    {t:'R&B Vamp 1', d:'eight-bar vamp in E-flat minor'}, {t:'R&B Vamp 2', d:'two-chord vamp in E-minor'} ]},
+  { name:'Rock Vamps', tracks:[
+    {t:'Rock Vamp 1', d:'two-chord vamp in E'}, {t:'Rock Vamp 2', d:'four-bar vamp in D-minor'},
+    {t:'Rock Vamp 3', d:'four-bar vamp in E-minor'}, {t:'Rock Vamp 4', d:'two-chord vamp in E'} ]},
+  { name:'Funk/Fusion Vamps', tracks:[
+    {t:'Funk/Fusion Vamp 1', d:'two-bar vamp in B-flat, based on Chameleon'},
+    {t:'Funk/Fusion Vamp 2', d:'vamp in B-flat, based on The Chicken'},
+    {t:'Funk/Fusion Vamp 3', d:'four-bar vamp in A-minor, based on Sunny'},
+    {t:'Funk/Fusion Vamp 4', d:'vamp in E, based on Beneath the Mask'} ]},
+  { name:'Jazz Vamps', tracks:[
+    {t:'Jazz Vamp 1', d:'medium swing'}, {t:'Jazz Vamp 2', d:'fast swing'}, {t:'Jazz Vamp 3', d:'jazz waltz'},
+    {t:'Jazz Vamp 4', d:'medium bossa'}, {t:'Jazz Vamp 5', d:'samba'}, {t:'Jazz Vamp 6', d:'jazz ballad'} ]}
+];
+
+const driveOpen = (id) => `https://drive.google.com/file/d/${encodeURIComponent(id)}/view`;
+const root = document.getElementById('genres');
+
+// Smooth open/close for <details>: animates the content's height.
+function smoothDetails(det, content, onFirstOpen){
+  const sum = det.querySelector(':scope > summary');
+  let anim = null;
+  sum.addEventListener('click', (e) => {
+    e.preventDefault();
+    if(anim){ anim.cancel(); anim = null; }
+    content.style.overflow = 'hidden';
+    const done = (open) => () => { anim = null; content.style.overflow = ''; if(!open) det.open = false; };
+    if(!det.open){
+      if(onFirstOpen){ onFirstOpen(); onFirstOpen = null; }
+      det.open = true;
+      anim = content.animate([{ height:'0px', opacity:0 }, { height: content.scrollHeight + 'px', opacity:1 }], { duration:280, easing:'ease' });
+      anim.onfinish = done(true);
+    } else {
+      anim = content.animate([{ height: content.offsetHeight + 'px', opacity:1 }, { height:'0px', opacity:0 }], { duration:220, easing:'ease' });
+      anim.onfinish = done(false);
+    }
+  });
+}
+
+function fileBlock(label, files){
+  if(!files || !files.length) return `<h4>${label}</h4><p class="il-soon">Próximamente</p>`;
+  return `<h4>${label}</h4><ul class="il-files">` +
+    files.map(([n, id]) => `<li><a href="${driveOpen(id)}" target="_blank" rel="noopener">${emnEsc(n)}</a></li>`).join('') + `</ul>`;
+}
+
+GENRES.forEach(g => {
+  const det = document.createElement('details');
+  det.className = 'il-genre';
+  det.innerHTML = `<summary>${emnEsc(g.name)}<span class="n">${g.tracks.length} temas</span></summary><div class="il-list"></div>`;
+  const list = det.querySelector('.il-list');
+  g.tracks.forEach(tr => {
+    const t = document.createElement('details');
+    t.className = 'il-track';
+    t.innerHTML = `<summary>${emnEsc(tr.t)} <small>(${emnEsc(tr.d)})</small></summary><div class="il-body"></div>`;
+    const body = t.querySelector('.il-body');
+    // iframes load only when the track is first opened, so the page stays light
+    smoothDetails(t, body, () => {
+      body.innerHTML = `<div class="il-audio">${fileBlock('Audio', tr.audio)}</div><div class="il-pdf">${fileBlock('Partitura', tr.pdf)}</div>`;
+    });
+    list.appendChild(t);
+  });
+  smoothDetails(det, list);
+  root.appendChild(det);
+});
+
+emnInit();
+</script>
+</body>
+</html>

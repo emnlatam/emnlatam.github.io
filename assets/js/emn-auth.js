@@ -447,7 +447,6 @@ function emnRenderNav(st){
   const nav = document.querySelector('.emn-nav');
   if(!nav) return;
   nav.querySelectorAll('[data-emn-inj]').forEach((n) => n.remove());
-  emnSplitInterviewLink(st);
   emnInjectCareerMenu(st);
   emnInjectAdminMenu(st);
   // Keep the "Cursos" button right beside the account/login link, after the

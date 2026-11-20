@@ -5,13 +5,14 @@
     </a>
     <nav class="emn-nav">
       <div class="emn-nav__item">
-        <a href="/practice-lab" class="emn-nav__link{% if page.url == '/practice-lab' or page.url == '/feedback' %} is-active{% endif %}">Practice Lab</a>
+        <a href="/practice-lab" class="emn-nav__link{% if page.url == '/practice-lab' or page.url == '/feedback' or page.url == '/improvisation-lab' %} is-active{% endif %}">Practice Lab</a>
         <button class="emn-nav__caret" aria-label="Abrir submenú de Practice Lab" aria-expanded="false">&#9662;</button>
         <div class="emn-nav__dropdown">
           <a href="/sight-melody" class="emn-nav__dropdown-item">Sight reading &amp; Audio Practice</a>
+          <a href="/interview-prep" class="emn-nav__dropdown-item">Interview Prep</a>
+          <a href="/improvisation-lab" class="emn-nav__dropdown-item">Improvisation Lab</a>
+          <span class="emn-nav__dropdown-item is-disabled">Berklee Piece <span class="soon">Pronto</span></span>
           <a href="/feedback" class="emn-nav__dropdown-item">Obtén Feedback</a>
-          <span class="emn-nav__dropdown-item is-disabled">Berklee Improvisation Practice <span class="soon">Pronto</span></span>
-          <span class="emn-nav__dropdown-item is-disabled">Berklee Piece &amp; Impro <span class="soon">Pronto</span></span>
         </div>
       </div>
       <a href="/mentores" class="emn-nav__link{% if page.url == '/mentores' %} is-active{% endif %}">Mentores</a>
