@@ -14,11 +14,16 @@
 <style>
 .il-wrap{ max-width:none; margin:0; padding:32px 28px 70px; font-family:'Inter',system-ui,sans-serif; color:#1A1A1A; }
 .il-intro{ font-size:14px; line-height:1.6; color:#4B5563; margin:0 0 14px; }
-.il-how{ background:#fff; border:1px solid #D8DBDF; border-radius:12px; padding:16px 20px; margin:0 0 14px; }
+.il-how{ margin:0 0 18px; }
 .il-how h2{ font-family:'Fraunces',serif; font-size:18px; margin:0 0 8px; }
 .il-how p{ font-size:14px; line-height:1.6; color:#4B5563; margin:0 0 8px; }
 .il-how ul{ margin:0; padding-left:20px; font-size:13.5px; line-height:1.65; color:#4B5563; }
-.il-how li{ margin-bottom:6px; }
+.il-pick{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:13px; font-weight:600; margin-top:6px; }
+.il-pick select{ font:inherit; font-weight:500; padding:9px 12px; border:1px solid #D8DBDF; border-radius:8px; min-width:220px; background:#fff; }
+.il-pick select:focus{ outline:2px solid #C8102E; outline-offset:1px; }
+.il-row{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+.il-miss{ font-size:12px; color:#8A8F98; font-style:italic; }
+.il-pickhint{ font-size:13px; color:#8A8F98; font-style:italic; margin:0; }
 .il-notice{ font-size:12.5px; line-height:1.55; color:#6b2330; background:#FCE9EB; border-left:3px solid #C8102E; border-radius:6px; padding:10px 14px; margin:0 0 26px; }
 #genres{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:22px; align-items:start; }
 @media (max-width:900px){ #genres{ grid-template-columns:1fr; } .il-wrap{ padding:24px 20px 60px; } }
@@ -78,11 +83,10 @@
 <div class="il-wrap">
   <div class="il-how">
     <h2>Cómo usar esta página</h2>
-    <p>Estos son los posibles temas (tracks) de los que dependerá tu prueba de improvisación. Escoge el tema que prefieras y elige:</p>
-    <ul>
-      <li><b>El audio donde tu instrumento no esté.</b> Por ejemplo, si tocas guitarra, usa "No Guitar"; si tocas bajo, "No Bass". Así tocas tú esa parte sobre el resto de la banda. "Complete" es la versión con todos los instrumentos, para escuchar cómo suena.</li>
-      <li><b>La partitura que se acomode a tu instrumento.</b> Concert (instrumentos en Do: piano, flauta, violín, voz), B-flat (trompeta, clarinete, saxo tenor), E-flat (saxo alto y barítono), F (corno francés), Alto Clef (viola), Bass Clef (trombón, bajo, chelo) o Guitar.</li>
-    </ul>
+    <p>Estos son los posibles temas (tracks) de los que dependerá tu prueba de improvisación. Escoge tu instrumento y, en cada tema, te mostramos el audio donde tu instrumento no suena (para que toques tú esa parte) y la partitura que le corresponde. "Complete" es la versión con todos los instrumentos, para escuchar cómo suena.</p>
+    <label class="il-pick" for="instr">Selecciona tu instrumento
+      <select id="instr"><option value="">— Elige tu instrumento —</option></select>
+    </label>
   </div>
   <p class="il-notice">Todos los audios y partituras de esta página pertenecen a Berklee College of Music. Se comparten aquí únicamente con fines educativos y de práctica.</p>
   <div id="genres"></div>
@@ -1608,11 +1612,62 @@ function smoothDetails(det, content, onFirstOpen){
   });
 }
 
-function fileBlock(label, files){
-  if(!files || !files.length) return `<h4>${label}</h4><p class="il-soon">Próximamente</p>`;
-  return `<h4>${label}</h4><ul class="il-files">` +
-    files.map(([n, id]) => `<li><a href="${driveOpen(id)}" target="_blank" rel="noopener">${emnEsc(n)}</a></li>`).join('') + `</ul>`;
+// Instrument -> which "No ..." audio and which part (PDF) applies.
+// piano also accepts "No Keyboard" (the tracks that have no "No Piano" use that name).
+const INSTR = [
+  { k:'all',     label:'Todos', all:true },
+  { k:'guitar',  label:'Guitarra',      audio:['guitar'],             pdf:'concert' },
+  { k:'piano',   label:'Piano',         audio:['piano','keyboard'],   pdf:'concert' },
+  { k:'drums',   label:'Drums',         audio:['drums'],              pdf:'concert' },
+  { k:'bass',    label:'Bajo (Bass)',   audio:['bass'],               pdf:'bassclef' },
+  { k:'trumpet', label:'Trompeta',      audio:['melody'],             pdf:'bb' },
+  { k:'clarinet',label:'Clarinete',     audio:['melody'],             pdf:'bb' },
+  { k:'alto',    label:'Saxo alto',     audio:['melody'],             pdf:'eb' },
+  { k:'bari',    label:'Saxo barítono', audio:['melody'],             pdf:'eb' },
+  { k:'eh',      label:'Corno inglés',  audio:['melody'],             pdf:'f' },
+  { k:'bassoon', label:'Fagot',         audio:['melody'],             pdf:'f' },
+  { k:'voice',   label:'Voice',         audio:['melody'],             pdf:'concert' }
+];
+const PDF_RE = { concert:/_concert\.pdf$/i, bb:/_(bb|bflat)\.pdf$/i, eb:/_(eb|eflat)\.pdf$/i, f:/_f\.pdf$/i, bassclef:/_bassclef\.pdf$/i };
+const PDF_NAME = { concert:'Concert', bb:'B-flat', eb:'E-flat', f:'F', bassclef:'Bass Clef' };
+let currentInstr = null;
+
+const instrSel = document.getElementById('instr');
+INSTR.forEach(i => { const o = document.createElement('option'); o.value = i.k; o.textContent = i.label; instrSel.appendChild(o); });
+
+const link = (n, id) => `<a href="${driveOpen(id)}" target="_blank" rel="noopener">${emnEsc(n)}</a>`;
+const row = (inner) => `<li class="il-row">${inner}</li>`;
+
+function trackBody(tr){
+  if(!currentInstr) return '<p class="il-pickhint">Selecciona tu instrumento arriba para ver el audio y la partitura de este tema.</p>';
+  const ins = currentInstr;
+  if(ins.all){
+    const list = (a) => a.length ? `<ul class="il-files">${a.map(([n, id]) => row(link(n, id))).join('')}</ul>` : '<p class="il-soon">Berklee no tiene archivos</p>';
+    return `<div class="il-audio"><h4>Audio</h4>${list(tr.audio)}</div><div class="il-pdf"><h4>Partitura</h4>${list(tr.pdf)}</div>`;
+  }
+  // audio for the chosen instrument (first matching "No ..." name), then Complete
+  let own = null;
+  for(const w of ins.audio){
+    own = tr.audio.find(([n]) => new RegExp(`no_?${w}\.mp3$`, 'i').test(n));
+    if(own) break;
+  }
+  const wanted = 'No ' + ins.audio[0][0].toUpperCase() + ins.audio[0].slice(1);
+  const complete = tr.audio.find(([n]) => /(complete|full)\.mp3$/i.test(n));
+  const part = tr.pdf.find(([n]) => PDF_RE[ins.pdf].test(n));
+  return `<div class="il-audio"><h4>Audio</h4><ul class="il-files">` +
+      row(own ? link(own[0], own[1]) : `<span>${wanted}</span><span class="il-miss">Berklee no tiene el audio</span>`) +
+      row(complete ? link(complete[0], complete[1]) : `<span>Complete</span><span class="il-miss">Berklee no tiene el audio</span>`) +
+    `</ul></div>` +
+    `<div class="il-pdf"><h4>Partitura</h4><ul class="il-files">` +
+      row(part ? link(part[0], part[1]) : `<span>${PDF_NAME[ins.pdf]}</span><span class="il-miss">Berklee no tiene la partitura</span>`) +
+    `</ul></div>`;
 }
+
+const bodies = [];   // { body, tr } for tracks already opened, re-rendered when the instrument changes
+instrSel.addEventListener('change', () => {
+  currentInstr = INSTR.find(i => i.k === instrSel.value) || null;
+  bodies.forEach(({ body, tr }) => { body.innerHTML = trackBody(tr); });
+});
 
 GENRES.forEach(g => {
   const det = document.createElement('details');
@@ -1625,9 +1680,7 @@ GENRES.forEach(g => {
     t.innerHTML = `<summary>${emnEsc(tr.t)} <small>(${emnEsc(tr.d)})</small></summary><div class="il-body"></div>`;
     const body = t.querySelector('.il-body');
     // iframes load only when the track is first opened, so the page stays light
-    smoothDetails(t, body, () => {
-      body.innerHTML = `<div class="il-audio">${fileBlock('Audio', tr.audio)}</div><div class="il-pdf">${fileBlock('Partitura', tr.pdf)}</div>`;
-    });
+    smoothDetails(t, body, () => { body.innerHTML = trackBody(tr); bodies.push({ body, tr }); });
     list.appendChild(t);
   });
   smoothDetails(det, list);
