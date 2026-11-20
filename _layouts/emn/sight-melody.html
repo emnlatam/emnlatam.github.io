@@ -1625,6 +1625,123 @@ function generateCore(){
     }
   }
 
+  // One stave, configured exactly as drawn (clef / key / time), not yet drawn: also used to measure the
+  // clef + key + time column so a measure's width can never be smaller than what it must hold.
+  const buildStave = (m, x, y, w) => {
+    const isFirst = m===0;
+    const isRowStart = (m % MEASURES_PER_ROW) === 0;
+    const stave = new VF.Stave(x, y, w);
+    if(state.mode === 'rhythm'){
+      stave.setConfigForLines([
+        { visible: false }, { visible: false }, { visible: true },
+        { visible: false }, { visible: false }
+      ]);
+    }
+    if(isRowStart){
+      if(state.mode === 'rhythm'){
+        stave.addClef('percussion');
+      } else {
+        stave.addClef(state.mode === 'melody' ? state.clef : 'treble');
+        stave.addKeySignature(vfKeySig);
+      }
+      if(isFirst) stave.addTimeSignature(state.meter);
+    }
+    return stave;
+  };
+
+  // Pass 2a: build every measure's notes first (same order, same random picks as before) so each
+  // measure's REAL minimum width is known before any stave is drawn.
+  const built = [];
+  let prevMidi = null; // carries melodic continuity across measures
+  const usageCounts = {}; // midi -> times used so far, drives degree-coverage balancing
+  if(state.mode !== 'harmony'){
+    for(let m=0; m<state.measures; m++){
+        const flat = measureFlats[m];
+        const vfNotes = [];
+        const events = []; // {note, startTick, dur, isRest, inTuplet} — drives beat-based auto-beaming
+        const tupletBuckets = {}; // tupletGroup id -> notes[]
+        const measureAcc = {}; // letter+octave -> currently-sounding alteration, reset each measure
+        let runningTick = 0;
+
+        flat.forEach(spec=>{
+          let note;
+          if(spec.rest){
+            note = new VF.StaveNote({ keys:['b/4'], duration: spec.dur + 'r' });
+            playbackSeq.push({ ticks: specTicks(spec), midi: null });
+          } else {
+            let vfKey, midiForPlayback, accidentalAlt = null;
+            if(state.mode === 'rhythm'){
+              // Rhythm mode ignores pitch entirely -- every note sits on the
+              // same fixed reference pitch (B4, the treble staff's middle
+              // line), so only the rhythm reads.
+              vfKey = 'b/4';
+              midiForPlayback = 71;
+            } else {
+              const pick = weightedPick(pool, prevMidi, usageCounts);
+              prevMidi = pick.midi;
+              usageCounts[pick.midi] = (usageCounts[pick.midi] || 0) + 1;
+              const octave = letterOctave(pick.midi);
+              vfKey = vfKeyString(pick.letter, pick.totalAlt, octave);
+              midiForPlayback = pick.midi;
+
+              const memKey = pick.letter + octave;
+              const baseline = measureAcc.hasOwnProperty(memKey) ? measureAcc[memKey] : keySigAlteration(pick.letter, sig);
+              if(pick.totalAlt !== baseline) accidentalAlt = pick.totalAlt;
+              measureAcc[memKey] = pick.totalAlt;
+            }
+            note = new VF.StaveNote({ keys:[vfKey], duration: spec.dur });
+            playbackSeq.push({ ticks: specTicks(spec), midi: midiForPlayback });
+            if(accidentalAlt !== null) note.addModifier(new VF.Accidental(ALT_SYMBOL[accidentalAlt]), 0);
+          }
+          if(spec.dots){
+            for(let d=0; d<spec.dots; d++) VF.Dot.buildAndAttach([note], {all:true});
+          }
+          vfNotes.push(note);
+          events.push({ note, startTick: runningTick, dur: spec.dur, isRest: !!spec.rest, inTuplet: spec.tupletGroup!=null });
+          if(spec.tupletGroup!=null){
+            (tupletBuckets[spec.tupletGroup] = tupletBuckets[spec.tupletGroup] || []).push(note);
+          }
+          runningTick += specTicks(spec);
+        });
+        const tupletGroups = Object.values(tupletBuckets).map(notes => ({notes, num:3}));
+
+        // Beat-based auto-beaming: link any run of 2+ consecutive eighth-or-
+        // shorter notes that share a beat, regardless of which rhythm atom they
+        // came from. Rests, longer notes, and tuplet-internal notes break a run.
+        const beamGroups = [];
+        let current = [];
+        let currentBeat = null;
+        function flushBeam(){
+          if(current.length>1) beamGroups.push(current.map(e=>e.note));
+          current = [];
+          currentBeat = null;
+        }
+        events.forEach(e=>{
+          const eligible = !e.isRest && !e.inTuplet && (e.dur==='8' || e.dur==='16');
+          if(!eligible){ flushBeam(); return; }
+          const beatIdx = beatIndexAt(e.startTick, beatStarts);
+          if(current.length===0){ current=[e]; currentBeat=beatIdx; return; }
+          if(beatIdx===currentBeat){ current.push(e); }
+          else { flushBeam(); current=[e]; currentBeat=beatIdx; }
+        });
+        flushBeam();
+
+        // Beam and Tuplet objects must be constructed BEFORE the voice is drawn:
+        // their constructors assign each note's .beam property, which is what
+        // suppresses the individual flag/tail when the note itself renders.
+        // Building them after voice.draw() draws flags AND a beam on top.
+        const beamInstances = beamGroups.map(g => new VF.Beam(g));
+        const tupletInstances = tupletGroups.map(t => new VF.Tuplet(t.notes, {num_notes:t.num, notes_occupied:2}));
+
+        const voice = new VF.Voice({ num_beats: measureTicks, beat_value: 16 });
+        voice.setStrict(false);
+        voice.addTickables(vfNotes);
+        const formatter = new VF.Formatter().joinVoices([voice]);
+        const minW = formatter.preCalculateMinTotalWidth([voice]);   // real minimum the notes need (heads, accidentals, dots, flags, stems)
+        built[m] = { voice, beamInstances, tupletInstances, formatter, minW };
+    }
+  }
+
   // Phone held upright: 2 measures per row and almost the full screen width,
   // so each measure is ~2x wider than with 4 squeezed into 340px.
   const phone = isPhonePortrait();
@@ -1643,10 +1760,38 @@ function generateCore(){
   // sizes each stave's actual note spacing to whatever room it has, so a
   // narrower share for the clef/key/time column just spaces its notes a
   // little tighter instead of needing extra reserved width.
-  const uniformWidth = Math.floor((available - rowMargin) / columnsUsed);
+  // Width each measure NEEDS: the clef/key/time column + the notes' real minimum width + a safety gap
+  // before the barline. A measure is never drawn narrower than that, so a note, stem or flag can never
+  // cross a barline or sit on top of its neighbour. If a row cannot fit the screen at natural size,
+  // the whole score (notes + staff) is drawn at a wider virtual size and scaled down evenly below.
+  const needed = [];
+  for(let m=0; m<state.measures; m++){
+    if(!built[m]){ needed.push(0); continue; }
+    const t = buildStave(m, 0, 0, 400);
+    const furniture = 400 - (t.getNoteEndX() - t.getNoteStartX());   // clef/key/time + end margin
+    needed.push(Math.ceil(furniture + built[m].minW + 12 + 10));
+  }
+  const rowAvail = available - rowMargin;
+  let virtualRow = rowAvail;
+  for(let r=0; r*MEASURES_PER_ROW < state.measures; r++){
+    const a0 = r*MEASURES_PER_ROW, a1 = Math.min(a0 + MEASURES_PER_ROW, state.measures);
+    let sum = 0; for(let m=a0; m<a1; m++) sum += needed[m];
+    virtualRow = Math.max(virtualRow, sum * columnsUsed / (a1 - a0));
+  }
+  virtualRow = Math.ceil(virtualRow);
+  const displayScale = Math.min(1, rowAvail / virtualRow);
+  const uniformWidth = Math.floor(virtualRow / columnsUsed);
 
   const measureWidths = [];
-  for(let m=0; m<state.measures; m++) measureWidths.push(uniformWidth);
+  for(let r=0; r*MEASURES_PER_ROW < state.measures; r++){
+    const a0 = r*MEASURES_PER_ROW, a1 = Math.min(a0 + MEASURES_PER_ROW, state.measures);
+    const cnt = a1 - a0;
+    let allFit = true, sum = 0;
+    for(let m=a0; m<a1; m++){ sum += needed[m]; if(needed[m] > uniformWidth) allFit = false; }
+    // everybody fits the shared width: keep all measures equal. Otherwise each gets what it needs plus an equal share of the spare room.
+    const spare = (uniformWidth * cnt - sum) / cnt;
+    for(let m=a0; m<a1; m++) measureWidths.push(allFit ? uniformWidth : Math.floor(needed[m] + spare));
+  }
 
   const rowCount = Math.ceil(state.measures / MEASURES_PER_ROW);
   const rowWidths = [];
@@ -1661,42 +1806,29 @@ function generateCore(){
   const height = 40 + rowCount*ROW_HEIGHT;
 
   const renderer = new VF.Renderer(outputSvg, VF.Renderer.Backends.SVG);
-  renderer.resize(Math.max(totalWidth, 320), height);
+  const virtualW = Math.max(totalWidth, 320);
+  renderer.resize(virtualW, height);
+  if(displayScale < 1){   // not enough room at natural size: shrink notes + staff together so everything fits side by side
+    const svgEl = outputSvg.querySelector('svg');
+    if(svgEl){
+      svgEl.setAttribute('viewBox', `0 0 ${virtualW} ${height}`);
+      svgEl.setAttribute('width', String(Math.floor(virtualW * displayScale)));
+      svgEl.setAttribute('height', String(Math.ceil(height * displayScale)));
+      svgEl.style.width = Math.floor(virtualW * displayScale) + 'px';   // VexFlow also sets an inline style: it must change too
+      svgEl.style.height = Math.ceil(height * displayScale) + 'px';
+    }
+  }
   const ctx = renderer.getContext();
   ctx.setFont('Inter', 10);
 
   let x = phone ? 12 : 20;
   let y = 30;
-  let prevMidi = null; // carries melodic continuity across measures
-  const usageCounts = {}; // midi -> times used so far, drives degree-coverage balancing
   for(let m=0; m<state.measures; m++){
     const isFirst = m===0;
     const isRowStart = (m % MEASURES_PER_ROW) === 0;
     if(isRowStart && !isFirst){ x = phone ? 12 : 20; y += ROW_HEIGHT; }
     const w = measureWidths[m];
-    const stave = new VF.Stave(x, y, w);
-    if(state.mode === 'rhythm'){
-      // setNumLines(1) draws line 0 -- the TOP line of the normal 5-line
-      // grid -- which sits well above where notes actually render (they're
-      // all pinned to 'b/4', the middle line, index 2). Keeping the full
-      // 5-line grid but only showing line 2 (the middle one) puts the single
-      // visible line exactly where the notes and the clef symbol sit.
-      stave.setConfigForLines([
-        { visible: false }, { visible: false }, { visible: true },
-        { visible: false }, { visible: false }
-      ]);
-    }
-    if(isRowStart){
-      if(state.mode === 'rhythm'){
-        stave.addClef('percussion'); // renders as the double-bar rhythm-staff symbol, not a pitched clef
-      } else {
-        // Only Melody honors the clef picker -- Harmony's chord symbols sit
-        // above a fixed treble reference notehead regardless of clef choice.
-        stave.addClef(state.mode === 'melody' ? state.clef : 'treble');
-        stave.addKeySignature(vfKeySig); // Harmony still needs this -- chords are built from this same key
-      }
-      if(isFirst) stave.addTimeSignature(state.meter);
-    }
+    const stave = buildStave(m, x, y, w);
     stave.setContext(ctx).draw();
 
     if(state.mode === 'harmony'){
@@ -1705,93 +1837,14 @@ function generateCore(){
       continue;
     }
 
-    const flat = measureFlats[m];
-    const vfNotes = [];
-    const events = []; // {note, startTick, dur, isRest, inTuplet} — drives beat-based auto-beaming
-    const tupletBuckets = {}; // tupletGroup id -> notes[]
-    const measureAcc = {}; // letter+octave -> currently-sounding alteration, reset each measure
-    let runningTick = 0;
-
-    flat.forEach(spec=>{
-      let note;
-      if(spec.rest){
-        note = new VF.StaveNote({ keys:['b/4'], duration: spec.dur + 'r' });
-        playbackSeq.push({ ticks: specTicks(spec), midi: null });
-      } else {
-        let vfKey, midiForPlayback, accidentalAlt = null;
-        if(state.mode === 'rhythm'){
-          // Rhythm mode ignores pitch entirely -- every note sits on the
-          // same fixed reference pitch (B4, the treble staff's middle
-          // line), so only the rhythm reads.
-          vfKey = 'b/4';
-          midiForPlayback = 71;
-        } else {
-          const pick = weightedPick(pool, prevMidi, usageCounts);
-          prevMidi = pick.midi;
-          usageCounts[pick.midi] = (usageCounts[pick.midi] || 0) + 1;
-          const octave = letterOctave(pick.midi);
-          vfKey = vfKeyString(pick.letter, pick.totalAlt, octave);
-          midiForPlayback = pick.midi;
-
-          const memKey = pick.letter + octave;
-          const baseline = measureAcc.hasOwnProperty(memKey) ? measureAcc[memKey] : keySigAlteration(pick.letter, sig);
-          if(pick.totalAlt !== baseline) accidentalAlt = pick.totalAlt;
-          measureAcc[memKey] = pick.totalAlt;
-        }
-        note = new VF.StaveNote({ keys:[vfKey], duration: spec.dur });
-        playbackSeq.push({ ticks: specTicks(spec), midi: midiForPlayback });
-        if(accidentalAlt !== null) note.addModifier(new VF.Accidental(ALT_SYMBOL[accidentalAlt]), 0);
-      }
-      if(spec.dots){
-        for(let d=0; d<spec.dots; d++) VF.Dot.buildAndAttach([note], {all:true});
-      }
-      vfNotes.push(note);
-      events.push({ note, startTick: runningTick, dur: spec.dur, isRest: !!spec.rest, inTuplet: spec.tupletGroup!=null });
-      if(spec.tupletGroup!=null){
-        (tupletBuckets[spec.tupletGroup] = tupletBuckets[spec.tupletGroup] || []).push(note);
-      }
-      runningTick += specTicks(spec);
-    });
-    const tupletGroups = Object.values(tupletBuckets).map(notes => ({notes, num:3}));
-
-    // Beat-based auto-beaming: link any run of 2+ consecutive eighth-or-
-    // shorter notes that share a beat, regardless of which rhythm atom they
-    // came from. Rests, longer notes, and tuplet-internal notes break a run.
-    const beamGroups = [];
-    let current = [];
-    let currentBeat = null;
-    function flushBeam(){
-      if(current.length>1) beamGroups.push(current.map(e=>e.note));
-      current = [];
-      currentBeat = null;
-    }
-    events.forEach(e=>{
-      const eligible = !e.isRest && !e.inTuplet && (e.dur==='8' || e.dur==='16');
-      if(!eligible){ flushBeam(); return; }
-      const beatIdx = beatIndexAt(e.startTick, beatStarts);
-      if(current.length===0){ current=[e]; currentBeat=beatIdx; return; }
-      if(beatIdx===currentBeat){ current.push(e); }
-      else { flushBeam(); current=[e]; currentBeat=beatIdx; }
-    });
-    flushBeam();
-
-    // Beam and Tuplet objects must be constructed BEFORE the voice is drawn:
-    // their constructors assign each note's .beam property, which is what
-    // suppresses the individual flag/tail when the note itself renders.
-    // Building them after voice.draw() draws flags AND a beam on top.
-    const beamInstances = beamGroups.map(g => new VF.Beam(g));
-    const tupletInstances = tupletGroups.map(t => new VF.Tuplet(t.notes, {num_notes:t.num, notes_occupied:2}));
-
-    const voice = new VF.Voice({ num_beats: measureTicks, beat_value: 16 });
-    voice.setStrict(false);
-    voice.addTickables(vfNotes);
+    const { voice, beamInstances, tupletInstances, formatter } = built[m];
 
     // Use VexFlow's own measured start/end of the note area for this exact
     // stave (accounts precisely for whatever clef/key/time glyphs it has)
     // instead of a guessed constant — that guess was leaving a large unused
     // gap between the last note and the barline.
     const formatWidth = Math.max(40, stave.getNoteEndX() - stave.getNoteStartX() - 12);
-    new VF.Formatter().joinVoices([voice]).format([voice], formatWidth);
+    formatter.format([voice], formatWidth);
     voice.draw(ctx, stave);
 
     beamInstances.forEach(b => b.setContext(ctx).draw());

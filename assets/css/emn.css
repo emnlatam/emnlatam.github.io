@@ -307,15 +307,6 @@
     align-items: center;
     justify-content: flex-start;
   }
-  .emn-landing .emn-m-pl {
-    font-family: var(--font-body);
-    font-weight: 600;
-    font-size: 15px;
-    color: var(--gray-700);
-    padding: 8px 6px;
-    white-space: nowrap;
-  }
-  .emn-landing .emn-m-pl.is-active { color: var(--red); }
   .emn-landing .emn-m-name {
     display: none;
     flex: 1;
@@ -330,9 +321,7 @@
     text-overflow: ellipsis;
     cursor: pointer;
   }
-  .emn-landing .emn-header--dark .emn-m-pl,
   .emn-landing .emn-header--dark .emn-m-name { color: #fff; }
-  html.emn-in .emn-m-pl { display: none; }
   html.emn-in .emn-m-name { display: block; }
   .emn-landing .emn-burger {
     display: flex;
@@ -382,19 +371,16 @@
     z-index: 70;
   }
   .emn-landing .emn-header.is-menu-open .emn-nav { display: flex; }
-  .emn-landing .emn-nav__link,
-  .emn-landing .emn-header--dark .emn-nav__link {
+  /* panel links are always red (the dark home header would otherwise paint them white on the white panel) */
+  .emn-landing .emn-header .emn-nav .emn-nav__link {
     padding: 12px 12px;
     font-size: 15px;
     text-align: left;
-    color: var(--ink);
+    color: var(--red);
     flex: 1;
   }
-  .emn-landing .emn-header--dark .emn-nav__link:not(.emn-nav__link--user):not(.emn-nav__link--cta):hover { background: var(--gray-100); color: var(--ink); }
-  .emn-landing .emn-nav__link.is-active,
-  .emn-landing .emn-header--dark .emn-nav__link.is-active { color: var(--red); }
-  .emn-landing .emn-nav__link--cta,
-  .emn-landing .emn-header--dark .emn-nav__link--cta {
+  .emn-landing .emn-header .emn-nav .emn-nav__link:not(.emn-nav__link--cta):hover { background: var(--gray-100); color: var(--red-dark); }
+  .emn-landing .emn-header .emn-nav .emn-nav__link--cta {
     flex: 0 0 auto;
     text-align: center;
     padding: 10px 22px;
@@ -403,9 +389,9 @@
     background: transparent;
     border-color: var(--red);
   }
+  .emn-landing .emn-header .emn-nav .emn-nav__link--cta:hover { background: var(--red-tint); color: var(--red); }
   .emn-landing .emn-nav__item { flex-wrap: wrap; width: 100%; }
-  .emn-landing .emn-nav__caret,
-  .emn-landing .emn-header--dark .emn-nav__caret { color: var(--gray-500); padding: 12px 12px; margin: 0; }
+  .emn-landing .emn-header .emn-nav .emn-nav__caret { color: var(--red); padding: 12px 12px; margin: 0; }
   .emn-landing .emn-nav__dropdown {
     position: static;
     display: none;
@@ -423,8 +409,6 @@
   }
   .emn-landing .emn-nav__item.is-open .emn-nav__dropdown { display: block; }
   .emn-landing .emn-nav__dropdown-item { white-space: normal; padding: 11px 10px; }
-  /* Practice Lab lives in the bar when signed out */
-  html:not(.emn-in) .emn-nav__item--pl { display: none; }
   /* the account item: its name is shown in the bar, its two actions sit flat in the panel */
   .emn-landing .emn-nav__item--user .emn-nav__link--user,
   .emn-landing .emn-nav__item--user .emn-nav__caret { display: none; }
