@@ -92,7 +92,7 @@ function emnInjectAuthLink(st){
   }
 
   const item = document.createElement('div');
-  item.className = 'emn-nav__item';
+  item.className = 'emn-nav__item emn-nav__item--user';
   item.setAttribute('data-emn-inj', '');
   const displayName = emnEsc(st.name);
   item.innerHTML = `
@@ -447,6 +447,9 @@ function emnRenderNav(st){
   const nav = document.querySelector('.emn-nav');
   if(!nav) return;
   nav.querySelectorAll('[data-emn-inj]').forEach((n) => n.remove());
+  // phones: signed in -> the user's name sits in the header bar (Practice Lab moves into the hamburger panel)
+  document.documentElement.classList.toggle('emn-in', !!st.in);
+  document.querySelectorAll('.emn-m-name').forEach((n) => { n.textContent = st.in ? (st.name || '') : ''; });
   emnInjectCareerMenu(st);
   emnInjectAdminMenu(st);
   // Keep the "Cursos" button right beside the account/login link, after the

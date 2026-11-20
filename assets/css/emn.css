@@ -287,32 +287,148 @@
   border-radius: 2px;
 }
 
-/* Mobile nav */
+/* Mobile nav: logo + (Practice Lab | user name) + hamburger; everything else in a floating panel */
+.emn-landing .emn-burger,
+.emn-landing .emn-m-bar { display: none; }
 @media (max-width: 640px) {
   .emn-landing .emn-header__inner {
-    flex-wrap: wrap;
-    height: auto;
-    padding: 0 var(--side-pad) 14px 0;
+    flex-wrap: nowrap;
+    align-items: center;
+    height: 56px;
+    gap: 8px;
+    padding: 0 12px 0 0;
   }
   .emn-landing .emn-logo { height: 52px; }
   .emn-landing .emn-logo img { height: 52px; width: 52px; }
-  .emn-landing .emn-nav {
-    width: 100%;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 2px;
-    padding-left: var(--side-pad);
-  }
-  .emn-landing .emn-nav__link {
-    padding: 8px 8px;
-    font-size: 13px;
+  .emn-landing .emn-m-bar {
+    display: flex;
     flex: 1;
+    min-width: 0;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  .emn-landing .emn-m-pl {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--gray-700);
+    padding: 8px 6px;
+    white-space: nowrap;
+  }
+  .emn-landing .emn-m-pl.is-active { color: var(--red); }
+  .emn-landing .emn-m-name {
+    display: none;
+    flex: 1;
+    min-width: 0;
     text-align: center;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
   }
-  .emn-landing .emn-nav__link--cta {
+  .emn-landing .emn-header--dark .emn-m-pl,
+  .emn-landing .emn-header--dark .emn-m-name { color: #fff; }
+  html.emn-in .emn-m-pl { display: none; }
+  html.emn-in .emn-m-name { display: block; }
+  .emn-landing .emn-burger {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 42px;
+    height: 42px;
+    padding: 0 9px;
+    margin-left: auto;
+    flex-shrink: 0;
+    appearance: none;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: 8px;
+  }
+  .emn-landing .emn-burger span {
+    display: block;
+    height: 2.5px;
+    border-radius: 2px;
+    background: var(--ink);
+    transition: transform 0.18s ease, opacity 0.18s ease;
+  }
+  .emn-landing .emn-header--dark .emn-burger span { background: #fff; }
+  .emn-landing .emn-header.is-menu-open .emn-burger span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+  .emn-landing .emn-header.is-menu-open .emn-burger span:nth-child(2) { opacity: 0; }
+  .emn-landing .emn-header.is-menu-open .emn-burger span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+
+  /* the nav becomes the floating panel */
+  .emn-landing .emn-nav {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 10px;
+    width: min(86vw, 320px);
+    max-height: calc(100svh - 90px);
+    overflow-y: auto;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    padding: 8px;
+    background: var(--paper);
+    border: 1px solid var(--gray-300);
+    border-radius: 12px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22);
+    z-index: 70;
+  }
+  .emn-landing .emn-header.is-menu-open .emn-nav { display: flex; }
+  .emn-landing .emn-nav__link,
+  .emn-landing .emn-header--dark .emn-nav__link {
+    padding: 12px 12px;
+    font-size: 15px;
+    text-align: left;
+    color: var(--ink);
+    flex: 1;
+  }
+  .emn-landing .emn-header--dark .emn-nav__link:not(.emn-nav__link--user):not(.emn-nav__link--cta):hover { background: var(--gray-100); color: var(--ink); }
+  .emn-landing .emn-nav__link.is-active,
+  .emn-landing .emn-header--dark .emn-nav__link.is-active { color: var(--red); }
+  .emn-landing .emn-nav__link--cta,
+  .emn-landing .emn-header--dark .emn-nav__link--cta {
     flex: 0 0 auto;
-    padding: 6px 22px;
+    text-align: center;
+    padding: 10px 22px;
+    margin: 4px 0;
+    color: var(--red);
+    background: transparent;
+    border-color: var(--red);
   }
+  .emn-landing .emn-nav__item { flex-wrap: wrap; width: 100%; }
+  .emn-landing .emn-nav__caret,
+  .emn-landing .emn-header--dark .emn-nav__caret { color: var(--gray-500); padding: 12px 12px; margin: 0; }
+  .emn-landing .emn-nav__dropdown {
+    position: static;
+    display: none;
+    flex-basis: 100%;
+    min-width: 0;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    box-shadow: none;
+    border: none;
+    border-left: 2px solid var(--gray-300);
+    border-radius: 0;
+    margin: 0 0 4px 12px;
+    padding: 2px 0 2px 6px;
+  }
+  .emn-landing .emn-nav__item.is-open .emn-nav__dropdown { display: block; }
+  .emn-landing .emn-nav__dropdown-item { white-space: normal; padding: 11px 10px; }
+  /* Practice Lab lives in the bar when signed out */
+  html:not(.emn-in) .emn-nav__item--pl { display: none; }
+  /* the account item: its name is shown in the bar, its two actions sit flat in the panel */
+  .emn-landing .emn-nav__item--user .emn-nav__link--user,
+  .emn-landing .emn-nav__item--user .emn-nav__caret { display: none; }
+  .emn-landing .emn-nav__item--user .emn-nav__dropdown { display: block; border-left: none; margin: 4px 0 0; padding: 4px 0 0; border-top: 1px solid var(--gray-300); }
 }
 
 /* Main content area */
