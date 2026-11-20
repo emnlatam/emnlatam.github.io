@@ -297,7 +297,21 @@ build();
      exists (from signing in via the Practice Lab nav) — doesn't change
      anything about how the tool works either way. -->
 <script>
-  emnInit().then(() => { if(emnSession) emnStartHeartbeat('interview-prep'); });
+  emnInit().then(() => {
+    if(emnSession) emnStartHeartbeat('interview-prep');
+    // "Arma tus respuestas": students go to /clases-interview-prep, everyone else sees the students-only pop up.
+    const homeLink = document.querySelector('.brandline-below .home-link');
+    if(!homeLink) return;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'live-link';
+    b.textContent = 'Arma tus respuestas';
+    b.addEventListener('click', () => {
+      if(emnSession) location.href = '/clases-interview-prep';
+      else emnShowStudentsOnly();
+    });
+    homeLink.parentNode.insertBefore(b, homeLink);
+  });
 </script>
 </body>
 </html>

@@ -2413,12 +2413,13 @@ function emnSetupLiveMode(){
   }
 
   btn.addEventListener('click', () => {
+    if(!emnSession && liveRole === null){ emnShowStudentsOnly(); return; }
     if(isStaff) openHostModal(); else openFollowerModal();
   });
 
   // Auto-join via a shared ?live=CODE link — skips typing the code in.
   const urlCode = new URLSearchParams(location.search).get('live');
-  if(urlCode && !isStaff && liveRole === null){
+  if(urlCode && !isStaff && liveRole === null && emnSession){
     liveJoinAsFollower(urlCode.toUpperCase());
     updateTriggerLabel();
   }

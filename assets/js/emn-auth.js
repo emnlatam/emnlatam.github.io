@@ -165,6 +165,24 @@ function emnEnsureModalStyles(){
   document.head.appendChild(style);
 }
 
+// Pop up shown when someone who isn't signed in presses a students-only button.
+function emnShowStudentsOnly(){
+  emnEnsureModalStyles();
+  const overlay = document.createElement('div');
+  overlay.className = 'emn-modal-overlay';
+  overlay.innerHTML = `
+    <div class="emn-modal-box">
+      <h3>Exclusivo para alumnos EMN</h3>
+      <div class="emn-modal-actions">
+        <button type="button" class="emn-modal-btn-primary">Entendido</button>
+      </div>
+    </div>`;
+  const close = () => overlay.remove();
+  overlay.querySelector('button').addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if(e.target === overlay) close(); });
+  document.body.appendChild(overlay);
+}
+
 const emnEsc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 
 // In-page replacement for window.confirm() — returns a Promise<boolean>.
