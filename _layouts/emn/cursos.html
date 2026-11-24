@@ -338,7 +338,7 @@ function renderLesson(){
       <thead><tr><th>Type</th><th>Host</th><th>Value</th><th>TTL</th></tr></thead>
       <tbody>
         ${dnsIPs.map(ip => `<tr><td>A Record</td><td>@</td><td><span class="shortcuts__dns-value"><span>${ip}</span>${dnsCopyBtn(ip)}</span></td><td>Automatic</td></tr>`).join('')}
-        <tr><td>CNAME Record</td><td>www</td><td>yourwebsitename</td><td>Automatic</td></tr>
+        <tr><td>CNAME Record</td><td>www</td><td>yourwebsitename.com</td><td>Automatic</td></tr>
       </tbody></table></div>` : '';
   const shortcutsHTML = isQuiz ? '' : `<section class="shortcuts${isDomainLesson ? ' shortcuts--platforms' : ''}" aria-label="ShortCuts">
     <h2 class="shortcuts__title">ShortCuts:</h2>
