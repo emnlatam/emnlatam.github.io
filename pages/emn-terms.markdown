@@ -28,7 +28,7 @@ We may update the service or these terms. The service is provided "as is", and w
 Our [Privacy Policy](/privacy) explains how we handle information.
 
 ## Contact
-emnlatam@gmail.com
+admisiones@emnlatam.com
 
 <hr>
 
@@ -57,4 +57,4 @@ Podemos actualizar el servicio o estos términos. El servicio se ofrece "tal cua
 Nuestra [Política de Privacidad](/privacy) explica cómo manejamos la información.
 
 ## Contacto
-emnlatam@gmail.com
+admisiones@emnlatam.com

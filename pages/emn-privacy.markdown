@@ -20,13 +20,13 @@ EMN connects to the Google account emnlatam@gmail.com, which belongs to EMN, to 
 EMN's use of information received from Google APIs adheres to the [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy), including the Limited Use requirements.
 
 ## Sharing
-We do not sell personal information. Class details (title, date, time, Meet link) are shared only with the student and the professor of that class. We use Supabase to store data and Google to deliver calendar invitations.
+We do not sell personal information. Class details (title, date, time, Meet link) are shared only with the student and the professor of that class. We store data in a database and use Google to deliver calendar invitations.
 
 ## Retention and deletion
-We keep your information while you are enrolled. To ask for access, correction or deletion, write to emnlatam@gmail.com and we will respond promptly.
+We keep your information while you are enrolled. To ask for access, correction or deletion, write to admisiones@emnlatam.com and we will respond promptly.
 
 ## Contact
-emnlatam@gmail.com
+admisiones@emnlatam.com
 
 <hr>
 
@@ -47,10 +47,10 @@ EMN se conecta a la cuenta de Google emnlatam@gmail.com, que pertenece a EMN, pa
 El uso que hace EMN de la información recibida de las APIs de Google cumple con la [Política de Datos de Usuario de los Servicios de API de Google](https://developers.google.com/terms/api-services-user-data-policy), incluidos los requisitos de Uso Limitado.
 
 ## Con quién la compartimos
-No vendemos información personal. Los datos de la clase (título, fecha, hora, enlace de Meet) solo se comparten con el alumno y el profesor de esa clase. Usamos Supabase para guardar datos y Google para enviar las invitaciones de calendario.
+No vendemos información personal. Los datos de la clase (título, fecha, hora, enlace de Meet) solo se comparten con el alumno y el profesor de esa clase. Guardamos los datos en una base de datos y usamos Google para enviar las invitaciones de calendario.
 
 ## Conservación y eliminación
-Conservamos tu información mientras estés inscrito. Para pedir acceso, corrección o eliminación, escribe a emnlatam@gmail.com.
+Conservamos tu información mientras estés inscrito. Para pedir acceso, corrección o eliminación, escribe a admisiones@emnlatam.com.
 
 ## Contacto
-emnlatam@gmail.com
+admisiones@emnlatam.com
