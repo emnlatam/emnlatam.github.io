@@ -414,7 +414,7 @@ function emnInjectAskBerklee(st){
 // "Mi Aula" tab: a plain link to /mi-aula (the hub with the Career Progress and
 // Mock Audition buttons) — any signed-in person, never a signed-out visitor.
 // A red button that never moves: always the last tab before the user button, in both headers.
-const EMN_AULA_PATHS = ['/mi-aula', '/mi-aula-anterior', '/collaba', '/career', '/career-progress', '/mock-audition'];
+const EMN_AULA_PATHS = ['/mi-aula', '/mi-aula-anterior', '/singsync', '/career', '/career-progress', '/mock-audition'];
 function emnInjectCareerMenu(st){
   if(!st.in) return;
   const nav = document.querySelector('.emn-nav');

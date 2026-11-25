@@ -51,8 +51,8 @@
 {{picker}}
 <button type="button" style="background: #ffffff; color: #C8102E; border: 1.5px solid #C8102E; border-radius: 999px; padding: 10px 22px; min-height: 48px; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; gap: 8px">
 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Mi Drive</button>
-<button type="button" data-href="{{collabaHref}}" data-live="collaba" style="background: #C8102E; color: #ffffff; border: 0; border-radius: 999px; padding: 10px 24px; min-height: 48px; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; gap: 8px">
-<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h3l3-8 4 16 3-8h5"/></svg>Entrar a Collaba</button>
+<button type="button" data-href="{{singsyncHref}}" data-live="singsync" style="background: #C8102E; color: #ffffff; border: 0; border-radius: 999px; padding: 10px 24px; min-height: 48px; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; gap: 8px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h3l3-8 4 16 3-8h5"/></svg>Entrar a SingSync</button>
 </div>
 </div>
 
@@ -117,7 +117,7 @@
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="13" height="12" rx="2"/><path d="M15 10l7-4v12l-7-4z"/></svg>
 </button>
 </sc-if>
-{{day.collabas}}
+{{day.singsyncs}}
 </div>
 </div>
 {{day.chips}}
@@ -274,24 +274,24 @@ const ymd = (d) => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'
 const getTz = () => emnGetTz();
 // A class is saved as a date + hour in Lima time (UTC-5). Returns the real instant.
 const limaInstant = (fecha, hora) => { const [y,mo,d] = fecha.split('-').map(Number); const [h,mi] = (hora || '00:00').split(':').map(Number); return new Date(Date.UTC(y, mo-1, d, h + 5, mi || 0)); };
-// ===== Collaba: la sala es la clase. Abierta 12 h antes y 12 h después de su hora (misma regla que collaba_acceso en la base) =====
-const COLLABA_MS = 12 * 3600 * 1000;
+// ===== SingSync: la sala es la clase. Abierta 12 h antes y 12 h después de su hora (misma regla que singsync_acceso en la base) =====
+const SINGSYNC_MS = 12 * 3600 * 1000;
 // Link del botón grande: la clase cuya ventana incluye este momento (si hay dos, la más cercana); si no hay ninguna, la próxima clase.
-function collabaHref(now){
+function singsyncHref(now){
   const t = now.getTime();
   const cl = (S.resumen?.clases || []).filter(c => c.id).map(c => ({ id: c.id, dt: limaInstant(c.fecha, c.hora).getTime() }));
-  const open = cl.filter(c => Math.abs(t - c.dt) <= COLLABA_MS).sort((a, b) => Math.abs(t - a.dt) - Math.abs(t - b.dt))[0];
+  const open = cl.filter(c => Math.abs(t - c.dt) <= SINGSYNC_MS).sort((a, b) => Math.abs(t - a.dt) - Math.abs(t - b.dt))[0];
   const pick = open || cl.filter(c => c.dt > t).sort((a, b) => a.dt - b.dt)[0];
-  return pick ? '/collaba?clase=' + encodeURIComponent(pick.id) : '/collaba';
+  return pick ? '/singsync?clase=' + encodeURIComponent(pick.id) : '/singsync';
 }
-// Botón redondo de Collaba para cada clase de un día, debajo del de videollamada (relleno oscuro = sala abierta ahora).
-function collabaBtns(list, past){
+// Botón redondo de SingSync para cada clase de un día, debajo del de videollamada (relleno oscuro = sala abierta ahora).
+function singsyncBtns(list, past){
   const now = Date.now();
   return list.filter(e => e.id).map(e => {
-    const live = Math.abs(now - e.dt.getTime()) <= COLLABA_MS;
+    const live = Math.abs(now - e.dt.getTime()) <= SINGSYNC_MS;
     const st = 'width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;padding:0;flex:none;box-sizing:border-box;text-decoration:none;' +
       (live ? 'background:#2b2e36;color:#fff;border:1.5px solid #2b2e36;' : 'background:#fff;color:#2b2e36;border:1.5px solid #2b2e36;') + (past && !live ? 'opacity:0.5;' : '');
-    return '<a href="/collaba?clase=' + encodeURIComponent(e.id) + '" target="_blank" rel="noopener" title="Collaba: ' + esc(e.k.label) + (live ? ' (sala abierta)' : '') + '" aria-label="Collaba de ' + esc(e.k.label) + '" style="' + st + '">' +
+    return '<a href="/singsync?clase=' + encodeURIComponent(e.id) + '" target="_blank" rel="noopener" title="SingSync: ' + esc(e.k.label) + (live ? ' (sala abierta)' : '') + '" aria-label="SingSync de ' + esc(e.k.label) + '" style="' + st + '">' +
       '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></a>';
   }).join('');
 }
@@ -450,7 +450,7 @@ function getData(){
     const btnStyle = btnBase + (today ? 'background:#C8102E;color:#fff;border:0;' : 'background:#fff;color:#C8102E;border:1.5px solid #C8102E;') + (past ? 'opacity:0.5;' : '');
     const chips = list.map(e => '<div title="' + esc(e.t || '') + '" style="font-size:11.5px;font-weight:600;border-radius:5px;padding:2px 6px;line-height:1.25;background:' + e.k.bg + ';color:' + e.k.fg + ';' + (past ? 'opacity:0.6;' : '') + '">' + esc(e.k.label) + '</div>').join('');
     cells.push({
-      n: d.getDate(), cellStyle, numStyle, chips, link: esc(link), btnStyle, collabas: collabaBtns(list, past),
+      n: d.getDate(), cellStyle, numStyle, chips, link: esc(link), btnStyle, singsyncs: singsyncBtns(list, past),
       hasLink: list.length > 0 && !!link, noLink: list.length > 0 && !link,
       btnLabel: list.length ? 'Videollamada de ' + list[0].k.label + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()].toLowerCase() : ''
     });
@@ -535,7 +535,7 @@ function getData(){
     S.students.filter(x => x.id !== S.me).map(x => '<option value="' + x.id + '"' + (x.id === S.target ? ' selected' : '') + '>' + esc(x.full_name || x.email) + '</option>').join('') + '</select>' : '');
 
   return {
-    collabaHref: esc(collabaHref(now)),
+    singsyncHref: esc(singsyncHref(now)),
     nombre: esc(first), sub: esc(sub), ringDash: (rutaPct * 157.1 / 100).toFixed(1), rutaPct, rutaNote, picker,
     proxClase, tareasTxt: pendientes + ' por entregar', mockTxt, rachaTxt: racha + (racha === 1 ? ' día' : ' días'), rachaSub, offBanner,
     monthTitle: MESES[S.vm] + ' ' + S.vy, legend, cells,
@@ -604,7 +604,7 @@ emnInit().then(async () => {
   paint();
   const app = document.getElementById('mi-aula-app');
   app.addEventListener('click', (e) => {
-    const h = e.target.closest('[data-href]'); if(h){ location.href = h.dataset.live === 'collaba' ? collabaHref(new Date()) : h.dataset.href; return; }   // el botón de Collaba se recalcula al hacer clic, por si la ventana cambió con la página abierta
+    const h = e.target.closest('[data-href]'); if(h){ location.href = h.dataset.live === 'singsync' ? singsyncHref(new Date()) : h.dataset.href; return; }   // el botón de SingSync se recalcula al hacer clic, por si la ventana cambió con la página abierta
     const a = e.target.closest('[data-act]'); if(!a) return;
     const act = a.dataset.act;
     if(act === 'tarea'){

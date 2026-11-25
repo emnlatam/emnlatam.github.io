@@ -1,4 +1,4 @@
--- Collaba: acceso a la sala privada de cada clase.
+-- SingSync (antes Collaba; los objetos de base de datos conservan el prefijo collaba_): acceso a la sala privada de cada clase.
 -- Requiere mi-aula.sql (profesores.correo) y alumnos.sql (clases, alumnos, profes_curso).
 --
 -- Reglas:

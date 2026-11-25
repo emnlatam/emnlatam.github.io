@@ -1,4 +1,4 @@
-// Collaba: borra los archivos de las salas ya cerradas (clase + 12 h). La clase no existe -> también se borra.
+// SingSync (antes Collaba; la función y el bucket conservan el nombre collaba): borra los archivos de las salas ya cerradas (clase + 12 h). La clase no existe -> también se borra.
 // Idempotente y sin parámetros: solo toca salas vencidas, así que no necesita sesión (la llama pg_cron cada hora).
 // Storage no permite borrar archivos con SQL, por eso se hace aquí con la service role.
 // Deploy: supabase functions deploy collaba-limpiar --no-verify-jwt --project-ref gpoddvcrsdkpgfmyniqu

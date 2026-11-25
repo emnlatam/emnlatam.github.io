@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% include emn-favicon.html %}
-<title>Collaba — EMN</title>
+<title>SingSync — EMN</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/css/emn.css?v={{ site.time | date: '%s' }}">
@@ -53,6 +53,18 @@ body{ margin:0; background:#FBFBFC; }
 .cb-delay{ width:200px; }
 .cb-delay .cb-lbl b{ color:var(--ink); }
 .cb-hint{ flex:1; min-width:200px; font-size:12px; color:var(--g5); }
+
+/* ---- llamada ---- */
+.cb-call-row{ display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap; margin-top:10px; }
+.cb-call-row.first{ margin-top:0; }
+.cb-fld{ display:flex; flex-direction:column; gap:2px; }
+.cb-fld .cb-sel{ max-width:250px; }
+.cb-meter{ width:110px; height:8px; background:var(--g2); border-radius:99px; overflow:hidden; margin-bottom:13px; }
+.cb-meter i{ display:block; height:100%; width:0; background:#2BA24C; transition:width .07s; }
+.cb-meter.rmt i{ background:#2563C9; }
+.cb-meter-l{ display:flex; flex-direction:column; gap:2px; }
+.cb-btn.on{ background:var(--ink); border-color:var(--ink); color:#fff; }
+.cb-btn[hidden]{ display:none; }
 
 /* ---- cards ---- */
 .cb-card{ background:#fff; border:1px solid var(--g2); border-radius:14px; padding:12px 18px 14px; box-shadow:0 1px 2px rgba(20,20,30,.03); }
@@ -145,6 +157,10 @@ body{ margin:0; background:#FBFBFC; }
 .cb-b .l{ width:26px; height:26px; border-radius:8px; background:#3a3a40; border:1px solid #55555c; border-bottom-width:3px; display:grid; place-items:center; font-weight:700; font-size:12.5px; color:#fff; }
 .cb-b.on{ background:linear-gradient(#9C0C24,#6a0817); }
 .cb-b.on .l{ background:var(--red); border-color:#e0485f; }
+.cb-w.rem{ background:linear-gradient(#C9DDF7,#8FB6EC); }
+.cb-w.rem .l{ background:#2563C9; color:#fff; border-color:#1B4A98; }
+.cb-b.rem{ background:linear-gradient(#1B4A98,#12326a); }
+.cb-b.rem .l{ background:#2563C9; border-color:#5b8de0; }
 .cb-help{ margin-top:9px; display:flex; gap:18px; flex-wrap:wrap; color:var(--g4); font-size:12px; }
 .cb-help b{ color:var(--g5); font-weight:600; }
 
@@ -163,7 +179,7 @@ body{ margin:0; background:#FBFBFC; }
 
 <div class="cb">
   <div class="cb-top">
-    <h1><i><svg viewBox="0 0 24 24"><path d="M9 3v11.3A3.5 3.5 0 1 0 11 17.5V8.2l8-1.7v6.8a3.5 3.5 0 1 0 2 3.2V3.5z"/></svg></i>Collaba</h1>
+    <h1><i><svg viewBox="0 0 24 24"><path d="M9 3v11.3A3.5 3.5 0 1 0 11 17.5V8.2l8-1.7v6.8a3.5 3.5 0 1 0 2 3.2V3.5z"/></svg></i>SingSync</h1>
     <div class="cb-chips">
       <div class="cb-chip red"><span>Tempo</span><b id="chBpm">100 BPM</b></div>
       <div class="cb-chip"><span>Compás</span><b id="chMeter">4/4</b></div>
@@ -172,6 +188,36 @@ body{ margin:0; background:#FBFBFC; }
   </div>
 
   <div class="cb-room" id="room" aria-live="polite"><i></i><div><b id="roomT">Espacio personal</b><span id="roomD"></span></div></div>
+
+  <!-- ===== Llamada ===== -->
+  <section class="cb-card" id="callCard">
+    <div class="cb-card-h"><h2>Llamada</h2><div class="cb-status" id="callStatus">Sin conexión</div></div>
+    <div class="cb-call-row first">
+      <button class="cb-btn primary" id="callJoin" type="button" style="min-width:170px"><span id="callJoinTxt">Probar micrófono</span></button>
+      <button class="cb-btn" id="callMute" type="button" hidden>Silenciar mi micrófono</button>
+      <button class="cb-btn" id="callLeave" type="button" hidden>Salir</button>
+      <div class="cb-vol">
+        <svg viewBox="0 0 24 24"><path d="M4 9.5v5h3.5l5 4v-13l-5 4z"/><path d="M16 9a4.2 4.2 0 0 1 0 6"/></svg>
+        <input class="cb-range" id="callVol" type="range" min="0" max="100" value="100" aria-label="Volumen de la voz del otro">
+      </div>
+    </div>
+    <div class="cb-call-row">
+      <label class="cb-fld"><span class="cb-lbl">Micrófono o interfaz</span><select class="cb-sel" id="micSel"><option value="">Predeterminado del sistema</option></select></label>
+      <label class="cb-fld"><span class="cb-lbl">Entrada</span>
+        <select class="cb-sel" id="micCh">
+          <option value="auto">Automática</option>
+          <option value="raw">Tal cual llega</option>
+          <option value="l">Canal 1 (izquierdo) en mono</option>
+          <option value="r">Canal 2 (derecho) en mono</option>
+          <option value="sum">Suma de canales en mono</option>
+        </select></label>
+      <label class="cb-fld"><span class="cb-lbl">Latencia</span>
+        <select class="cb-sel" id="callJb"><option value="0">Mínima</option><option value="40">Equilibrada</option><option value="120">Más estable</option></select></label>
+      <div class="cb-meter-l"><span class="cb-lbl">Tu voz</span><div class="cb-meter"><i id="micLvl"></i></div></div>
+      <div class="cb-meter-l"><span class="cb-lbl">El otro</span><div class="cb-meter rmt"><i id="rmtLvl"></i></div></div>
+    </div>
+    <div class="cb-note" id="callNote">Prueba tu micrófono aquí. Para hablar con tu profesor o alumno, entra a la sala de la clase desde Mi Aula.</div>
+  </section>
 
   <!-- ===== Pistas ===== -->
   <section class="cb-card" id="trkCard">
@@ -192,6 +238,11 @@ body{ margin:0; background:#FBFBFC; }
         <option value="0.5">0.5×</option><option value="0.6">0.6×</option><option value="0.7">0.7×</option><option value="0.8">0.8×</option><option value="0.9">0.9×</option>
         <option value="1" selected>1×</option><option value="1.1">1.1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option>
       </select>
+      <select class="cb-sel" id="trkPitch" aria-label="Tono (semitonos)" title="Tono: sube o baja la pista sin cambiar el tempo">
+        <option value="-6">Tono −6</option><option value="-5">−5</option><option value="-4">−4</option><option value="-3">−3</option><option value="-2">−2</option><option value="-1">−1</option>
+        <option value="0" selected>Tono 0</option>
+        <option value="1">+1</option><option value="2">+2</option><option value="3">+3</option><option value="4">+4</option><option value="5">+5</option><option value="6">Tono +6</option>
+      </select>
       <div class="cb-vol">
         <svg viewBox="0 0 24 24"><path d="M4 9.5v5h3.5l5 4v-13l-5 4z"/><path d="M16 9a4.2 4.2 0 0 1 0 6"/></svg>
         <input class="cb-range" id="trkVol" type="range" min="0" max="100" value="85" aria-label="Volumen de la pista">
@@ -204,8 +255,8 @@ body{ margin:0; background:#FBFBFC; }
         <div class="cb-seg" id="refSeg"><button type="button" data-r="alumno" class="on">Alumno</button><button type="button" data-r="profesor">Profesor</button></div>
       </div>
       <div class="cb-delay">
-        <div class="cb-lbl">Retraso de Meet: <b id="delayVal">150</b> ms</div>
-        <input class="cb-range" id="delayRange" type="range" min="0" max="600" step="10" value="150" aria-label="Retraso de Meet en milisegundos">
+        <div class="cb-lbl">Retraso de la voz: <b id="delayVal">150</b> ms</div>
+        <input class="cb-range" id="delayRange" type="range" min="0" max="600" step="10" value="150" aria-label="Retraso de la voz en milisegundos">
       </div>
       <div class="cb-hint" id="refHint"></div>
     </div>
@@ -286,12 +337,13 @@ body{ margin:0; background:#FBFBFC; }
 const $ = id => document.getElementById(id);
 
 /* ============================= AUDIO CORE ============================= */
-let ctx = null, pianoBus = null, metBus = null;
+let ctx = null, pianoBus = null, metBus = null, trkBus = null;
 function getCtx(){
   if(!ctx){
     ctx = new (window.AudioContext || window.webkitAudioContext)();
     pianoBus = ctx.createGain(); pianoBus.gain.value = $('pianoVol').value / 100; pianoBus.connect(ctx.destination);
     metBus   = ctx.createGain(); metBus.gain.value   = $('metVol').value / 100;   metBus.connect(ctx.destination);
+    trkBus   = ctx.createGain(); trkBus.gain.value   = $('trkVol').value / 100;   trkBus.connect(ctx.destination);
   }
   if(ctx.state === 'suspended') ctx.resume();
   return ctx;
@@ -331,7 +383,8 @@ const baseMidi = () => (octave + 1) * 12;
 const keysEl = $('keys');
 const keyEls = {};        // midi -> element
 const held = new Map();   // key id (code or pointer) -> midi
-const voices = new Map(); // midi -> {gain, src, released}
+const voices = new Map(); // key (midi o 'r'+midi del otro) -> {gain, src, released}
+const remHeld = new Set(); // notas que toca el otro
 
 function renderKeys(){
   keysEl.innerHTML = ''; Object.keys(keyEls).forEach(k => delete keyEls[k]);
@@ -358,6 +411,7 @@ function renderKeys(){
     keysEl.appendChild(el); keyEls[midi] = el;
   }
   held.forEach(m => keyEls[m] && keyEls[m].classList.add('on'));
+  remHeld.forEach(m => keyEls[m] && keyEls[m].classList.add('rem'));
   const lo = noteName(base), hi = noteName(base + SPAN - 1);
   $('octRange').textContent = lo + ' – ' + hi;
   $('chOct').textContent = lo;
@@ -374,24 +428,25 @@ function preload(){
     .catch(() => { st.className = 'cb-status'; st.textContent = 'No se pudieron cargar los sonidos'; });
 }
 
-async function noteOn(midi){
-  if(voices.has(midi)) return;
+async function noteOn(midi, key){
+  if(key === undefined) key = midi;
+  if(voices.has(key)) return;
   const c = getCtx();
   const v = { released: false, gain: null, src: null };
-  voices.set(midi, v);
+  voices.set(key, v);
   const s = midiToSample(midi);
   let buf;
-  try { buf = await loadBuffer(s.url); } catch(e){ voices.delete(midi); return; }
-  if(voices.get(midi) !== v) return;
+  try { buf = await loadBuffer(s.url); } catch(e){ voices.delete(key); return; }
+  if(voices.get(key) !== v) return;
   const src = c.createBufferSource(); src.buffer = buf; src.playbackRate.value = s.rate;
   const g = c.createGain(); g.gain.value = 0.9;
   src.connect(g); g.connect(pianoBus);
   src.start();
   v.src = src; v.gain = g;
-  src.onended = () => { if(voices.get(midi) === v) voices.delete(midi); };
-  if(v.released) release(midi, v, 0.25);
+  src.onended = () => { if(voices.get(key) === v) voices.delete(key); };
+  if(v.released) release(key, v, 0.25);
 }
-function release(midi, v, t){
+function release(key, v, t){
   if(!v.gain) return;
   const now = ctx.currentTime, dur = t || 0.35;
   try{
@@ -400,12 +455,12 @@ function release(midi, v, t){
     v.gain.gain.linearRampToValueAtTime(0, now + dur);
     v.src.stop(now + dur + 0.02);
   }catch(e){}
-  if(voices.get(midi) === v) voices.delete(midi);
+  if(voices.get(key) === v) voices.delete(key);
 }
-function noteOff(midi){
-  const v = voices.get(midi); if(!v) return;
+function noteOff(key){
+  const v = voices.get(key); if(!v) return;
   v.released = true;
-  if(v.gain) release(midi, v);
+  if(v.gain) release(key, v);
 }
 
 function press(id, midi){
@@ -413,12 +468,13 @@ function press(id, midi){
   held.set(id, midi);
   if(keyEls[midi]) keyEls[midi].classList.add('on');
   noteOn(midi);
+  send({ t: 'n', on: 1, m: midi, at: Date.now(), r: ROOM.rol });
 }
 function lift(id){
   if(!held.has(id)) return;
   const midi = held.get(id); held.delete(id);
   let still = false; held.forEach(m => { if(m === midi) still = true; });
-  if(!still){ if(keyEls[midi]) keyEls[midi].classList.remove('on'); noteOff(midi); }
+  if(!still){ if(keyEls[midi]) keyEls[midi].classList.remove('on'); noteOff(midi); send({ t: 'n', on: 0, m: midi, at: Date.now(), r: ROOM.rol }); }
 }
 function liftAll(){ [...held.keys()].forEach(lift); }
 
@@ -452,7 +508,9 @@ const METERS = {
   '3/4': { beats:3, sub:2, comp:false }, '6/8': { beats:2, sub:3, comp:true  }, '9/8': { beats:3, sub:3, comp:true }
 };
 const GROUPS = { bin:['2/4','4/4'], ter:['3/4','6/8','9/8'] };
-const met = { bpm:100, meter:'4/4', group:'bin', sub:false, running:false, timer:null, next:0, beat:0, tick:0, queue:[] };
+// Metrónomo por ancla: todos los clics salen de (at, k0, bpm, compás). at = Date.now() del reloj de quien lo cambió, medido en la
+// línea de tiempo de la referencia; k0 = número de tic en ese instante. Así los dos lados calculan los mismos golpes sin enviarlos.
+const met = { bpm:100, meter:'4/4', group:'bin', sub:false, running:false, timer:null, queue:[], at:0, k0:0, own:true, la:0, until:0 };
 
 function wordFor(b){ return b < 60 ? 'Largo' : b < 76 ? 'Adagio' : b < 108 ? 'Andante' : b < 120 ? 'Moderato' : b < 168 ? 'Allegro' : 'Presto'; }
 function drawBpm(){
@@ -462,8 +520,7 @@ function drawBpm(){
   $('chBpm').textContent = met.bpm + ' BPM';
   $('bpmPulse').textContent = METERS[met.meter].comp ? '♩.' : '♩';
 }
-function setBpm(v){ met.bpm = Math.min(240, Math.max(30, Math.round(v))); drawBpm(); }
-
+function setBpm(v){ metChange({ bpm: Math.min(240, Math.max(30, Math.round(v))) }); }
 function drawMeters(){
   const row = $('meterRow'); row.innerHTML = '';
   GROUPS[met.group].forEach(m => {
@@ -479,22 +536,56 @@ function drawBeats(){
     const d = document.createElement('div'); d.className = 'cb-beat' + (i === 0 ? ' acc' : ''); d.textContent = i + 1; box.appendChild(d);
   }
 }
-function resetBeat(){ met.beat = 0; met.tick = 0; met.queue.length = 0; }
-function setMeter(m){
-  met.meter = m; resetBeat(); drawMeters(); drawBeats(); drawBpm(); $('chMeter').textContent = m;
-  if(met.running && ctx) met.next = Math.max(met.next, ctx.currentTime + 0.05); // restart the bar cleanly
+function metBar(){ const M = METERS[met.meter], per = met.sub ? M.sub : 1; return { M, per, bar: M.beats * per, p: 60000 / met.bpm / per }; }
+function metLocalAnchor(){ met.la = (met.own ? met.at : met.at - ROOM.offset) + dSec() * 1000; }   // quien escucha atrasa el metrónomo igual que la pista
+function drawMet(){
+  drawBpm(); drawMeters(); drawBeats(); $('chMeter').textContent = met.meter; $('subToggle').checked = met.sub;
+  const b = $('btnPlay'), s = $('metStatus');
+  if(met.running){
+    b.classList.add('on'); b.innerHTML = '<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4.2" height="14" rx="1"/><rect x="13.8" y="5" width="4.2" height="14" rx="1"/></svg><span>Detener</span>';
+    s.className = 'cb-status ok'; s.textContent = 'En marcha';
+  } else {
+    b.classList.remove('on'); b.innerHTML = '<svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg><span>Iniciar</span>';
+    s.className = 'cb-status'; s.textContent = 'Detenido'; clearBeatLights();
+  }
 }
+// Cambio hecho aquí. Si ya suena, el nuevo ancla entra en el primer golpe que aún no se programó, conservando la posición en el compás.
+function metChange(patch, noSend){
+  const old = metBar(), wasRun = met.running;
+  const n = wasRun ? Math.ceil(met.k0 + (Math.max(Date.now(), met.until + 1) - met.la) / old.p) : 0;
+  const tn = wasRun ? met.la + (n - met.k0) * old.p : 0;
+  Object.assign(met, patch);
+  if(patch.running === true && !wasRun){
+    met.at = Date.now() + 90 - dSec() * 1000; met.k0 = 0; met.own = true; met.until = 0; metLocalAnchor();
+  } else if(met.running && wasRun){
+    const nb = metBar(), same = nb.bar === old.bar && nb.per === old.per;
+    met.at = tn - dSec() * 1000; met.k0 = same ? ((n % old.bar) + old.bar) % old.bar : 0; met.own = true; metLocalAnchor();
+  }
+  metRun(); drawMet();
+  if(!noSend) sendMet();
+}
+let metSendT = 0;
+function sendMet(){
+  clearTimeout(metSendT);
+  metSendT = setTimeout(() => send({ t: 'met', run: met.running, bpm: met.bpm, meter: met.meter, sub: met.sub, at: met.at, k0: met.k0, rel: ROOM.rol }), 40);
+}
+function onMet(m){
+  const meter = METERS[m.meter] ? m.meter : '4/4';
+  Object.assign(met, { bpm: Math.min(240, Math.max(30, +m.bpm || 100)), meter, group: GROUPS.bin.includes(meter) ? 'bin' : 'ter', sub: !!m.sub, running: !!m.run, at: +m.at || Date.now(), k0: +m.k0 || 0, own: false });
+  metLocalAnchor(); metRun(); drawMet();
+}
+function setMeter(m){ metChange({ meter: m, group: GROUPS.bin.includes(m) ? 'bin' : 'ter' }); }
 
 document.querySelectorAll('#segGroup button').forEach(b => b.onclick = () => {
-  met.group = b.dataset.g;
-  setMeter(GROUPS[met.group].includes(met.meter) ? met.meter : GROUPS[met.group][0]);
+  const g = b.dataset.g;
+  if(GROUPS[g].includes(met.meter)) metChange({ group: g }); else metChange({ group: g, meter: GROUPS[g][0] });
 });
 document.querySelectorAll('.cb-step').forEach(b => b.onclick = () => setBpm(met.bpm + (+b.dataset.d)));
 $('bpmRange').oninput = e => setBpm(+e.target.value);
-$('subToggle').onchange = e => { met.sub = e.target.checked; met.tick = 0; };
+$('subToggle').onchange = e => metChange({ sub: e.target.checked });
 $('metVol').oninput = e => { if(metBus) metBus.gain.value = e.target.value / 100; };
 
-// clicks: accent (beat 1) / normal beat / soft subdivision
+// clics: acento (tiempo 1) / tiempo / subdivisión suave
 function click(when, kind){
   const o = ctx.createOscillator(), g = ctx.createGain();
   const f = kind === 'acc' ? 1500 : kind === 'beat' ? 1000 : 700;
@@ -504,14 +595,18 @@ function click(when, kind){
   o.connect(g); g.connect(metBus); o.start(when); o.stop(when + 0.06);
 }
 function scheduler(){
-  const M = METERS[met.meter], per = met.sub ? M.sub : 1;
-  while(met.next < ctx.currentTime + 0.12){
-    const isBeat = met.tick === 0;
-    click(met.next, isBeat ? (met.beat === 0 ? 'acc' : 'beat') : 'sub');
-    if(isBeat) met.queue.push({ t: met.next, beat: met.beat });
-    met.tick++;
-    if(met.tick >= per){ met.tick = 0; met.beat = (met.beat + 1) % M.beats; }
-    met.next += (60 / met.bpm) / per; // bpm is read live, so a tempo change applies from the next tick
+  if(!met.running || !ctx) return;
+  const { per, bar, p } = metBar();
+  const horizon = Date.now() + 70;
+  let n = Math.ceil(met.k0 + (Math.max(Date.now(), met.until + 1) - met.la) / p);
+  for(;;){
+    const w = met.la + (n - met.k0) * p;           // reloj de pared de este golpe
+    if(w > horizon) break;
+    const idx = ((n % bar) + bar) % bar, beat = Math.floor(idx / per), isBeat = idx % per === 0;
+    const when = ctx.currentTime + Math.max(0, w - Date.now()) / 1000;
+    click(when, isBeat ? (beat === 0 ? 'acc' : 'beat') : 'sub');
+    if(isBeat) met.queue.push({ t: when, beat });
+    met.until = w; n++;
   }
 }
 function clearBeatLights(){ document.querySelectorAll('.cb-beat').forEach(e => e.classList.remove('hit')); }
@@ -524,21 +619,16 @@ function animate(){
   }
   requestAnimationFrame(animate);
 }
-function startMet(){
-  getCtx(); resetBeat(); met.next = ctx.currentTime + 0.08; met.running = true;
-  met.timer = setInterval(scheduler, 25); scheduler(); requestAnimationFrame(animate);
-  const b = $('btnPlay'); b.classList.add('on');
-  b.innerHTML = '<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4.2" height="14" rx="1"/><rect x="13.8" y="5" width="4.2" height="14" rx="1"/></svg><span>Detener</span>';
-  const s = $('metStatus'); s.className = 'cb-status ok'; s.textContent = 'En marcha';
+// Arranca o detiene el temporizador según met.running (lo llaman tanto los cambios locales como los del otro lado).
+function metRun(){
+  if(met.running){
+    getCtx();
+    if(!met.timer){ met.timer = setInterval(scheduler, 20); requestAnimationFrame(animate); }
+    met.until = Math.min(met.until, Date.now());
+    scheduler();
+  } else if(met.timer){ clearInterval(met.timer); met.timer = null; met.queue.length = 0; }
 }
-function stopMet(){
-  met.running = false; clearInterval(met.timer); met.queue.length = 0;
-  const b = $('btnPlay'); b.classList.remove('on');
-  b.innerHTML = '<svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg><span>Iniciar</span>';
-  const s = $('metStatus'); s.className = 'cb-status'; s.textContent = 'Detenido';
-  clearBeatLights();
-}
-const toggleMet = () => met.running ? stopMet() : startMet();
+const toggleMet = () => metChange({ running: !met.running });
 $('btnPlay').onclick = toggleMet;
 
 // tap tempo (average of the last taps; a gap over 2 s starts over)
@@ -558,16 +648,18 @@ $('btnTap').onclick = () => {
 //  * Personal (sin sala): el audio se carga desde tu computadora y suena solo ahí; nada se sube.
 //  * Sala (clase abierta): se sube a la nube (máx. 5 pistas, 25 MB c/u), la otra persona la descarga sola, y el play, la
 //    pausa, la posición y la velocidad van sincronizados por un canal privado. Los archivos se borran cuando la sala
-//    se cierra (collaba-limpiar) o cuando alguien los quita.
-// La velocidad conserva el tono (preservesPitch). La transposición de tono queda para más adelante.
+//    se cierra (singsync-limpiar) o cuando alguien los quita.
+// La velocidad conserva el tono (preservesPitch). El tono se cambia aparte con SoundTouch y también va sincronizado.
 const MAX_PISTAS = 5, MAX_MB = 25, BUCKET = 'collaba';
+const ROOM_NOTE = 'La voz va directo entre ustedes, sin pasar por un servidor. Usen audífonos: el eco no se cancela para no recortar el sonido.';
 const ROOM = { on:false, clase:null, rol:null, ch:null, ready:false, offset:0, samples:[], peerAt:0, ref:'alumno', delay:150 };
+const CALL = { pc:null, stream:null, raw:null, graph:null, joined:false, peerReady:false, replied:false, offered:false, pending:[], remoteSet:false, live:false, lat:0, statT:null, lvlT:null, an:null, rmtAn:null, muted:false, tries:0, sender:null };
 const tracks = [];   // personal: { id, name, url } · sala: { id, path, name, size, url|null, loading }
 let curTrack = null; // índice en tracks
 let seeking = false, trkSeq = 0, startTimer = null;
 // Línea de tiempo compartida, medida en la posición de QUIEN TOCA O CANTA (la referencia).
 // at = Date.now() del reloj de quien la fijó; own = true si fui yo (si no, se corrige con ROOM.offset).
-const TL = { path:null, playing:false, pos:0, at:0, rate:1, own:true };
+const TL = { path:null, playing:false, pos:0, at:0, rate:1, pitch:0, own:true };
 const au = new Audio();
 au.preload = 'auto';
 au.preservesPitch = true; au.webkitPreservesPitch = true; au.mozPreservesPitch = true;
@@ -620,9 +712,10 @@ function drawTransport(){
 function drawRef(){
   document.querySelectorAll('#refSeg button').forEach(b => b.classList.toggle('on', b.dataset.r === ROOM.ref));
   $('delayRange').value = ROOM.delay; $('delayVal').textContent = ROOM.delay;
-  $('refHint').textContent = iListen()
-    ? 'Tu pista se atrasa ' + ROOM.delay + ' ms para que oigas la voz que llega por Meet alineada con ella.'
-    : 'Tú eres la referencia: tu pista suena sin retraso y la del otro se atrasa.';
+  $('delayRange').disabled = CALL.live;
+  $('refHint').textContent = (CALL.live ? 'Medido en la llamada. ' : '') + (iListen()
+    ? 'Tu pista, el metrónomo y las notas se atrasan ' + ROOM.delay + ' ms para que lleguen junto con la voz.'
+    : 'Tú eres la referencia: lo tuyo suena sin retraso y lo del otro se atrasa.');
 }
 
 /* ---- personal: archivos de esta computadora ---- */
@@ -683,7 +776,7 @@ function selectTrack(i){
   if(i === curTrack) return;
   au.pause(); curTrack = i; au.src = tracks[i].url; au.playbackRate = +$('trkRate').value;
   $('trkSeek').value = 0; $('trkCur').textContent = '0:00'; $('trkDur').textContent = '0:00';
-  drawTracks(); drawTransport();
+  drawTracks(); drawTransport(); syncPitch();
 }
 async function removeTrack(i){
   const t = tracks[i];
@@ -697,6 +790,49 @@ async function removeTrack(i){
   else if(curTrack !== null && i < curTrack) curTrack--;
   URL.revokeObjectURL(t.url); tracks.splice(i, 1);
   if(curTrack === null && tracks.length) selectTrack(0); else { drawTracks(); drawTransport(); }
+}
+
+/* ---- tono (SoundTouch, se carga solo si lo usas) ---- */
+// El reproductor normal (au) sigue siendo el reloj de la pista, pero en silencio. Con tono ≠ 0 una copia procesada por SoundTouch suena en su lugar:
+// misma posición, mismo tempo, otra altura. A tono 0 no se carga nada y el audio sale directo.
+const ST_URL = 'https://cdn.jsdelivr.net/npm/soundtouchjs@0.3.0/dist/soundtouch.js';
+const PS = { mod:null, sh:null, path:null, conn:false, token:0 };
+function psStop(){
+  if(PS.sh && PS.conn){ try{ PS.sh.disconnect(); }catch(e){} }
+  PS.conn = false; au.muted = false;
+}
+async function syncPitch(){
+  const s = TL.pitch | 0, tok = ++PS.token;
+  const t = curTrack !== null ? tracks[curTrack] : null;
+  if(!s || !t || !t.url){ psStop(); return; }
+  au.muted = true;
+  try{
+    if(PS.path !== t.path || !PS.sh){
+      if(PS.sh && PS.conn){ try{ PS.sh.disconnect(); }catch(e){} PS.conn = false; }
+      PS.sh = null; PS.path = null;
+      $('trkStatus').textContent = 'Preparando el tono…';
+      if(!PS.build || PS.buildPath !== t.path){
+        PS.buildPath = t.path;
+        PS.build = (async () => {
+          const mod = PS.mod || (PS.mod = await import(ST_URL));
+          const buf = await getCtx().decodeAudioData(await (await fetch(t.url)).arrayBuffer());
+          return new mod.PitchShifter(ctx, buf, 4096);
+        })();
+        PS.build.catch(() => { PS.build = null; });
+      }
+      const sh0 = await PS.build;
+      if(tok !== PS.token) return;
+      PS.sh = sh0; PS.path = t.path; PS.build = null;
+    }
+  }catch(e){ console.error('tono', e); psStop(); TL.pitch = 0; $('trkPitch').value = '0'; say('No se pudo cambiar el tono en este navegador'); return; }
+  if(tok !== PS.token) return;
+  const sh = PS.sh;
+  sh.pitchSemitones = s; sh.tempo = au.playbackRate || 1; sh.rate = 1;
+  const dur = au.duration || sh.duration;
+  if(dur){ const want = au.currentTime / dur; if(!PS.conn || Math.abs(sh.percentagePlayed / 100 - want) * dur > 0.12) sh.percentagePlayed = Math.min(0.9999, want); }
+  if(!au.paused && !PS.conn){ sh.connect(trkBus); PS.conn = true; }
+  else if(au.paused && PS.conn){ sh.disconnect(); PS.conn = false; }
+  drawTransport();
 }
 
 /* ---- sincronía (sala) ---- */
@@ -723,7 +859,8 @@ function applyTL(){
     else if(want < 0){ au.pause(); au.currentTime = 0; startTimer = setTimeout(applyTL, -want * 1000 / TL.rate + 5); }
     else { if(au.paused || Math.abs(au.currentTime - want) > 0.08) au.currentTime = want; au.play().catch(() => {}); }
   }
-  drawTracks(); drawTransport();
+  $('trkPitch').value = String(TL.pitch | 0);
+  drawTracks(); drawTransport(); syncPitch();
 }
 // Cambio hecho aquí: se guarda como nueva línea de tiempo, se avisa al otro y se aplica.
 function setTL(p){
@@ -731,11 +868,11 @@ function setTL(p){
   Object.assign(TL, { pos }, p);
   if(au.duration) TL.pos = Math.max(0, Math.min(TL.pos, au.duration));
   TL.at = Date.now(); TL.own = true;
-  send({ t: 'tl', path: TL.path, playing: TL.playing, pos: TL.pos, at: TL.at, rate: TL.rate });
+  send({ t: 'tl', path: TL.path, playing: TL.playing, pos: TL.pos, at: TL.at, rate: TL.rate, pitch: TL.pitch });
   applyTL();
 }
 function onTL(m){
-  TL.path = m.path; TL.playing = !!m.playing; TL.pos = +m.pos || 0; TL.rate = +m.rate || 1; TL.at = +m.at || Date.now(); TL.own = false;
+  TL.path = m.path; TL.playing = !!m.playing; TL.pos = +m.pos || 0; TL.rate = +m.rate || 1; TL.pitch = Math.max(-6, Math.min(6, Math.round(+m.pitch || 0))); TL.at = +m.at || Date.now(); TL.own = false;
   applyTL();
 }
 function onMsg(m){
@@ -747,12 +884,26 @@ function onMsg(m){
     ROOM.samples.push({ rtt, off: m.t1 - (m.t0 + rtt / 2) }); if(ROOM.samples.length > 8) ROOM.samples.shift();
     ROOM.offset = ROOM.samples.reduce((b, s) => s.rtt < b.rtt ? s : b).off;   // la muestra más rápida es la más fiable
   }
-  else if(m.t === 'hello'){ send({ t: 'state', ref: ROOM.ref, delay: ROOM.delay, path: TL.path, playing: TL.playing, pos: TL.pos, at: atLocal(), rate: TL.rate }); pingNow(); }
-  else if(m.t === 'state'){ ROOM.ref = m.ref === 'profesor' ? 'profesor' : 'alumno'; ROOM.delay = +m.delay || 0; drawRef(); refreshList().then(() => { if(m.path) onTL(m); }); }
+  else if(m.t === 'hello'){ send({ t: 'state', ref: ROOM.ref, delay: ROOM.delay, path: TL.path, playing: TL.playing, pos: TL.pos, at: atLocal(), rate: TL.rate, pitch: TL.pitch, met: { run: met.running, bpm: met.bpm, meter: met.meter, sub: met.sub, at: met.own ? met.at : met.at - ROOM.offset, k0: met.k0 } }); pingNow(); }
+  else if(m.t === 'state'){ ROOM.ref = m.ref === 'profesor' ? 'profesor' : 'alumno'; ROOM.delay = +m.delay || 0; drawRef(); metLocalAnchor(); if(m.met && m.met.run) onMet(m.met); refreshList().then(() => { if(m.path) onTL(m); }); }
   else if(m.t === 'tl') onTL(m);
-  else if(m.t === 'mode'){ ROOM.ref = m.ref === 'profesor' ? 'profesor' : 'alumno'; ROOM.delay = Math.min(600, Math.max(0, +m.delay || 0)); drawRef(); applyTL(); }
+  else if(m.t === 'met') onMet(m);
+  else if(m.t === 'rtc') rtcSignal(m);
+  else if(m.t === 'n') remoteNote(m);
+  else if(m.t === 'mode'){ ROOM.ref = m.ref === 'profesor' ? 'profesor' : 'alumno'; ROOM.delay = Math.min(600, Math.max(0, +m.delay || 0)); drawRef(); metLocalAnchor(); applyTL(); }
   else if(m.t === 'tracks') refreshList();
   drawTransport();
+}
+// Notas del otro: si toca la referencia, llegan por la red antes que su voz; se esperan para sonar junto a ella.
+function remoteNote(m){
+  const midi = +m.m; if(!(midi >= 0 && midi < 128)) return;
+  let wait = 0;
+  if(m.r === ROOM.ref && iListen()) wait = ROOM.delay - (ROOM.samples.length ? Date.now() - (m.at - ROOM.offset) : 0);
+  wait = Math.min(1500, Math.max(0, wait));
+  setTimeout(() => {
+    if(m.on){ noteOn(midi, 'r' + midi); remHeld.add(midi); if(keyEls[midi]) keyEls[midi].classList.add('rem'); }
+    else { noteOff('r' + midi); remHeld.delete(midi); if(keyEls[midi]) keyEls[midi].classList.remove('rem'); }
+  }, wait);
 }
 function pingNow(){ send({ t: 'ping', t0: Date.now() }); }
 // Si la pista se aleja más de 0.3 s de donde debe estar (tirones, red), se corrige.
@@ -765,6 +916,7 @@ async function joinRoom(info, clase){
   ROOM.on = true; ROOM.clase = clase; ROOM.rol = info.rol;
   tracks.forEach(t => t.url && URL.revokeObjectURL(t.url)); tracks.length = 0; curTrack = null; au.pause(); au.removeAttribute('src'); delete au.dataset.path;
   $('syncRow').hidden = false; $('trkUpTxt').textContent = 'Subir a la sala';
+  $('callJoinTxt').textContent = 'Unirme a la llamada'; $('callNote').textContent = ROOM_NOTE; callUi();
   $('trkNote').textContent = 'Máx. ' + MAX_PISTAS + ' pistas por clase, ' + MAX_MB + ' MB cada una. Se borran solas cuando la sala se cierra, o al quitarlas con la ×.';
   drawRef(); drawTracks(); drawTransport();
   await refreshList();
@@ -784,7 +936,7 @@ async function joinRoom(info, clase){
 }
 
 /* ---- controles ---- */
-$('trkFile').onchange = e => { const f = e.target.files; e.target.value = ''; ROOM.on ? uploadFiles(f) : addFiles(f); };
+$('trkFile').onchange = e => { const f = [...e.target.files]; e.target.value = ''; ROOM.on ? uploadFiles(f) : addFiles(f); };
 $('trkPlay').onclick = () => {
   if(curTrack === null) return;
   if(!ROOM.on){ au.paused ? au.play().catch(() => {}) : au.pause(); return; }
@@ -792,23 +944,25 @@ $('trkPlay').onclick = () => {
   setTL({ playing: !TL.playing, pos });
 };
 $('trkRate').onchange = e => { const r = +e.target.value; e.target.blur(); if(ROOM.on && TL.path) setTL({ rate: r }); else au.playbackRate = r; };  // blur: para que las letras del piano sigan funcionando
-$('trkVol').oninput = e => { au.volume = e.target.value / 100; };
+$('trkVol').oninput = e => { au.volume = e.target.value / 100; if(trkBus) trkBus.gain.value = e.target.value / 100; };
+$('trkPitch').onchange = e => { const v = +e.target.value; e.target.blur(); if(ROOM.on && TL.path) setTL({ pitch: v }); else { TL.pitch = v; syncPitch(); } };
 $('trkSeek').oninput = e => { seeking = true; if(au.duration) $('trkCur').textContent = mmss(au.duration * e.target.value / 1000); };
 $('trkSeek').onchange = e => {
   const x = au.duration ? au.duration * e.target.value / 1000 : 0; seeking = false; e.target.blur();
   if(ROOM.on && TL.path) setTL({ pos: x + dSec() }); else if(au.duration) au.currentTime = x;
 };
 document.querySelectorAll('#refSeg button').forEach(b => b.onclick = () => {
-  ROOM.ref = b.dataset.r; send({ t: 'mode', ref: ROOM.ref, delay: ROOM.delay }); drawRef(); applyTL(); b.blur();
+  ROOM.ref = b.dataset.r; send({ t: 'mode', ref: ROOM.ref, delay: ROOM.delay }); drawRef(); metLocalAnchor(); applyTL(); b.blur();
 });
 $('delayRange').oninput = e => { ROOM.delay = +e.target.value; drawRef(); };
-$('delayRange').onchange = e => { send({ t: 'mode', ref: ROOM.ref, delay: ROOM.delay }); applyTL(); e.target.blur(); };
+$('delayRange').onchange = e => { send({ t: 'mode', ref: ROOM.ref, delay: ROOM.delay }); metLocalAnchor(); applyTL(); e.target.blur(); };
 au.addEventListener('timeupdate', () => {
   if(seeking || !au.duration) return;
   $('trkSeek').value = Math.round(au.currentTime / au.duration * 1000); $('trkCur').textContent = mmss(au.currentTime);
 });
 au.addEventListener('loadedmetadata', () => { $('trkDur').textContent = mmss(au.duration); });
-['play','pause','ended'].forEach(t => au.addEventListener(t, drawTransport));
+['play','pause','ended'].forEach(t => au.addEventListener(t, () => { drawTransport(); syncPitch(); }));
+['seeked','ratechange'].forEach(t => au.addEventListener(t, syncPitch));
 au.addEventListener('error', () => { if(curTrack !== null) say('No se pudo leer ese audio'); });
 // arrastrar audios sobre la tarjeta
 const card = $('trkCard');
@@ -816,6 +970,223 @@ const card = $('trkCard');
 ['dragleave','drop'].forEach(t => card.addEventListener(t, e => { e.preventDefault(); card.classList.remove('cb-drop'); }));
 card.addEventListener('drop', e => { if(e.dataTransfer && e.dataTransfer.files.length) ROOM.on ? uploadFiles(e.dataTransfer.files) : addFiles(e.dataTransfer.files); });
 window.addEventListener('pagehide', () => tracks.forEach(t => t.url && URL.revokeObjectURL(t.url)));
+setInterval(() => { if(PS.conn) syncPitch(); }, 1000);   // corrige la deriva de la copia con tono
+
+/* ============================= LLAMADA ============================= */
+// Voz directa entre los dos (WebRTC, Opus a 48 kHz estéreo, 256 kbps, sin cancelación de eco, sin supresión de ruido y sin control de ganancia,
+// para no recortar ninguna frecuencia). Las señales para conectarse viajan por el mismo canal privado de la sala; el audio no pasa por Supabase.
+// Piano, metrónomo y pistas NO viajan por la llamada: cada uno los suena en su computadora, sincronizados con la latencia medida aquí.
+const RTC_CFG = { iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] }], bundlePolicy: 'max-bundle', iceCandidatePoolSize: 2 };
+const IFACE = /scarlett|focusrite|interface|usb audio|behringer|presonus|motu|audient|steinberg|umc|apollo|babyface|rme|tascam|mackie|m-audio|clarett|volt|evo/i;
+const remoteAudio = new Audio(); remoteAudio.autoplay = true;
+const LS = { get: k => { try{ return localStorage.getItem('singsync.' + k); }catch(e){ return null; } }, set: (k, v) => { try{ localStorage.setItem('singsync.' + k, v); }catch(e){} } };
+
+function tuneSdp(sdp){
+  const m = sdp.match(/a=rtpmap:(\d+) opus\/48000\/2/); if(!m) return sdp;
+  const pt = m[1], want = { minptime: '10', useinbandfec: '1', usedtx: '0', stereo: '1', 'sprop-stereo': '1', maxaveragebitrate: '256000', maxplaybackrate: '48000', 'sprop-maxcapturerate': '48000', cbr: '0' };
+  return sdp.replace(new RegExp('a=fmtp:' + pt + ' ([^\\r\\n]*)'), (all, params) => {
+    const o = {}; params.split(';').forEach(kv => { const i = kv.indexOf('='); if(i > 0) o[kv.slice(0, i).trim()] = kv.slice(i + 1).trim(); });
+    Object.assign(o, want);
+    return 'a=fmtp:' + pt + ' ' + Object.keys(o).map(k => k + '=' + o[k]).join(';') + '\r\na=ptime:10';
+  });
+}
+function callSay(t, ok){ const e = $('callStatus'); e.className = 'cb-status' + (ok ? ' ok' : ''); e.textContent = t; }
+function callUi(){
+  const open = !!CALL.raw;
+  $('callJoin').hidden = open;
+  $('callMute').hidden = !open; $('callLeave').hidden = !open;
+  $('callMute').classList.toggle('on', CALL.muted);
+  $('callMute').textContent = CALL.muted ? 'Activar mi micrófono' : 'Silenciar mi micrófono';
+  $('callLeave').textContent = ROOM.on ? 'Salir de la llamada' : 'Cerrar prueba';
+}
+async function fillDevices(){
+  if(!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+  let list = [];
+  try{ list = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput' && d.deviceId !== 'default' && d.deviceId !== 'communications'); }catch(e){ return; }
+  const sel = $('micSel'), cur = sel.value || LS.get('mic') || '';
+  sel.innerHTML = '<option value="">Predeterminado del sistema</option>';
+  list.forEach((d, i) => { const o = document.createElement('option'); o.value = d.deviceId; o.textContent = d.label || ('Entrada ' + (i + 1)); sel.appendChild(o); });
+  sel.value = [...sel.options].some(o => o.value === cur) ? cur : '';
+}
+function micConstraints(){
+  const a = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: { ideal: 2 }, sampleRate: { ideal: 48000 }, sampleSize: { ideal: 16 }, latency: { ideal: 0 } };
+  const id = $('micSel').value; if(id) a.deviceId = { exact: id };
+  return { audio: a, video: false };
+}
+// Abre el micrófono elegido y arma el camino de la señal: según "Entrada", un canal de la interfaz pasa a mono en los dos oídos.
+async function openMic(){
+  const prev = CALL.raw;
+  let raw;
+  try{ raw = await navigator.mediaDevices.getUserMedia(micConstraints()); }
+  catch(e){
+    if(e && e.name === 'OverconstrainedError' && $('micSel').value){ $('micSel').value = ''; LS.set('mic', ''); raw = await navigator.mediaDevices.getUserMedia(micConstraints()); }
+    else throw e;
+  }
+  if(prev) prev.getTracks().forEach(t => t.stop());
+  if(CALL.graph){ try{ CALL.graph.forEach(n => n.disconnect()); }catch(e){} }
+  CALL.raw = raw;
+  await fillDevices();
+  const tr = raw.getAudioTracks()[0], st = tr.getSettings ? tr.getSettings() : {};
+  const chs = st.channelCount || 1;
+  let mode = $('micCh').value;
+  if(mode === 'auto') mode = (chs >= 2 && IFACE.test(tr.label || '')) ? 'l' : 'raw';
+  if(chs < 2 && (mode === 'r' || mode === 'sum')) mode = 'l';
+  const c = getCtx(), src = c.createMediaStreamSource(raw), an = c.createAnalyser(); an.fftSize = 512;
+  let out = raw;
+  if(mode === 'raw'){ src.connect(an); CALL.graph = [src, an]; }
+  else {
+    const merger = c.createChannelMerger(2), dest = c.createMediaStreamDestination(); dest.channelCount = 2; dest.channelCountMode = 'explicit';
+    const nodes = [src, merger, dest, an];
+    if(mode === 'sum'){ const g = c.createGain(); g.channelCount = 1; g.channelCountMode = 'explicit'; src.connect(g); g.connect(merger, 0, 0); g.connect(merger, 0, 1); nodes.push(g); }
+    else { const sp = c.createChannelSplitter(2), k = mode === 'r' ? 1 : 0; src.connect(sp); sp.connect(merger, k, 0); sp.connect(merger, k, 1); nodes.push(sp); }
+    merger.connect(dest); merger.connect(an); out = dest.stream; CALL.graph = nodes;
+  }
+  CALL.stream = out; CALL.an = an; CALL.muted = false;
+  out.getAudioTracks().forEach(t => { t.enabled = true; });
+  if(CALL.sender){ try{ await CALL.sender.replaceTrack(out.getAudioTracks()[0]); }catch(e){ console.error('replaceTrack', e); } }
+  $('callNote').textContent = (tr.label || 'Micrófono') + ' · ' + chs + (chs === 1 ? ' canal' : ' canales') + (st.sampleRate ? ' · ' + Math.round(st.sampleRate / 100) / 10 + ' kHz' : '') + (mode !== 'raw' ? ' · ' + (mode === 'l' ? 'canal 1 en mono' : mode === 'r' ? 'canal 2 en mono' : 'suma en mono') : '');
+  startMeters(); callUi();
+}
+function closeMic(){
+  if(CALL.raw) CALL.raw.getTracks().forEach(t => t.stop());
+  if(CALL.graph){ try{ CALL.graph.forEach(n => n.disconnect()); }catch(e){} }
+  CALL.raw = null; CALL.stream = null; CALL.graph = null; CALL.an = null;
+}
+function peak(an){ if(!an) return 0; const b = new Uint8Array(an.fftSize); an.getByteTimeDomainData(b); let m = 0; for(let i = 0; i < b.length; i++){ const v = Math.abs(b[i] - 128) / 128; if(v > m) m = v; } return m; }
+function startMeters(){
+  clearInterval(CALL.lvlT);
+  CALL.lvlT = setInterval(() => {
+    $('micLvl').style.width = Math.min(100, Math.round(Math.sqrt(peak(CALL.an)) * 100)) + '%';
+    $('rmtLvl').style.width = Math.min(100, Math.round(Math.sqrt(peak(CALL.rmtAn)) * 100)) + '%';
+  }, 80);
+}
+function micErrorText(e){
+  const n = e && e.name;
+  if(n === 'NotAllowedError' || n === 'SecurityError') return 'El navegador no tiene permiso para usar el micrófono. Actívalo con el candado junto a la dirección.';
+  if(n === 'NotFoundError') return 'No se encontró ningún micrófono.';
+  if(n === 'NotReadableError') return 'Otro programa está usando ese micrófono. Ciérralo e intenta de nuevo.';
+  return 'No se pudo abrir el micrófono.';
+}
+
+/* ---- conexión ---- */
+function makePc(){
+  const pc = new RTCPeerConnection(RTC_CFG); CALL.pc = pc; CALL.remoteSet = false; CALL.pending = [];
+  CALL.sender = pc.addTrack(CALL.stream.getAudioTracks()[0], CALL.stream);
+  (async () => {
+    try{ const p = CALL.sender.getParameters(); if(!p.encodings || !p.encodings.length) p.encodings = [{}]; p.encodings[0].maxBitrate = 256000; p.encodings[0].priority = 'high'; p.encodings[0].networkPriority = 'high'; await CALL.sender.setParameters(p); }catch(e){}
+  })();
+  pc.onicecandidate = e => { if(e.candidate) send({ t: 'rtc', k: 'ice', d: e.candidate.toJSON() }); };
+  pc.ontrack = e => {
+    const st = e.streams[0] || new MediaStream([e.track]);
+    remoteAudio.srcObject = st; remoteAudio.play().catch(() => {});
+    try{ const c = getCtx(), n = c.createMediaStreamSource(st); CALL.rmtAn = c.createAnalyser(); CALL.rmtAn.fftSize = 512; n.connect(CALL.rmtAn); }catch(err){}
+    applyJb(e.receiver);
+  };
+  pc.onconnectionstatechange = () => {
+    const s = pc.connectionState;
+    if(s === 'connected'){ CALL.live = true; CALL.tries = 0; callSay('Conectados', true); drawRef(); startStats(); }
+    else if(s === 'connecting') callSay('Conectando…');
+    else if(s === 'disconnected'){ callSay('Conexión inestable…'); setTimeout(() => { if(CALL.pc === pc && pc.connectionState === 'disconnected') callRestart(); }, 4000); }
+    else if(s === 'failed') callRestart();
+  };
+  return pc;
+}
+function applyJb(r){ const v = +$('callJb').value; try{ if('jitterBufferTarget' in r) r.jitterBufferTarget = v; if('playoutDelayHint' in r) r.playoutDelayHint = v / 1000; }catch(e){} }
+function dropPc(){
+  clearInterval(CALL.statT); CALL.live = false; CALL.rmtAn = null;
+  if(CALL.pc){ CALL.pc.onconnectionstatechange = null; CALL.pc.onicecandidate = null; try{ CALL.pc.close(); }catch(e){} }
+  CALL.pc = null; CALL.sender = null; CALL.offered = false; CALL.remoteSet = false; CALL.pending = [];
+  remoteAudio.srcObject = null; drawRef();
+}
+async function callOffer(){
+  if(CALL.offered || !CALL.joined) return; CALL.offered = true;
+  try{
+    const pc = CALL.pc || makePc();
+    const o = await pc.createOffer(); await pc.setLocalDescription({ type: 'offer', sdp: tuneSdp(o.sdp) });
+    send({ t: 'rtc', k: 'offer', d: { type: 'offer', sdp: pc.localDescription.sdp } });
+  }catch(e){ console.error('offer', e); CALL.offered = false; callSay('No se pudo iniciar la conexión'); }
+}
+async function flushIce(){ while(CALL.pending.length && CALL.pc){ try{ await CALL.pc.addIceCandidate(CALL.pending.shift()); }catch(e){} } }
+async function rtcSignal(m){
+  const k = m.k;
+  try{
+    if(k === 'ready'){
+      CALL.peerReady = true;
+      if(!CALL.joined){ callSay('El otro ya está en la llamada'); return; }
+      if(!CALL.replied){ CALL.replied = true; send({ t: 'rtc', k: 'ready' }); }
+      if(ROOM.rol === 'alumno') callOffer();
+    }
+    else if(k === 'offer' && CALL.joined){
+      const pc = CALL.pc || makePc();
+      await pc.setRemoteDescription(m.d); CALL.remoteSet = true; await flushIce();
+      const a = await pc.createAnswer(); await pc.setLocalDescription({ type: 'answer', sdp: tuneSdp(a.sdp) });
+      send({ t: 'rtc', k: 'answer', d: { type: 'answer', sdp: pc.localDescription.sdp } });
+    }
+    else if(k === 'answer' && CALL.pc){ await CALL.pc.setRemoteDescription(m.d); CALL.remoteSet = true; await flushIce(); }
+    else if(k === 'ice' && m.d){ if(CALL.pc && CALL.remoteSet) await CALL.pc.addIceCandidate(m.d).catch(() => {}); else CALL.pending.push(m.d); }
+    else if(k === 'bye'){ CALL.peerReady = false; CALL.replied = false; dropPc(); if(CALL.joined) callSay('El otro salió de la llamada'); }
+    else if(k === 'reset'){ dropPc(); CALL.replied = false; if(CALL.joined){ CALL.replied = true; send({ t: 'rtc', k: 'ready' }); } }
+  }catch(e){ console.error('rtc', k, e); }
+}
+function callRestart(){
+  if(!CALL.joined) return;
+  if(++CALL.tries > 3){ callSay('No se pudo conectar. Salgan y vuelvan a entrar.'); return; }
+  callSay('Reconectando…'); dropPc(); send({ t: 'rtc', k: 'reset' });
+  if(ROOM.rol === 'alumno') setTimeout(callOffer, 400); else { CALL.replied = true; send({ t: 'rtc', k: 'ready' }); }
+}
+
+/* ---- latencia medida: retraso de pista, metrónomo y notas ---- */
+function startStats(){
+  clearInterval(CALL.statT);
+  CALL.statT = setInterval(async () => {
+    if(!CALL.pc) return;
+    let rtt = null, jb = null, lost = 0, rcv = 0;
+    try{
+      (await CALL.pc.getStats()).forEach(r => {
+        if(r.type === 'candidate-pair' && (r.nominated || r.state === 'succeeded') && r.currentRoundTripTime != null) rtt = r.currentRoundTripTime;
+        if(r.type === 'inbound-rtp' && r.kind === 'audio'){ if(r.jitterBufferEmittedCount) jb = r.jitterBufferDelay / r.jitterBufferEmittedCount; lost = r.packetsLost || 0; rcv = r.packetsReceived || 0; }
+      });
+    }catch(e){ return; }
+    if(rtt == null) return;
+    const L = rtt * 500 + (jb || 0) * 1000 + 20;                      // ida (mitad del viaje) + buffer + captura y salida
+    CALL.lat = CALL.lat ? CALL.lat * 0.7 + L * 0.3 : L;
+    const d = Math.min(600, Math.max(0, Math.round(CALL.lat / 5) * 5));
+    if(Math.abs(d - ROOM.delay) >= 15){ ROOM.delay = d; drawRef(); metLocalAnchor(); applyTL(); }
+    callSay('Conectados · voz ≈ ' + Math.round(CALL.lat) + ' ms · ida y vuelta ' + Math.round(rtt * 1000) + ' ms' + (rcv ? ' · pérdida ' + (100 * lost / (lost + rcv)).toFixed(1) + ' %' : ''), true);
+  }, 1000);
+}
+
+/* ---- botones ---- */
+async function callJoin(){
+  if(ROOM.on && !ROOM.ready){ callSay('Esperando a la sala…'); return; }
+  if(!navigator.mediaDevices || !window.RTCPeerConnection){ callSay('Este navegador no permite llamadas'); return; }
+  $('callJoin').disabled = true;
+  try{ await openMic(); }
+  catch(e){ callSay(micErrorText(e)); $('callJoin').disabled = false; return; }
+  $('callJoin').disabled = false;
+  if(!ROOM.on){ callSay('Micrófono listo: habla y mira la barra', true); callUi(); return; }
+  CALL.joined = true; CALL.replied = false; callSay('Esperando al otro…'); callUi();
+  send({ t: 'rtc', k: 'ready' });
+}
+function callLeave(){
+  if(ROOM.on && CALL.joined) send({ t: 'rtc', k: 'bye' });
+  CALL.joined = false; CALL.peerReady = false; CALL.replied = false; dropPc(); closeMic(); clearInterval(CALL.lvlT);
+  $('micLvl').style.width = '0'; $('rmtLvl').style.width = '0'; CALL.muted = false;
+  callSay('Sin conexión'); callUi();
+  if(ROOM.on) $('callNote').textContent = ROOM_NOTE;
+}
+$('callJoin').onclick = callJoin;
+$('callLeave').onclick = callLeave;
+$('callMute').onclick = () => { CALL.muted = !CALL.muted; if(CALL.stream) CALL.stream.getAudioTracks().forEach(t => { t.enabled = !CALL.muted; }); callUi(); };
+$('callVol').oninput = e => { remoteAudio.volume = e.target.value / 100; };
+const reopen = () => { if(CALL.raw) openMic().catch(e => callSay(micErrorText(e))); };
+$('micSel').onchange = e => { LS.set('mic', e.target.value); reopen(); };
+$('micCh').onchange = e => { LS.set('ch', e.target.value); reopen(); };
+$('callJb').onchange = e => { LS.set('jb', e.target.value); if(CALL.pc) CALL.pc.getReceivers().forEach(applyJb); };
+if(LS.get('ch')) $('micCh').value = LS.get('ch');
+if(LS.get('jb')) $('callJb').value = LS.get('jb');
+if(navigator.mediaDevices && navigator.mediaDevices.addEventListener) navigator.mediaDevices.addEventListener('devicechange', () => { fillDevices(); });
+window.addEventListener('pagehide', () => { if(ROOM.on && CALL.joined) send({ t: 'rtc', k: 'bye' }); });
 
 /* ============================= KEYBOARD ============================= */
 const typing = t => t && (t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || (t.tagName === 'INPUT' && t.type !== 'range' && t.type !== 'checkbox'));
@@ -856,7 +1227,7 @@ function linkTo(href, label){ const a = document.createElement('a'); a.href = hr
 const PERSONAL = 'Sigues en tu espacio personal: todo funciona igual.';
 (async function checkRoom(){
   const clase = new URLSearchParams(location.search).get('clase');
-  if(!clase){ setRoom('', 'Espacio personal', 'Práctica individual. Para la sala de tu clase usa el botón de Collaba en Mi Aula.'); return; }
+  if(!clase){ setRoom('', 'Espacio personal', 'Práctica individual. Para la sala de tu clase usa el botón de SingSync en Mi Aula.'); return; }
   if(!/^[0-9a-f-]{36}$/i.test(clase)){ setRoom('bad', 'Este enlace no es válido', PERSONAL, linkTo('/mi-aula', 'Volver a Mi Aula')); return; }
   setRoom('', 'Verificando tu sala…', '');
   try{

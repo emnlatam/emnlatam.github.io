@@ -1,4 +1,4 @@
--- Collaba etapa 2: pistas de audio en la nube + canal de tiempo real de la sala.
+-- SingSync etapa 2 (antes Collaba; los objetos conservan el prefijo collaba_): pistas de audio en la nube + canal de tiempo real de la sala.
 -- Requiere collaba.sql (collaba_acceso).
 --
 -- Reglas:
