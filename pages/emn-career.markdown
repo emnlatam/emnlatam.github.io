@@ -1,4 +1,4 @@
 ---
 layout: emn/career
-permalink: /career
+permalink: /mi-aula
 ---

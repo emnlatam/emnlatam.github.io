@@ -271,6 +271,9 @@
   border-radius: 999px;
 }
 
+.emn-landing .emn-nav__link--aula { background: var(--red); color: #fff; }
+.emn-landing .emn-nav__link--aula:hover { background: var(--red-dark); color: #fff; }
+
 .emn-landing .emn-nav__link--user:hover {
   background: var(--red-dark);
   color: #fff;
@@ -391,7 +394,8 @@
   }
   .emn-landing .emn-header .emn-nav .emn-nav__link--cta:hover { background: var(--red-tint); color: var(--red); }
   .emn-landing .emn-nav__item { flex-wrap: wrap; width: 100%; }
-  .emn-landing .emn-header .emn-nav .emn-nav__caret { color: var(--red); padding: 12px 12px; margin: 0; }
+  /* bigger arrow, always red (also after tapping it: the dark header's open/hover rule used to turn it white) */
+  .emn-landing .emn-header .emn-nav .emn-nav__caret { color: var(--red) !important; font-size: 20px; padding: 10px 14px; margin: 0; }
   .emn-landing .emn-nav__dropdown {
     position: static;
     display: none;
@@ -3555,3 +3559,33 @@
   .emn-tool .meta-stats { gap: 10px; font-size: 12px; }
   .emn-tool .footer--edge { padding: 10px 12px; }
 }
+
+/* Practice Lab: "Escoge tu app" block under the app cards */
+.emn-landing .lab__about { margin: 56px 0 48px; max-width: 760px; }
+.emn-landing .lab__about .lab__title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 26px;
+  margin: 0 0 14px;
+  color: var(--ink);
+}
+.emn-landing .lab__about .lab__text { font-size: 16px; line-height: 1.65; color: var(--gray-700); margin: 0; }
+.emn-landing .lab__about .lab__text strong { color: var(--ink); }
+@media (max-width: 640px) {
+  .emn-landing .lab__about { margin: 40px 0 36px; }
+  .emn-landing .lab__about .lab__title { font-size: 23px; }
+  .emn-landing .lab__about .lab__text { font-size: 15px; }
+}
+
+/* Sight Melody & tools: bigger settings gear (larger still on phones, upright or landscape) */
+.emn-tool .gear-btn { width: 48px; height: 48px; }
+.emn-tool .gear-btn svg { width: 27px; height: 27px; }
+@media (max-width: 900px), (orientation: landscape) and (max-height: 520px) {
+  .emn-tool .gear-btn { width: 52px; height: 52px; border-radius: 12px; }
+  .emn-tool .gear-btn svg { width: 32px; height: 32px; stroke-width: 2.1; }
+}
+
+/* Ask BerkliBot is admin-only for now: others see it grayed out with a "Pronto" tag */
+.emn-landing .emn-nav__link--soon { color: var(--gray-500); cursor: default; display: inline-flex; align-items: center; gap: 6px; }
+.emn-landing .emn-nav__link--soon:hover { background: none; color: var(--gray-500); }
+.emn-landing .emn-nav__link--soon .soon { font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--gray-500); background: var(--gray-100); padding: 2px 7px; border-radius: 20px; }

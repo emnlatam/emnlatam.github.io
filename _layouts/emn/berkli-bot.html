@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% include emn-favicon.html %}
-<title>EMN — Ask Berklee</title>
+<title>EMN — Ask BerkliBot</title>
 <meta name="description" content="Pregunta sobre admisiones de pregrado de Berklee y recibe respuestas con el link oficial de donde salen.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="/assets/css/emn.css?v={{ site.time | date: '%s' }}">
@@ -18,8 +18,8 @@
   .ab .eyebrow{ font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--red); margin:0 0 8px; }
   .ab h1{ font-family:'Bricolage Grotesque', var(--font-body); font-weight:800; font-size:clamp(32px,4.8vw,50px); letter-spacing:-.02em; line-height:1.05; margin:0 0 10px; }
   .ab .lede{ margin:0 0 14px; color:var(--gray-700); max-width:62ch; font-size:16.5px; line-height:1.55; }
-  .badge{ display:inline-flex; align-items:center; gap:8px; font-size:12.5px; font-weight:600; color:var(--gray-700); background:var(--paper); border:1px solid var(--gray-300); border-radius:999px; padding:5px 12px; margin:0 0 22px; }
-  .badge i{ width:8px; height:8px; border-radius:50%; background:#2f9e6b; display:inline-block; }
+  .badge{ display:inline-flex; align-items:flex-start; gap:8px; line-height:1.45; max-width:720px; font-size:12.5px; font-weight:600; color:var(--gray-700); background:var(--paper); border:1px solid var(--gray-300); border-radius:14px; padding:8px 14px; margin:0 0 22px; }
+  .badge i{ flex:none; margin-top:5px; width:8px; height:8px; border-radius:50%; background:#2f9e6b; display:inline-block; }
 
   /* signed-out intro */
   .gate{ background:var(--paper); border:1px solid var(--gray-300); border-radius:var(--radius); padding:28px 26px; }
@@ -30,6 +30,7 @@
 
   /* chat */
   .chat{ background:var(--paper); border:1px solid var(--gray-300); border-radius:var(--radius); display:flex; flex-direction:column; min-height:440px; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  #log > *{ flex-shrink:0; }
   #log{ flex:1; padding:20px; display:flex; flex-direction:column; gap:16px; max-height:62vh; overflow-y:auto; }
   .me{ align-self:flex-end; max-width:82%; background:var(--red); color:#fff; padding:10px 15px; border-radius:16px 16px 4px 16px; font-size:15px; line-height:1.5; word-wrap:break-word; }
   .hello{ align-self:flex-start; max-width:88%; background:var(--gray-100); padding:11px 15px; border-radius:16px 16px 16px 4px; font-size:15px; line-height:1.55; }
@@ -85,9 +86,14 @@
 
 <main class="ab">
   <p class="eyebrow">EMN · Admisiones Berklee</p>
-  <h1>Ask Berklee</h1>
+  <h1>Ask BerkliBot</h1>
   <p class="lede">Pregunta sobre admisiones de pregrado de Berklee: fechas límite, audición, entrevista, requisitos, becas. Respondo solo con lo que dicen las páginas oficiales y te dejo el link de donde sale cada respuesta.</p>
-  <div class="badge"><i></i><span id="fresh">Información oficial de Berklee · revisada cada mes</span></div>
+  <div class="badge"><i></i><span id="fresh">Información extraída directamente de la página de Berklee. Se recomienda corroborar con los links previstos. No nos hacemos responsables de decisiones tomadas sin corroborar la fuente. · revisada cada mes</span></div>
+
+  <section id="soon" class="gate" hidden>
+    <h2>Próximamente</h2>
+    <p style="margin:0;color:var(--gray-700);line-height:1.6">Ask BerkliBot todavía no está disponible. Muy pronto podrás preguntarle sobre las admisiones de Berklee.</p>
+  </section>
 
   <section id="gate" class="gate" hidden>
     <h2>Resuelve tus dudas de admisión en segundos</h2>
@@ -101,7 +107,7 @@
 
   <section id="app" hidden>
     <div class="chat">
-      <div id="log"><div class="hello">Hola, soy Ask Berklee. Puedes escribirme en español o en inglés. ¿Qué quieres saber?</div></div>
+      <div id="log"><div class="hello">Hola, soy Ask BerkliBot. Puedes escribirme en español o en inglés. ¿Qué quieres saber?</div></div>
       <form id="ask" autocomplete="off">
         <input id="q" type="text" maxlength="600" placeholder="Ej: ¿Cuándo vence el plazo de Early Action?" aria-label="Tu pregunta">
         <button id="send" type="submit">Enviar</button>
@@ -113,7 +119,7 @@
       <button type="button">¿Qué documentos necesito para aplicar?</button>
       <button type="button">¿Hay becas para estudiantes internacionales?</button>
     </div>
-    <p class="note">La información viene de college.berklee.edu y se revisa cada mes. Para decisiones importantes confirma siempre en el link de la fuente o con admissions@berklee.edu. Ask Berklee es una herramienta de EMN y no está afiliada a Berklee.</p>
+    <p class="note">La información viene de college.berklee.edu y se revisa cada mes. Para decisiones importantes confirma siempre en el link de la fuente o con admissions@berklee.edu. Ask BerkliBot es una herramienta de EMN y no está afiliada a Berklee.</p>
   </section>
 </main>
 
@@ -168,6 +174,7 @@ async function ask(question){
 }
 
 emnInit().then(async () => {
+  if(emnStudentProfile?.role !== 'admin'){ $('#soon').hidden = false; return; }   // admins only for now
   if(!emnSession){ $('#gate').hidden = false; return; }
   $('#app').hidden = false;
   $('#ask').addEventListener('submit', (e) => {
@@ -179,7 +186,7 @@ emnInit().then(async () => {
   try{
     const { data } = await emnSupabase.from('berkli_pages').select('last_checked').order('last_checked', { ascending: false }).limit(1);
     const d = data && data[0] && new Date(data[0].last_checked);
-    if(d && !isNaN(d)) $('#fresh').textContent = 'Información oficial de Berklee · última revisión: ' + d.getDate() + ' de ' + MONTHS[d.getMonth()] + ' de ' + d.getFullYear();
+    if(d && !isNaN(d)) $('#fresh').textContent = 'Información extraída directamente de la página de Berklee. Se recomienda corroborar con los links previstos. No nos hacemos responsables de decisiones tomadas sin corroborar la fuente. · Última revisión: ' + d.getDate() + ' de ' + MONTHS[d.getMonth()] + ' de ' + d.getFullYear();
   }catch(e){}
 });
 </script>

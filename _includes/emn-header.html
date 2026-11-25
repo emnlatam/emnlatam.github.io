@@ -34,7 +34,21 @@
   if(nm) nm.addEventListener('click', function(e){ e.stopPropagation(); set(!h.classList.contains('is-menu-open')); });
   document.addEventListener('click', function(e){ if(!h.contains(e.target)) set(false); });
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape') set(false); });
-  h.querySelector('.emn-nav').addEventListener('click', function(e){
+  var nav = h.querySelector('.emn-nav'), phone = window.matchMedia('(max-width: 640px)');
+  // Phone panel: the arrow (or a '#' label like Mi Aula) opens / closes its submenu. Handled here, once, in the
+  // capture phase, because not every page ships the desktop caret script (so /practice-lab never opened it).
+  nav.addEventListener('click', function(e){
+    if(!phone.matches) return;
+    var caret = e.target.closest('.emn-nav__caret'), lab = e.target.closest('a.emn-nav__link[href="#"]');
+    var item = (caret || lab) && (caret || lab).closest('.emn-nav__item');
+    if(!item || !item.querySelector('.emn-nav__dropdown')) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    var open = !item.classList.contains('is-open');
+    nav.querySelectorAll('.emn-nav__item').forEach(function(i){ i.classList.remove('is-open'); var c = i.querySelector('.emn-nav__caret'); if(c) c.setAttribute('aria-expanded', 'false'); });
+    item.classList.toggle('is-open', open);
+    var cc = item.querySelector('.emn-nav__caret'); if(cc) cc.setAttribute('aria-expanded', String(open));
+  }, true);
+  nav.addEventListener('click', function(e){
     var a = e.target.closest('a[href]'); if(a && a.getAttribute('href') !== '#') set(false);
   });
 })();

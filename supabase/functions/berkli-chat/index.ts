@@ -5,7 +5,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const EMN_SUPABASE_URL = 'https://gpoddvcrsdkpgfmyniqu.supabase.co';
-const MODEL = 'gemini-2.5-flash';
+const MODELS = ['gemini-3.5-flash', 'gemini-3.7-flash', 'gemini-3.1-flash-lite', 'gemini-flash-latest'];
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,14 +22,23 @@ function json(body: unknown, status = 200) {
 async function gemini(prompt: string): Promise<string> {
   const apiKey = Deno.env.get('GEMINI_API_KEY');
   if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-    },
-  );
+  let res!: Response;
+  for (const model of MODELS) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        },
+      );
+      if (res.ok) break;
+      if (![429, 500, 503].includes(res.status)) break;
+      await new Promise((r) => setTimeout(r, 800));
+    }
+    if (res.ok) break;
+  }
   if (!res.ok) throw new Error(`Gemini API error: ${await res.text()}`);
   const data = await res.json();
   return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';

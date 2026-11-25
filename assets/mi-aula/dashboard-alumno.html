@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard del alumno · EMN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#fff}
+button{font-family:Inter,system-ui,sans-serif;cursor:pointer}
+button:hover{filter:brightness(0.95)}
+</style>
+</head>
+<body>
+<!--
+  Dashboard del alumno EMN (maqueta de prueba, todos los botones sin función).
+  Un solo archivo: HTML + CSS en línea + un script que repite los bloques (calendario, tareas,
+  barras de Career Progress y gráfico de líneas) a partir de los datos de ejemplo de getData().
+  Para cambiar datos o textos de ejemplo edita getData() al final del archivo.
+  La plantilla HTML está dentro de <script type="text/x-template" id="tpl"> ... </script>.
+-->
+<div id="app"></div>
+
+<script type="text/x-template" id="tpl">
+<div style="min-height: 100%; background: #ffffff; color: #1a1a1d; font-family: Inter, system-ui, sans-serif; font-size: 14px; line-height: 1.4">
+
+<!-- NAVBAR -->
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px; padding-right: 48px; min-height: 76px">
+<div style="width: 72px; height: 76px; background: #E4122B; display: flex; align-items: center; justify-content: center">
+<svg width="30" height="42" viewBox="0 0 30 42" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Logo EMN"><path d="M20 4c-6 2-8 7-4 11s8 6 4 12-8 8-12 11"/><circle cx="21" cy="5" r="2" fill="#fff"/></svg>
+</div>
+<nav style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 28px; font-weight: 600; font-size: 15px; color: #3a3d45">
+<button type="button" style="background: none; border: 0; padding: 10px 4px; font-weight: 600; font-size: 15px; color: #3a3d45">Practice Lab</button>
+<button type="button" style="background: none; border: 0; padding: 10px 4px; font-weight: 600; font-size: 15px; color: #3a3d45">Ask BerkliBot</button>
+<button type="button" style="background: none; border: 0; padding: 10px 4px; font-weight: 600; font-size: 15px; color: #3a3d45">+ Cursos</button>
+<button type="button" style="background: none; border: 0; padding: 10px 4px; font-weight: 600; font-size: 15px; color: #3a3d45">Administrar</button>
+<button type="button" style="background: #C8102E; color: #ffffff; border: 0; border-radius: 999px; padding: 10px 18px; min-height: 44px; font-weight: 700; font-size: 15px">Mi Aula</button>
+<button type="button" style="background: #C8102E; color: #ffffff; border: 0; border-radius: 999px; padding: 10px 18px; min-height: 44px; font-weight: 700; font-size: 15px">Dany Zare</button>
+</nav>
+</div>
+
+<div style="max-width: 1760px; margin: 0 auto; padding: 24px 32px 64px; display: flex; flex-direction: column; gap: 24px">
+
+<!-- HEADER -->
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px">
+<div style="display: flex; align-items: center; gap: 16px">
+<div>
+<h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 700; font-size: 34px; line-height: 1.1; color: #17171a">Hola, [Nombre]</h1>
+<p style="margin: 4px 0 0; color: #5b6070; font-size: 14px">Piano | Perú | Film Scoring</p>
+</div>
+<div style="position: relative; width: 60px; height: 60px; flex: none" role="img" aria-label="Progreso hacia tu audición: 62 por ciento">
+<svg width="60" height="60" viewBox="0 0 60 60" aria-hidden="true" style="display: block">
+<circle cx="30" cy="30" r="25" style="fill: none; stroke: #eceef2; stroke-width: 6px"/>
+<circle cx="30" cy="30" r="25" style="fill: none; stroke: #C8102E; stroke-width: 6px; stroke-linecap: round; stroke-dasharray: 97.4 157.1; transform: rotate(-90deg); transform-origin: 30px 30px"/>
+</svg>
+<span style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'Source Serif 4', Georgia, serif; font-weight: 700; font-size: 17px; color: #17171a">62%</span>
+</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<button type="button" style="background: #ffffff; color: #C8102E; border: 1.5px solid #C8102E; border-radius: 999px; padding: 10px 22px; min-height: 48px; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; gap: 8px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Mi Drive</button>
+<button type="button" style="background: #C8102E; color: #ffffff; border: 0; border-radius: 999px; padding: 10px 24px; min-height: 48px; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; gap: 8px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h3l3-8 4 16 3-8h5"/></svg>Entrar a Collaba</button>
+</div>
+</div>
+
+<!-- STATS -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px">
+<div style="border: 1px solid #e3e5ea; border-radius: 14px; padding: 12px 18px">
+<div style="font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #5b6070; font-weight: 600">Próxima clase</div>
+<div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600; margin-top: 2px">Hoy · 4:00 p. m.</div>
+</div>
+<div style="border: 1px solid #e3e5ea; border-radius: 14px; padding: 12px 18px">
+<div style="font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #5b6070; font-weight: 600">Tareas pendientes</div>
+<div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600; margin-top: 2px">5 por entregar</div>
+</div>
+<div style="border: 1px solid #e3e5ea; border-radius: 14px; padding: 12px 18px">
+<div style="font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #5b6070; font-weight: 600">Mock Audition</div>
+<div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600; margin-top: 2px">Dom 29 nov</div>
+</div>
+<div style="border: 1px solid #e3e5ea; border-radius: 14px; padding: 12px 18px">
+<div style="font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #5b6070; font-weight: 600">Racha de práctica</div>
+<div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600; margin-top: 2px">6 días</div>
+</div>
+</div>
+
+<!-- ROW 1: CALENDAR + TASKS / MOCK -->
+<div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: stretch">
+
+<section style="flex: 2.4 1 640px; min-width: 0; border: 1px solid #e3e5ea; border-radius: 18px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px">
+<div style="display: flex; align-items: center; gap: 10px">
+<button type="button" aria-label="Mes anterior" style="width: 40px; height: 40px; border-radius: 50%; border: 1px solid #d5d8df; background: #fff; color: #C8102E; font-size: 17px">‹</button>
+<h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 24px">Noviembre 2026</h2>
+<button type="button" aria-label="Mes siguiente" style="width: 40px; height: 40px; border-radius: 50%; border: 1px solid #d5d8df; background: #fff; color: #C8102E; font-size: 17px">›</button>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px">
+<span style="font-size: 12px; font-weight: 600; color: #5b6070; margin-right: 2px">Mis clases:</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; background: #FBDDE1; color: #6E0A1A; font-weight: 600; font-size: 12.5px; border-radius: 999px; padding: 5px 11px">Piece Prep</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; background: #D5E1F6; color: #14305F; font-weight: 600; font-size: 12.5px; border-radius: 999px; padding: 5px 11px">Sight Read &amp; Audio Training</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; background: #FFE8BF; color: #5C3A00; font-weight: 600; font-size: 12.5px; border-radius: 999px; padding: 5px 11px">Improvisation</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; background: #D3EEDD; color: #0F4A2A; font-weight: 600; font-size: 12.5px; border-radius: 999px; padding: 5px 11px">Interview Prep</span>
+</div>
+<button type="button" style="background: #fff; border: 1px solid #d5d8df; border-radius: 10px; padding: 8px 16px; min-height: 40px; font-size: 14px; font-weight: 500; color: #1a1a1d">Hoy</button>
+</div>
+<div style="overflow-x: auto">
+<div style="min-width: 560px">
+<div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-bottom: 6px; text-align: center; font-size: 11.5px; letter-spacing: 0.06em; color: #5b6070; font-weight: 600">
+<span>DOM</span><span>LUN</span><span>MAR</span><span>MIÉ</span><span>JUE</span><span>VIE</span><span>SÁB</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px">
+<sc-for list="{{cells}}" as="day" hint-placeholder-count="35">
+<div style="{{day.cellStyle}}">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 4px; min-height: 28px">
+<span style="{{day.numStyle}}">{{day.n}}</span>
+<sc-if value="{{day.hasEvent}}" hint-placeholder-val="{{ true }}">
+<button type="button" aria-label="{{day.btnLabel}}" style="{{day.btnStyle}}">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="13" height="12" rx="2"/><path d="M15 10l7-4v12l-7-4z"/></svg>
+</button>
+</sc-if>
+</div>
+<sc-if value="{{day.hasEvent}}" hint-placeholder-val="{{ true }}">
+<div style="{{day.chipStyle}}">{{day.label}}</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</section>
+
+<div style="flex: 1 1 400px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<section style="flex: 1; border: 1px solid #e3e5ea; border-radius: 18px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+<h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 24px; color: #C8102E">Tareas pendientes</h2>
+<span style="background: #FDE8EB; color: #8F0B20; font-weight: 700; font-size: 13px; border-radius: 999px; padding: 3px 11px">5</span>
+</div>
+<sc-for list="{{tasks}}" as="t" hint-placeholder-count="4">
+<div style="display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #eceef2; padding-bottom: 10px">
+<span style="width: 22px; height: 22px; border-radius: 6px; border: 2px solid #b8bcc7; flex: none"></span>
+<div style="flex: 1; min-width: 0"><div style="font-weight: 600; font-size: 14.5px">{{t.title}}</div><div style="font-size: 12.5px; color: #5b6070">{{t.meta}}</div></div>
+</div>
+</sc-for>
+<button type="button" style="align-self: flex-start; background: none; border: 0; color: #C8102E; font-weight: 600; font-size: 14px; padding: 6px 0; min-height: 40px">Ver todas mis tareas →</button>
+</section>
+
+</div>
+</div>
+
+<!-- ROWS 2-3 -->
+<div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: stretch">
+
+<section style="flex: 1 1 600px; min-width: 0; border: 1px solid #e3e5ea; border-radius: 18px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px">
+<div>
+<h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 24px; color: #C8102E">Comienza a practicar</h2>
+</div>
+<div style="border: 1px solid #eceef2; background: #FAFAFB; border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px"><span style="font-weight: 700; font-size: 15px">Meta semanal</span><strong style="font-size: 18px">6 h</strong></div>
+<div style="height: 12px; border-radius: 999px; background: #eceef2; overflow: hidden"><div style="width: 75%; height: 100%; background: #C8102E; border-radius: 999px"></div></div>
+<div style="font-size: 14px; font-weight: 600">Horas trabajadas <strong style="color: #C8102E; font-size: 16px">4.5 h</strong></div>
+</div>
+<div style="flex: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 150px)); justify-content: space-between; align-content: center; gap: 10px">
+<button type="button" style="aspect-ratio: 1 / 1; border: 0; border-radius: 14px; background: #FBDDE1; color: #6E0A1A; padding: 8px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; font-weight: 600; font-size: 13px; line-height: 1.2; text-align: center">
+<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>Piece Prep</button>
+<button type="button" style="aspect-ratio: 1 / 1; border: 0; border-radius: 14px; background: #D5E1F6; color: #14305F; padding: 8px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; font-weight: 600; font-size: 13px; line-height: 1.2; text-align: center">
+<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Sight-read &amp; Ear Training</button>
+<button type="button" style="aspect-ratio: 1 / 1; border: 0; border-radius: 14px; background: #FFE8BF; color: #5C3A00; padding: 8px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; font-weight: 600; font-size: 13px; line-height: 1.2; text-align: center">
+<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h3l3-8 4 16 3-8h5"/></svg>Improvisation</button>
+<button type="button" style="aspect-ratio: 1 / 1; border: 0; border-radius: 14px; background: #D3EEDD; color: #0F4A2A; padding: 8px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; font-weight: 600; font-size: 13px; line-height: 1.2; text-align: center">
+<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v4"/></svg>Interview Prep</button>
+</div>
+</section>
+
+<section style="flex: 1 1 600px; min-width: 0; border: 1px solid #e3e5ea; border-radius: 18px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px 16px">
+<div>
+<h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 24px; color: #C8102E">Tu progreso por área</h2>
+<p style="margin: 2px 0 0; color: #5b6070; font-size: 13px">% de avance por área desde el inicio de tu programa.</p>
+</div>
+<select aria-label="Filtrar por curso" style="font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 600; color: #1a1a1d; background: #ffffff; border: 1.5px solid #C8102E; border-radius: 999px; padding: 9px 14px; min-height: 44px">
+<option selected>Todas las áreas</option>
+<option>Piece Prep</option>
+<option>Sight Read</option>
+<option>Ear Training</option>
+<option>Improvisation</option>
+<option>Interview Prep</option>
+</select>
+</div>
+<div style="display: flex; gap: 8px">
+<div style="width: 36px; flex: none; position: relative; height: 220px; font-size: 11px; color: #5b6070; text-align: right">
+<span style="position: absolute; right: 0; top: 4%; transform: translateY(-50%)">100%</span>
+<span style="position: absolute; right: 0; top: 50%; transform: translateY(-50%)">50%</span>
+<span style="position: absolute; right: 0; top: 96%; transform: translateY(-50%)">0%</span>
+</div>
+<div style="flex: 1; min-width: 0">
+<div style="position: relative; height: 220px">
+<svg viewBox="0 0 100 100" preserveAspectRatio="none" width="100%" height="100%" style="position: absolute; inset: 0; overflow: visible" aria-hidden="true">
+<line x1="0" x2="100" y1="4" y2="4" style="stroke: #e3e5ea; stroke-width: 1px; vector-effect: non-scaling-stroke"/>
+<line x1="0" x2="100" y1="27" y2="27" style="stroke: #f0f1f4; stroke-width: 1px; vector-effect: non-scaling-stroke"/>
+<line x1="0" x2="100" y1="50" y2="50" style="stroke: #e3e5ea; stroke-width: 1px; vector-effect: non-scaling-stroke"/>
+<line x1="0" x2="100" y1="73" y2="73" style="stroke: #f0f1f4; stroke-width: 1px; vector-effect: non-scaling-stroke"/>
+<line x1="0" x2="100" y1="96" y2="96" style="stroke: #c9ccd4; stroke-width: 1px; vector-effect: non-scaling-stroke"/>
+<sc-for list="{{lines}}" as="l" hint-placeholder-count="5">
+<polyline points="{{l.points}}" style="{{l.lineStyle}}"/>
+</sc-for>
+</svg>
+<sc-for list="{{lines}}" as="l" hint-placeholder-count="5">
+<span style="{{l.dotStyle}}"></span>
+</sc-for>
+</div>
+<div style="position: relative; height: 20px; margin-top: 4px; font-size: 11px; color: #5b6070">
+<span style="position: absolute; left: 2%; transform: translateX(-50%)">Inicio</span>
+<span style="position: absolute; left: 18%; transform: translateX(-50%)">19 oct</span>
+<span style="position: absolute; left: 34%; transform: translateX(-50%)">26 oct</span>
+<span style="position: absolute; left: 50%; transform: translateX(-50%)">2 nov</span>
+<span style="position: absolute; left: 66%; transform: translateX(-50%)">9 nov</span>
+<span style="position: absolute; left: 82%; transform: translateX(-50%)">16 nov</span>
+<span style="position: absolute; left: 98%; transform: translateX(-50%)">23 nov</span>
+</div>
+</div>
+</div>
+</section>
+
+<section style="flex: 1 1 600px; min-width: 0; border: 1px solid #e3e5ea; border-radius: 18px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px">
+<div>
+<h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 24px; color: #C8102E">Career Progress</h2>
+<p style="margin: 2px 0 0; color: #5b6070; font-size: 13px">Tu seguimiento de canciones, contenido, prensa y más.</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 16px">
+<sc-for list="{{progress}}" as="c" hint-placeholder-count="4">
+<div>
+<div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; margin-bottom: 6px"><span>{{c.label}}</span><span style="color: #4a4f5c; font-weight: 500">{{c.count}}</span></div>
+<div style="height: 10px; border-radius: 999px; background: #eceef2; overflow: hidden"><div style="{{c.barStyle}}"></div></div>
+</div>
+</sc-for>
+</div>
+<button type="button" style="align-self: flex-start; background: #ffffff; color: #C8102E; border: 1.5px solid #C8102E; border-radius: 999px; padding: 10px 20px; min-height: 44px; font-weight: 600; font-size: 14px">Ver mi Career Progress</button>
+</section>
+
+<section style="flex: 1 1 600px; min-width: 0; border: 1px solid #e3e5ea; border-radius: 18px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px">
+<div>
+<h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 24px; color: #C8102E">Ruta hacia tu audición</h2>
+<p style="margin: 2px 0 0; color: #5b6070; font-size: 13px">Avance de tu preparación para Berklee.</p>
+</div>
+<div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 40px; font-weight: 700; line-height: 1">62%</div>
+<div style="height: 8px; border-radius: 999px; background: #eceef2; overflow: hidden"><div style="width: 62%; height: 100%; background: #C8102E"></div></div>
+<ul style="margin: 0; padding-left: 18px; font-size: 13.5px; color: #3a3d45; display: flex; flex-direction: column; gap: 4px">
+<li>Repertorio: 3 de 5 piezas listas</li>
+<li>Lectura a primera vista: en progreso</li>
+<li>Entrevista: pendiente</li>
+</ul>
+</section>
+</div>
+
+</div>
+</div>
+</script>
+
+<script>
+// ===== DATOS DE EJEMPLO (reemplazar por datos reales más adelante) =====
+function getData() {
+
+  const K = {
+    piece: { label: 'Piece Prep', bg: '#FBDDE1', fg: '#6E0A1A' },
+    sight: { label: 'Sight Read & Audio Training', bg: '#D5E1F6', fg: '#14305F' },
+    impro: { label: 'Improvisation', bg: '#FFE8BF', fg: '#5C3A00' },
+    interview: { label: 'Interview Prep', bg: '#D3EEDD', fg: '#0F4A2A' },
+    mock: { label: 'Mock Audition', bg: '#1a1a1d', fg: '#ffffff' }
+  };
+  const cells = [];
+  for (let i = 0; i < 35; i++) {
+    const inMonth = i < 30;
+    const n = inMonth ? i + 1 : i - 29;
+    const dow = i % 7;
+    let kind = null;
+    if (inMonth) {
+      if (dow === 1) kind = 'piece';
+      else if (dow === 2) kind = 'sight';
+      else if (dow === 3) kind = 'impro';
+      else if (dow === 4) kind = 'interview';
+      if (n === 29) kind = 'mock';
+    }
+    const today = inMonth && n === 25;
+    const past = inMonth && n < 25;
+    const cellStyle = 'min-height: 64px; box-sizing: border-box; border-radius: 10px; padding: 5px 6px; overflow: hidden; display: flex; flex-direction: column; gap: 3px;' +
+      (today ? 'background:#FDE8EB;border:1.5px solid #C8102E;' : 'background:#F4F5F7;border:1.5px solid transparent;') +
+      (inMonth ? '' : 'opacity:0.4;');
+    const numStyle = 'font-family:"Source Serif 4",Georgia,serif;font-size:14px;font-weight:' + (today ? '700' : '500') + ';color:' + (today ? '#A50D26' : '#2b2e36') + ';';
+    const k = kind ? K[kind] : null;
+    const btnBase = 'width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;padding:0;flex:none;';
+    const btnStyle = btnBase + (today ? 'background:#C8102E;color:#fff;border:0;' : 'background:#fff;color:#C8102E;border:1.5px solid #C8102E;') + (past ? 'opacity:0.5;' : '');
+    const chipStyle = k ? 'font-size:11.5px;font-weight:600;border-radius:5px;padding:2px 6px;line-height:1.25;background:' + k.bg + ';color:' + k.fg + ';' + (past ? 'opacity:0.6;' : '') : '';
+    cells.push({
+      n, cellStyle, numStyle,
+      hasEvent: !!k,
+      label: k ? k.label : '',
+      btnLabel: k ? 'Unirse a la videollamada de ' + k.label + ', ' + n + ' de noviembre' : '',
+      btnStyle, chipStyle
+    });
+  }
+  const bar = (pct) => 'height:100%;background:#C8102E;border-radius:999px;width:' + pct + '%;';
+  const progress = [
+    { label: 'Canciones', count: '4 / 10', barStyle: bar(40) },
+    { label: 'Contenido', count: '7 / 12', barStyle: bar(58) },
+    { label: 'Prensa', count: '2 / 5', barStyle: bar(40) },
+    { label: 'Presencia en redes', count: '3 / 4', barStyle: bar(75) }
+  ];
+  const X = (i) => 2 + i * 16;
+  const Y = (v) => 96 - v * 0.92;
+  const defs = [
+    ['Piece Prep', '#C8102E', false, [0, 40, 46, 52, 58, 63, 68]],
+    ['Sight Read', '#2B5BB5', false, [0, 28, 33, 38, 43, 48, 52]],
+    ['Ear Training', '#2B5BB5', true, [0, 20, 26, 31, 36, 41, 45]],
+    ['Improvisation', '#B26B00', false, [0, 12, 17, 22, 28, 33, 38]],
+    ['Interview Prep', '#1E7A4A', false, [0, 8, 12, 17, 21, 26, 30]]
+  ];
+  const lines = defs.map(([label, color, dash, vals]) => {
+    const last = vals[vals.length - 1];
+    return {
+      label, pct: last + '%',
+      points: vals.map((v, i) => X(i) + ',' + Y(v)).join(' '),
+      lineStyle: 'fill:none;stroke:' + color + ';stroke-width:2.5px;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;' + (dash ? 'stroke-dasharray:6 4;' : ''),
+      dotStyle: 'position:absolute;width:12px;height:12px;border-radius:50%;box-sizing:border-box;transform:translate(-50%,-50%);background:#fff;border:3px solid ' + color + ';left:' + X(6) + '%;top:' + Y(last) + '%;',
+      labelStyle: 'position:absolute;left:10px;top:' + Y(last) + '%;transform:translateY(-50%);display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;white-space:nowrap;line-height:1.1;',
+      swatchStyle: 'display:inline-block;width:16px;height:0;flex:none;border-top:3px ' + (dash ? 'dashed' : 'solid') + ' ' + color + ';'
+    };
+  });
+  const tasks = [
+    { title: 'Berklee Mock Audition: reservar y asistir', meta: 'Mock Audition · Dom 29 nov, 11:00 a. m. (Lima)' },
+    { title: 'Grabar demo del repertorio 2', meta: 'Piece Prep · Vence vie 27 nov' },
+    { title: 'Ejercicios de lectura a primera vista', meta: 'Sight Read & Audio Training · Vence jue 26 nov' },
+    { title: 'Completar formulario de aplicación', meta: 'Interview Prep · Vence lun 30 nov' },
+    { title: 'Subir solo de improvisación a Collaba', meta: 'Improvisation · Vence mié 2 dic' }
+  ];
+  return { cells, progress, lines, tasks };
+}
+
+// ===== Renderizador mínimo de la plantilla: sc-for / sc-if / {{ruta.a.b}} =====
+function lookup(ctx, path) {
+  return path.trim().split('.').reduce((o, k) => (o == null ? undefined : o[k]), ctx);
+}
+function renderIfs(str, ctx) {
+  return str.replace(/<sc-if value="\{\{\s*([\w.]+)\s*\}\}"[^>]*>([\s\S]*?)<\/sc-if>/g, (_, path, inner) => (lookup(ctx, path) ? inner : ''));
+}
+function renderHoles(str, ctx) {
+  return str.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, path) => {
+    const v = lookup(ctx, path);
+    return v == null ? '' : String(v);
+  });
+}
+function render(tpl, data) {
+  let out = tpl.replace(/<sc-for list="\{\{\s*(\w+)\s*\}\}" as="(\w+)"[^>]*>([\s\S]*?)<\/sc-for>/g, (_, list, as, inner) =>
+    (data[list] || []).map((item, i) => {
+      const ctx = Object.assign({}, data, { [as]: item, $index: i });
+      return renderHoles(renderIfs(inner, ctx), ctx);
+    }).join('')
+  );
+  return renderHoles(renderIfs(out, data), data);
+}
+document.getElementById('app').innerHTML = render(document.getElementById('tpl').textContent, getData());
+</script>
+</body>
+</html>

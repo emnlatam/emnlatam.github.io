@@ -364,38 +364,47 @@ function emnSplitInterviewLink(st){
   `;
 }
 
-// "Ask Berklee" tab: visible to everyone, sits right after Mi Aula (this runs right after emnInjectCareerMenu).
+// "Ask BerkliBot" tab: visible to everyone, sits right after Mi Aula (this runs right after emnInjectCareerMenu).
 // The page itself shows a sign-in prompt to visitors; the chat is for signed-in students.
-function emnInjectAskBerklee(){
+function emnInjectAskBerklee(st){
   const nav = document.querySelector('.emn-nav');
   if(!nav) return;
   const path = location.pathname.replace(/\/$/, '');
+  // Admins only for now: everyone else sees it as "Pronto" (not clickable).
+  if(st.role !== 'admin'){
+    const s = document.createElement('span');
+    s.setAttribute('data-emn-inj', '');
+    s.className = 'emn-nav__link emn-nav__link--soon';
+    s.innerHTML = 'Ask Berkli Bot <span class="soon">Pronto</span>';
+    nav.appendChild(s);
+    return;
+  }
   const a = document.createElement('a');
   a.setAttribute('data-emn-inj', '');
   a.className = 'emn-nav__link' + (path === '/ask-berklee' || path === '/berkli-bot' ? ' is-active' : '');
   a.href = '/ask-berklee';
-  a.textContent = 'Ask Berklee';
+  a.textContent = 'Ask Berkli Bot';
   nav.appendChild(a);
 }
 
-// "Mi Aula" tab: a plain link to /career (the hub with the Career Progress and
+// "Mi Aula" tab: a plain link to /mi-aula (the hub with the Career Progress and
 // Mock Audition buttons) — any signed-in person, never a signed-out visitor.
-// `front` puts it first (the Mi Aula header); otherwise it goes after Ask Berklee.
-const EMN_AULA_PATHS = ['/career', '/career-progress', '/mock-audition'];
-function emnInjectCareerMenu(st, front){
+// A red button that never moves: always the last tab before the user button, in both headers.
+const EMN_AULA_PATHS = ['/mi-aula', '/career', '/career-progress', '/mock-audition'];
+function emnInjectCareerMenu(st){
   if(!st.in) return;
   const nav = document.querySelector('.emn-nav');
   if(!nav) return;
   const path = location.pathname.replace(/\/$/, '');
   const a = document.createElement('a');
   a.setAttribute('data-emn-inj', '');
-  a.className = 'emn-nav__link' + (EMN_AULA_PATHS.includes(path) ? ' is-active' : '');
-  a.href = '/career';
+  a.className = 'emn-nav__link emn-nav__link--cta emn-nav__link--aula';   // red button, always just left of the user button
+  a.href = '/mi-aula';
   a.textContent = 'Mi Aula';
-  if(front) nav.insertBefore(a, nav.firstChild); else nav.appendChild(a);
+  nav.appendChild(a);
 }
 
-// "+ Cursos" tab: only in the Mi Aula header, right after Ask Berklee.
+// "+ Cursos" tab: only in the Mi Aula header, right after Ask BerkliBot.
 function emnInjectCursosTab(){
   const nav = document.querySelector('.emn-nav');
   if(!nav) return;
@@ -408,7 +417,7 @@ function emnInjectCursosTab(){
   nav.appendChild(a);
 }
 
-// The Mi Aula header (Mi Aula / Practice Lab / Ask Berklee / + Cursos / Administrar) replaces the
+// The Mi Aula header (Practice Lab / Ask BerkliBot / + Cursos / Administrar, then the red Mi Aula button) replaces the
 // public one once someone opens Mi Aula, and stays while they move between those tabs (a
 // sessionStorage flag). Clicking the EMN logo goes back to the public header.
 const EMN_AULA_KEY = 'emn.aula';
@@ -467,17 +476,16 @@ function emnRenderNav(st){
   // Static tabs that depend on the mode / session.
   nav.querySelectorAll('a[href="/mentores"], a[href="/nosotros"]').forEach((a) => { a.style.display = aula ? 'none' : ''; });
   nav.querySelectorAll('.emn-nav__dropdown a[href="/feedback"]').forEach((a) => { a.style.display = st.in ? 'none' : ''; });
-  const cursos = nav.querySelector('.emn-nav__link--cta');
+  const cursos = nav.querySelector('.emn-nav__link--cta:not([data-emn-inj])');
   if(cursos) cursos.hidden = true;   // replaced by Mi Aula (+ Cursos lives inside the Mi Aula header)
   if(aula){
-    emnInjectCareerMenu(st, true);
-    emnInjectAskBerklee();
+    emnInjectAskBerklee(st);
     emnInjectCursosTab();
     emnInjectAdminMenu(st);
   } else {
-    emnInjectAskBerklee();
-    emnInjectCareerMenu(st, false);
+    emnInjectAskBerklee(st);
   }
+  emnInjectCareerMenu(st);
   document.querySelectorAll('.emn-logo').forEach((l) => {
     if(l.dataset.emnAula) return;
     l.dataset.emnAula = '1';
