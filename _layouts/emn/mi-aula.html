@@ -231,6 +231,7 @@
 </div>
 <div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 40px; font-weight: 700; line-height: 1">{{rutaPct}}%</div>
 <div style="height: 8px; border-radius: 999px; background: #eceef2; overflow: hidden"><div style="width: {{rutaPct}}%; height: 100%; background: #C8102E"></div></div>
+<div style="color: #5b6070; font-size: 13px">{{rutaNote}}</div>
 </section>
 </div>
 
@@ -424,13 +425,24 @@ function getData(){
   let wk = 0; Object.keys(secs).forEach(f => { if(f >= monStr && f <= todayStr) wk += secs[f]; });
   const horas = Math.round(wk / 360) / 10;
 
-  const progress = [];
+  const progress = [], cpPcts = [];
   CP.forEach(([id, name, key, last]) => {
     const rows = (S.career && S.career[id]) || [];
     if(!rows.length) return;
     const done = rows.filter(r => r[key] === last).length, pct = Math.round(done / rows.length * 100);
     progress.push({ label: name, count: done + ' / ' + rows.length, barStyle: 'height:100%;background:#C8102E;border-radius:999px;width:' + pct + '%;' });
+    cpPcts.push(pct);
   });
+
+  // Ruta hacia tu audición = 25 pts Career Progress + 75 pts Mock Audition.
+  // Career: promedio del % de las categorías con elementos. Mock: por cada parte cuenta solo la MEJOR nota
+  // (una nota más baja no resta; una más alta suma la diferencia). Las partes sin nota aportan 0. Todas son sobre 100.
+  const cpAvg = cpPcts.length ? cpPcts.reduce((a, b) => a + b, 0) / cpPcts.length : 0;
+  const best = AREAS.map(a => Math.max(0, ...(S.resumen?.puntajes || []).map(r => Number(r?.[a.k]) || 0)));
+  const mockAvg = best.reduce((a, b) => a + b, 0) / AREAS.length;
+  const cpPts = cpAvg * 0.25, mockPts = mockAvg * 0.75;
+  const rutaPct = Math.min(100, Math.round(cpPts + mockPts));
+  const rutaNote = (al || S.career) ? 'Career Progress ' + Math.round(cpPts) + ' / 25 · Mock Audition ' + Math.round(mockPts) + ' / 75' : '';
 
   // Tareas pendientes: las que el profesor deja en /calendario (alumnos.datos._tareas) y aún no están hechas.
   const linkify = txt => esc(txt).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:#C8102E;text-decoration:underline">Abrir link</a>').replace(/\n/g, '<br>');
@@ -453,7 +465,7 @@ function getData(){
     S.students.filter(x => x.id !== S.me).map(x => '<option value="' + x.id + '"' + (x.id === S.target ? ' selected' : '') + '>' + esc(x.full_name || x.email) + '</option>').join('') + '</select>' : '');
 
   return {
-    nombre: esc(first), sub: esc(sub), ringDash: 0, rutaPct: 0, picker,
+    nombre: esc(first), sub: esc(sub), ringDash: (rutaPct * 157.1 / 100).toFixed(1), rutaPct, rutaNote, picker,
     proxClase, tareasTxt: pendientes + ' por entregar', mockTxt, rachaTxt: racha + (racha === 1 ? ' día' : ' días'),
     monthTitle: MESES[S.vm] + ' ' + S.vy, legend, cells,
     tasks, tasksCount: pendientes, tasksEmpty: tasks.length ? '' : (vistaAlumno ? 'No tienes tareas pendientes.' : 'Este alumno no tiene tareas.'),
