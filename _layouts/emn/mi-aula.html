@@ -167,21 +167,19 @@
 <div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px 16px">
 <div>
 <h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 24px; color: #C8102E">Tu progreso por área</h2>
-<p style="margin: 2px 0 0; color: #5b6070; font-size: 13px">% de avance por área desde el inicio de tu programa.</p>
+<p style="margin: 2px 0 0; color: #5b6070; font-size: 13px">Puntaje (sobre 100) de cada Mock Audition por parte, mes a mes.</p>
 </div>
-<select aria-label="Filtrar por curso" style="font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 600; color: #1a1a1d; background: #ffffff; border: 1.5px solid #C8102E; border-radius: 999px; padding: 9px 14px; min-height: 44px">
-<option selected>Todas las áreas</option>
-<option>Piece Prep &amp; Improvisation</option>
-<option>Sight Read</option>
-<option>Ear Training</option>
-<option>Interview Prep</option>
+<select data-act="area" aria-label="Filtrar por parte de la audición" style="font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 600; color: #1a1a1d; background: #ffffff; border: 1.5px solid #C8102E; border-radius: 999px; padding: 9px 14px; min-height: 44px">
+{{areaOptions}}
 </select>
 </div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; font-weight: 600; color: #3a3d45">{{chartLegend}}</div>
+<div style="color: #5b6070; font-size: 14px">{{chartEmpty}}</div>
 <div style="display: flex; gap: 8px">
 <div style="width: 36px; flex: none; position: relative; height: 220px; font-size: 11px; color: #5b6070; text-align: right">
-<span style="position: absolute; right: 0; top: 4%; transform: translateY(-50%)">100%</span>
-<span style="position: absolute; right: 0; top: 50%; transform: translateY(-50%)">50%</span>
-<span style="position: absolute; right: 0; top: 96%; transform: translateY(-50%)">0%</span>
+<span style="position: absolute; right: 0; top: 4%; transform: translateY(-50%)">100</span>
+<span style="position: absolute; right: 0; top: 50%; transform: translateY(-50%)">50</span>
+<span style="position: absolute; right: 0; top: 96%; transform: translateY(-50%)">0</span>
 </div>
 <div style="flex: 1; min-width: 0">
 <div style="position: relative; height: 220px">
@@ -195,19 +193,16 @@
 <polyline points="{{l.points}}" style="{{l.lineStyle}}"/>
 </sc-for>
 </svg>
-<sc-for list="{{lines}}" as="l" hint-placeholder-count="5">
-<span style="{{l.dotStyle}}"></span>
+<sc-for list="{{dots}}" as="d" hint-placeholder-count="5">
+<span style="{{d.dotStyle}}" title="{{d.tip}}"><span style="{{d.numStyle}}">{{d.txt}}</span></span>
 </sc-for>
 </div>
 <div style="position: relative; height: 20px; margin-top: 4px; font-size: 11px; color: #5b6070">
-<span style="position: absolute; left: 2%; transform: translateX(-50%)">Inicio</span>
-<span style="position: absolute; left: 18%; transform: translateX(-50%)">19 oct</span>
-<span style="position: absolute; left: 34%; transform: translateX(-50%)">26 oct</span>
-<span style="position: absolute; left: 50%; transform: translateX(-50%)">2 nov</span>
-<span style="position: absolute; left: 66%; transform: translateX(-50%)">9 nov</span>
-<span style="position: absolute; left: 82%; transform: translateX(-50%)">16 nov</span>
-<span style="position: absolute; left: 98%; transform: translateX(-50%)">23 nov</span>
+<sc-for list="{{xlabels}}" as="x" hint-placeholder-count="6">
+<span style="position: absolute; left: {{x.left}}%; transform: translateX(-50%)">{{x.text}}</span>
+</sc-for>
 </div>
+<div style="font-size: 13px; color: #3a3d45; font-weight: 600">{{areaNote}}</div>
 </div>
 </div>
 </section>
@@ -280,7 +275,67 @@ const conv = (fecha, hora) => { const dt = limaInstant(fecha, hora); return { f:
 function lastSunday(y, m){ const d = new Date(y, m+1, 0); d.setDate(d.getDate() - d.getDay()); return d; }
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-const S = { me: null, target: null, isAdmin: false, isProf: false, students: [], resumen: null, practice: [], career: null, vy: 0, vm: 0 };
+const S = { me: null, target: null, isAdmin: false, isProf: false, students: [], resumen: null, practice: [], career: null, vy: 0, vm: 0, area: 'all' };
+
+// Partes de la audición para "Tu progreso por área" (clave = campo de mi_aula_resumen.puntajes).
+const AREAS = [
+  { k: 'piece',     label: 'Piece',         color: '#C8102E' },
+  { k: 'audio',     label: 'Audio',         color: '#2F6FDB' },
+  { k: 'sight',     label: 'Sight Read',    color: '#0F8A4F' },
+  { k: 'improv',    label: 'Improvisation', color: '#E08A00' },
+  { k: 'interview', label: 'Interview',     color: '#7A3FB5' }
+];
+// Puntajes de cada Mock Audition agrupados por mes (si hubo dos en un mes, promedio). Devuelve los datos del gráfico.
+function buildProgreso(now){
+  const rows = (S.resumen?.puntajes || []).filter(r => r && r.fecha);
+  const sel = AREAS.filter(a => S.area === 'all' || a.k === S.area);
+  const optHtml = '<option value="all"' + (S.area === 'all' ? ' selected' : '') + '>Todas las partes</option>' +
+    AREAS.map(a => '<option value="' + a.k + '"' + (S.area === a.k ? ' selected' : '') + '>' + a.label + '</option>').join('');
+  const out = { areaOptions: optHtml, lines: [], dots: [], xlabels: [], chartLegend: '', chartEmpty: '', areaNote: '' };
+  const mk = f => { const [y, m] = f.split('-').map(Number); return y * 12 + (m - 1); };
+  const byMonth = {};   // mes -> clave -> [valores]
+  rows.forEach(r => AREAS.forEach(a => {
+    const v = r[a.k]; if(v == null || isNaN(Number(v))) return;
+    const m = mk(r.fecha); ((byMonth[m] = byMonth[m] || {})[a.k] = byMonth[m][a.k] || []).push(Number(v));
+  }));
+  const months = Object.keys(byMonth).map(Number);
+  if(!months.length){ out.chartEmpty = 'Aún no tienes Mock Auditions evaluados. Cuando tu profesor guarde el primero, verás aquí tu avance mes a mes.'; return out; }
+  const cur = now.getFullYear() * 12 + now.getMonth();
+  let end = Math.max(cur, ...months), start = Math.min(...months, end - 5);
+  start = Math.max(start, end - 11);
+  const n = end - start + 1, xOf = i => n === 1 ? 50 : 3 + 94 * i / (n - 1), yOf = v => 96 - 92 * Math.max(0, Math.min(100, v)) / 100;
+  for(let i = 0; i < n; i++){
+    const m = start + i, mo = m % 12, yr = Math.floor(m / 12);
+    out.xlabels.push({ left: xOf(i).toFixed(2), text: MES_C[mo] + (i === 0 || mo === 0 ? ' ' + String(yr).slice(2) : '') });
+  }
+  const single = sel.length === 1;
+  const fmtN = v => String(Math.round(v * 10) / 10);
+  sel.forEach(a => {
+    const pts = [];
+    for(let i = 0; i < n; i++){
+      const arr = byMonth[start + i]?.[a.k]; if(!arr) continue;
+      const v = arr.reduce((s, x) => s + x, 0) / arr.length, mo = (start + i) % 12;
+      pts.push({ i, v, mo });
+      out.dots.push({
+        dotStyle: 'position: absolute; width: 11px; height: 11px; border-radius: 50%; background:' + a.color + '; border: 2px solid #fff; box-shadow: 0 0 0 1px ' + a.color + '; transform: translate(-50%,-50%); left:' + xOf(i).toFixed(2) + '%; top:' + yOf(v).toFixed(2) + '%;',
+        tip: esc(a.label + ' · ' + MESES[mo] + ': ' + fmtN(v) + '/100'),
+        numStyle: single ? 'position: absolute; bottom: 13px; left: 50%; transform: translateX(-50%); font-size: 11.5px; font-weight: 700; color:' + a.color + '; white-space: nowrap;' : 'display: none;',
+        txt: fmtN(v)
+      });
+    }
+    if(!pts.length) return;
+    if(pts.length > 1) out.lines.push({ points: pts.map(p => xOf(p.i).toFixed(2) + ',' + yOf(p.v).toFixed(2)).join(' '),
+      lineStyle: 'fill: none; stroke:' + a.color + '; stroke-width: 2.5px; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke;' });
+    if(single){
+      const last = pts[pts.length - 1], prev = pts[pts.length - 2];
+      out.areaNote = a.label + ' · último Mock (' + MESES[last.mo] + '): ' + fmtN(last.v) + '/100' +
+        (prev ? ' · ' + (last.v - prev.v >= 0 ? '+' : '') + fmtN(last.v - prev.v) + ' vs. ' + MESES[prev.mo].toLowerCase() : '');
+    }
+  });
+  if(!out.dots.length) out.chartEmpty = 'Todavía no hay puntajes de ' + (sel[0]?.label || 'esta parte') + ' en tus Mock Auditions.';
+  out.chartLegend = single ? '' : sel.map(a => '<span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 50%; background:' + a.color + '"></span>' + a.label + '</span>').join('');
+  return out;
+}
 
 async function loadTarget(){
   const sb = emnSupabase, tid = S.target;
@@ -403,7 +458,7 @@ function getData(){
     monthTitle: MESES[S.vm] + ' ' + S.vy, legend, cells,
     tasks, tasksCount: pendientes, tasksEmpty: tasks.length ? '' : (vistaAlumno ? 'No tienes tareas pendientes.' : 'Este alumno no tiene tareas.'),
     metaTxt: '—', metaPct: 0, horasTxt: horas + ' h',
-    lines: [], progress, cpEmpty: progress.length ? '' : 'Aún no tienes elementos en tu Career Progress.'
+    ...buildProgreso(now), progress, cpEmpty: progress.length ? '' : 'Aún no tienes elementos en tu Career Progress.'
   };
 }
 
@@ -484,6 +539,7 @@ emnInit().then(async () => {
     else if(act === 'today'){ const t = new Date(); S.vy = t.getFullYear(); S.vm = t.getMonth(); paint(); }
   });
   app.addEventListener('change', async (e) => {
+    if(e.target.dataset.act === 'area'){ S.area = e.target.value; paint(); return; }
     if(e.target.dataset.act !== 'student') return;
     S.target = e.target.value; await loadTarget(); paint();
   });

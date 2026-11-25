@@ -78,7 +78,18 @@ begin
                'link', coalesce(nullif((select f.link from public.mock_fechas f where f.fecha = s.fecha), ''),
                                 (select m.link from public.cursos_meet m where m.curso = 'Mock Audition')))
              order by s.fecha)
-      from public.mock_slots s where s.alumno_id = v_al.id and s.fecha >= current_date - 60), '[]'::jsonb)
+      from public.mock_slots s where s.alumno_id = v_al.id and s.fecha >= current_date - 60), '[]'::jsonb),
+    -- Puntajes (sobre 100) de cada Mock Audition por parte, para "Tu progreso por área".
+    -- Piece = puntaje_performance; Audio = Ear Training. Las partes sin puntaje salen null.
+    'puntajes', coalesce((
+      select jsonb_agg(jsonb_build_object('fecha', e.fecha,
+               'piece', nullif(e.puntaje_performance, 0),   -- 0 = evaluación vacía, no cuenta
+               'audio', nullif(btrim(e.datos->>'ear_score'), '')::numeric,
+               'sight', coalesce(e.puntaje_sight, nullif(btrim(e.datos->'sight'->>'score'), '')::numeric),
+               'improv', nullif(btrim(e.datos->>'improv_score'), '')::numeric,
+               'interview', nullif(btrim(e.datos->>'interview_score'), '')::numeric)
+             order by e.fecha)
+      from public.mock_evaluaciones e where e.alumno_id = v_al.id), '[]'::jsonb)
   );
 end;
 $$;
