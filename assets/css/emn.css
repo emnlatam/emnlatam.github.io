@@ -316,19 +316,26 @@
   }
   .emn-landing .emn-m-name {
     display: none;
-    flex: 1;
+    flex: 0 1 auto;
     min-width: 0;
+    max-width: 100%;
+    margin: 0 auto;
+    box-sizing: border-box;
+    padding: 5px 16px;
+    background: #fff;
+    border: 2px solid var(--red);
+    border-radius: 999px;
     text-align: center;
     font-family: var(--font-body);
     font-weight: 600;
     font-size: 15px;
-    color: var(--ink);
+    color: var(--red);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     cursor: pointer;
   }
-  .emn-landing .emn-header--dark .emn-m-name { color: #fff; }
+  .emn-landing .emn-header--dark .emn-m-name { color: var(--red); }
   html.emn-in .emn-m-name { display: block; }
   .emn-landing .emn-burger {
     display: flex;
