@@ -5,7 +5,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const EMN_SUPABASE_URL = 'https://gpoddvcrsdkpgfmyniqu.supabase.co';
-const MODELS = ['gemini-3.5-flash', 'gemini-3.7-flash', 'gemini-3.1-flash-lite', 'gemini-flash-latest'];
+const MODELS = ['gemini-3.1-flash-lite', 'gemini-3.5-flash', 'gemini-3.7-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite'];
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,20 +19,31 @@ function json(body: unknown, status = 200) {
   });
 }
 
+let trace: string[] = [];
+
 async function gemini(prompt: string): Promise<string> {
   const apiKey = Deno.env.get('GEMINI_API_KEY');
   if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
   let res!: Response;
   for (const model of MODELS) {
     for (let attempt = 0; attempt < 2; attempt++) {
-      res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-        },
-      );
+      const t0 = Date.now();
+      try {
+        res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+            signal: AbortSignal.timeout(12000),
+          },
+        );
+      } catch (_e) {
+        trace.push(`${model} timeout ${Date.now() - t0}ms`);
+        res = new Response('timeout', { status: 504 });
+        break;
+      }
+      trace.push(`${model} ${res.status} ${Date.now() - t0}ms`);
       if (res.ok) break;
       if (![429, 500, 503].includes(res.status)) break;
       await new Promise((r) => setTimeout(r, 800));
@@ -54,6 +65,7 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await client.auth.getUser();
     if (authError || !user) return json({ error: 'Not authenticated' }, 401);
 
+    trace = [];
     const body = await req.json();
     const question = String(body.question || '').trim().slice(0, 600);
     if (!question) return json({ error: 'Missing question' }, 400);
@@ -105,8 +117,8 @@ Deno.serve(async (req) => {
     const others = (rel || [])
       .filter((p: { url: string }) => !inSources.has(p.url))
       .map((p: { url: string; title: string }) => ({ url: p.url, title: p.title }));
-    return json({ answer, sources, others });
+    return json({ answer, sources, others, trace });
   } catch (e) {
-    return json({ error: String((e as Error).message || e) }, 500);
+    return json({ error: String((e as Error).message || e).slice(0, 300), trace }, 500);
   }
 });
