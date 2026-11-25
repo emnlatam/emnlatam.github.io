@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es" class="emn-landing">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% include emn-favicon.html %}
+<title>EMN — Ask Berklee</title>
+<meta name="description" content="Pregunta sobre admisiones de pregrado de Berklee y recibe respuestas con el link oficial de donde salen.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="/assets/css/emn.css?v={{ site.time | date: '%s' }}">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/assets/js/emn-auth.js?v={{ site.time | date: '%s' }}"></script>
+<style>
+  body{ background:var(--gray-100); font-family:var(--font-body); color:var(--ink); margin:0; }
+  button{ font-family:inherit; }
+  [hidden]{ display:none !important; }
+  .ab{ max-width:880px; margin:0 auto; padding:34px 20px 80px; }
+  .ab .eyebrow{ font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--red); margin:0 0 8px; }
+  .ab h1{ font-family:'Bricolage Grotesque', var(--font-body); font-weight:800; font-size:clamp(32px,4.8vw,50px); letter-spacing:-.02em; line-height:1.05; margin:0 0 10px; }
+  .ab .lede{ margin:0 0 14px; color:var(--gray-700); max-width:62ch; font-size:16.5px; line-height:1.55; }
+  .badge{ display:inline-flex; align-items:center; gap:8px; font-size:12.5px; font-weight:600; color:var(--gray-700); background:var(--paper); border:1px solid var(--gray-300); border-radius:999px; padding:5px 12px; margin:0 0 22px; }
+  .badge i{ width:8px; height:8px; border-radius:50%; background:#2f9e6b; display:inline-block; }
+
+  /* signed-out intro */
+  .gate{ background:var(--paper); border:1px solid var(--gray-300); border-radius:var(--radius); padding:28px 26px; }
+  .gate h2{ font-family:'Bricolage Grotesque', var(--font-body); font-size:22px; margin:0 0 10px; }
+  .gate ul{ margin:0 0 20px; padding-left:20px; color:var(--gray-700); line-height:1.7; }
+  .gate .cta{ display:inline-block; background:var(--red); color:#fff; font-weight:700; text-decoration:none; border-radius:10px; padding:12px 22px; }
+  .gate .cta:hover{ filter:brightness(.93); }
+
+  /* chat */
+  .chat{ background:var(--paper); border:1px solid var(--gray-300); border-radius:var(--radius); display:flex; flex-direction:column; min-height:440px; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  #log{ flex:1; padding:20px; display:flex; flex-direction:column; gap:16px; max-height:62vh; overflow-y:auto; }
+  .me{ align-self:flex-end; max-width:82%; background:var(--red); color:#fff; padding:10px 15px; border-radius:16px 16px 4px 16px; font-size:15px; line-height:1.5; word-wrap:break-word; }
+  .hello{ align-self:flex-start; max-width:88%; background:var(--gray-100); padding:11px 15px; border-radius:16px 16px 16px 4px; font-size:15px; line-height:1.55; }
+  .card{ align-self:stretch; border:1px solid var(--gray-300); border-radius:14px; background:#fff; overflow:hidden; }
+  .card .ans{ padding:16px 18px; font-size:15.5px; line-height:1.62; word-wrap:break-word; }
+  .card .ans b{ font-weight:700; }
+  .card .sec{ border-top:1px solid var(--gray-300); padding:12px 18px 14px; background:#fbfbfc; }
+  .card .sec h4{ margin:0 0 9px; font-size:11.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--gray-500); font-weight:700; }
+  .srcs{ display:grid; gap:8px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
+  .src{ display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--ink); border:1px solid var(--gray-300); border-radius:10px; padding:9px 12px; background:#fff; transition:border-color .12s, box-shadow .12s; }
+  .src:hover{ border-color:var(--red); box-shadow:0 2px 8px rgba(20,30,50,.08); }
+  .src .n{ flex:none; width:22px; height:22px; border-radius:50%; background:var(--red); color:#fff; font-size:12px; font-weight:700; display:grid; place-items:center; }
+  .src .tt{ min-width:0; flex:1; }
+  .src .tt b{ display:block; font-size:13.5px; line-height:1.25; }
+  .src .tt span{ display:block; font-size:11.5px; color:var(--gray-500); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
+  .src .go{ flex:none; color:var(--gray-500); font-size:14px; }
+  details.more summary{ cursor:pointer; list-style:none; font-size:13px; font-weight:600; color:var(--gray-700); display:flex; align-items:center; gap:8px; }
+  details.more summary::-webkit-details-marker{ display:none; }
+  details.more summary::before{ content:'▸'; transition:transform .15s; font-size:12px; }
+  details.more[open] summary::before{ transform:rotate(90deg); }
+  details.more .list{ margin-top:10px; display:flex; flex-direction:column; gap:2px; max-height:260px; overflow-y:auto; }
+  details.more .list a{ font-size:13.5px; color:var(--red); text-decoration:none; padding:5px 0; font-weight:600; }
+  details.more .list a:hover{ text-decoration:underline; }
+  .trust{ font-size:12px; color:var(--gray-500); padding:0 18px 14px; }
+  .wait{ align-self:flex-start; background:var(--gray-100); border-radius:16px 16px 16px 4px; padding:12px 16px; font-size:14px; color:var(--gray-700); display:flex; align-items:center; gap:10px; }
+  .dots{ display:inline-flex; gap:4px; }
+  .dots i{ width:7px; height:7px; border-radius:50%; background:var(--gray-500); animation:bnc 1.1s infinite ease-in-out; }
+  .dots i:nth-child(2){ animation-delay:.15s; } .dots i:nth-child(3){ animation-delay:.3s; }
+  @keyframes bnc{ 0%,80%,100%{ opacity:.25; transform:translateY(0);} 40%{ opacity:1; transform:translateY(-4px);} }
+  .oops{ align-self:flex-start; background:#fff4f2; border:1px solid #f1c9c3; border-radius:12px; padding:11px 15px; font-size:14px; }
+
+  form#ask{ display:flex; gap:10px; padding:12px; border-top:1px solid var(--gray-300); background:var(--paper); border-radius:0 0 var(--radius) var(--radius); }
+  form#ask input{ flex:1; min-width:0; border:1px solid var(--gray-300); border-radius:10px; padding:12px 14px; font:inherit; font-size:15px; }
+  form#ask input:focus{ outline:2px solid var(--red); outline-offset:-1px; border-color:transparent; }
+  form#ask button{ border:0; background:var(--red); color:#fff; font-weight:700; border-radius:10px; padding:0 24px; cursor:pointer; }
+  form#ask button:disabled{ opacity:.5; cursor:default; }
+  .ideas{ display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 0; }
+  .ideas button{ border:1px solid var(--gray-300); background:var(--paper); border-radius:999px; padding:7px 14px; font-size:13px; font-weight:600; cursor:pointer; }
+  .ideas button:hover{ border-color:var(--red); color:var(--red); }
+  .note{ margin-top:16px; font-size:12.5px; color:var(--gray-500); line-height:1.5; }
+
+  @media (max-width:640px){
+    .ab{ padding:22px 14px 60px; }
+    #log{ max-height:none; min-height:46vh; padding:14px; }
+    .me{ max-width:92%; }
+    .card .ans{ padding:14px; } .card .sec{ padding:11px 14px 13px; } .trust{ padding:0 14px 12px; }
+  }
+</style>
+</head>
+<body>
+
+{% include emn-header.html %}
+
+<main class="ab">
+  <p class="eyebrow">EMN · Admisiones Berklee</p>
+  <h1>Ask Berklee</h1>
+  <p class="lede">Pregunta sobre admisiones de pregrado de Berklee: fechas límite, audición, entrevista, requisitos, becas. Respondo solo con lo que dicen las páginas oficiales y te dejo el link de donde sale cada respuesta.</p>
+  <div class="badge"><i></i><span id="fresh">Información oficial de Berklee · revisada cada mes</span></div>
+
+  <section id="gate" class="gate" hidden>
+    <h2>Resuelve tus dudas de admisión en segundos</h2>
+    <ul>
+      <li>Fechas límite, audición online, entrevista y documentos.</li>
+      <li>Becas y ayuda financiera, incluidos estudiantes internacionales.</li>
+      <li>Cada respuesta trae el link oficial de Berklee para confirmar.</li>
+    </ul>
+    <a class="cta" href="/emn-login">Inicia sesión para preguntar</a>
+  </section>
+
+  <section id="app" hidden>
+    <div class="chat">
+      <div id="log"><div class="hello">Hola, soy Ask Berklee. Puedes escribirme en español o en inglés. ¿Qué quieres saber?</div></div>
+      <form id="ask" autocomplete="off">
+        <input id="q" type="text" maxlength="600" placeholder="Ej: ¿Cuándo vence el plazo de Early Action?" aria-label="Tu pregunta">
+        <button id="send" type="submit">Enviar</button>
+      </form>
+    </div>
+    <div class="ideas" id="ideas">
+      <button type="button">¿Cuáles son las fechas límite de aplicación?</button>
+      <button type="button">¿Cómo es la audición online?</button>
+      <button type="button">¿Qué documentos necesito para aplicar?</button>
+      <button type="button">¿Hay becas para estudiantes internacionales?</button>
+    </div>
+    <p class="note">La información viene de college.berklee.edu y se revisa cada mes. Para decisiones importantes confirma siempre en el link de la fuente o con admissions@berklee.edu. Ask Berklee es una herramienta de EMN y no está afiliada a Berklee.</p>
+  </section>
+</main>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const history = [];
+const MONTHS = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+const fmt = (text) => esc(text).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+const niceTitle = (t, u) => String(t || '').replace(/\s*\|.*$/, '').trim() || u;
+const shortPath = (u) => { try { const x = new URL(u); return x.hostname.replace(/^www\./, '') + x.pathname.replace(/\/$/, ''); } catch (e) { return u; } };
+
+function add(cls, html){
+  const d = document.createElement('div');
+  d.className = cls; d.innerHTML = html;
+  const log = $('#log'); log.appendChild(d); log.scrollTop = log.scrollHeight;
+  return d;
+}
+
+function renderAnswer(data, clean){
+  let h = '<div class="ans">' + fmt(clean) + '</div>';
+  if(data.sources?.length){
+    h += '<div class="sec"><h4>Fuentes</h4><div class="srcs">' + data.sources.map((s, i) =>
+      `<a class="src" href="${esc(s.url)}" target="_blank" rel="noopener"><span class="n">${i + 1}</span><span class="tt"><b>${esc(niceTitle(s.title, s.url))}</b><span>${esc(shortPath(s.url))}</span></span><span class="go">↗</span></a>`
+    ).join('') + '</div></div>';
+  }
+  if(data.others?.length){
+    h += '<div class="sec"><details class="more"><summary>Otras páginas posibles (' + data.others.length + ')</summary><div class="list">' +
+      data.others.map((s) => `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(niceTitle(s.title, s.url))}</a>`).join('') + '</div></details></div>';
+  }
+  h += '<div class="trust">Confirma fechas y requisitos en el link de la fuente antes de decidir.</div>';
+  return h;
+}
+
+async function ask(question){
+  add('me', esc(question));
+  const wait = add('wait', '<span class="dots"><i></i><i></i><i></i></span> Buscando en las páginas de Berklee…');
+  $('#send').disabled = true;
+  try{
+    const { data, error } = await emnSupabase.functions.invoke('berkli-chat', { body: { question, history } });
+    if(error || data?.error) throw new Error(error?.message || data.error);
+    // the model writes a "Fuentes: [1][2]" line; the real links are drawn as cards below instead
+    const clean = data.answer.replace(/\n*\s*(Fuentes|Sources)\s*:.*$/is, '').trim();
+    wait.className = 'card'; wait.innerHTML = renderAnswer(data, clean);
+    history.push({ role: 'user', text: question }, { role: 'bot', text: clean });
+  }catch(e){
+    wait.className = 'oops';
+    wait.textContent = 'No pude responder ahora. Intenta de nuevo en un momento.';
+  }
+  $('#send').disabled = false; $('#log').scrollTop = $('#log').scrollHeight;
+}
+
+emnInit().then(async () => {
+  if(!emnSession){ $('#gate').hidden = false; return; }
+  $('#app').hidden = false;
+  $('#ask').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const q = $('#q').value.trim(); if(!q) return;
+    $('#q').value = ''; ask(q);
+  });
+  document.querySelectorAll('#ideas button').forEach((b) => b.addEventListener('click', () => ask(b.textContent)));
+  try{
+    const { data } = await emnSupabase.from('berkli_pages').select('last_checked').order('last_checked', { ascending: false }).limit(1);
+    const d = data && data[0] && new Date(data[0].last_checked);
+    if(d && !isNaN(d)) $('#fresh').textContent = 'Información oficial de Berklee · última revisión: ' + d.getDate() + ' de ' + MONTHS[d.getMonth()] + ' de ' + d.getFullYear();
+  }catch(e){}
+});
+</script>
+</body>
+</html>

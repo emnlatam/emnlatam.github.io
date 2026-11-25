@@ -1,0 +1,5 @@
+---
+layout: null
+permalink: /berkli-bot
+---
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=/ask-berklee"><link rel="canonical" href="/ask-berklee"><title>Ask Berklee</title></head><body><a href="/ask-berklee">Ask Berklee</a></body></html>

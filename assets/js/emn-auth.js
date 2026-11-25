@@ -364,6 +364,20 @@ function emnSplitInterviewLink(st){
   `;
 }
 
+// "Ask Berklee" tab: visible to everyone, sits right after Mi Aula (this runs right after emnInjectCareerMenu).
+// The page itself shows a sign-in prompt to visitors; the chat is for signed-in students.
+function emnInjectAskBerklee(){
+  const nav = document.querySelector('.emn-nav');
+  if(!nav) return;
+  const path = location.pathname.replace(/\/$/, '');
+  const a = document.createElement('a');
+  a.setAttribute('data-emn-inj', '');
+  a.className = 'emn-nav__link' + (path === '/ask-berklee' || path === '/berkli-bot' ? ' is-active' : '');
+  a.href = '/ask-berklee';
+  a.textContent = 'Ask Berklee';
+  nav.appendChild(a);
+}
+
 // "Mi Aula" dropdown (Calendario, Career Progress) — any signed-in person
 // (student, professor or admin), never shown to a signed-out visitor since
 // everything underneath it is personal, per-account data. Built by hand for
@@ -451,6 +465,7 @@ function emnRenderNav(st){
   document.documentElement.classList.toggle('emn-in', !!st.in);
   document.querySelectorAll('.emn-m-name').forEach((n) => { n.textContent = st.in ? (st.name || '') : ''; });
   emnInjectCareerMenu(st);
+  emnInjectAskBerklee();
   emnInjectAdminMenu(st);
   // Keep the "Cursos" button right beside the account/login link, after the
   // dropdowns injected above.
