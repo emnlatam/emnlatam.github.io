@@ -12,7 +12,7 @@
 // Deploy:  supabase functions deploy google-calendar-sync --project-ref gpoddvcrsdkpgfmyniqu
 //
 // Acciones (POST JSON):
-//   (quiet: true en cualquiera = sin correos de invitación)
+//   (sin correos de invitación salvo que se pase notify: true)
 //   { action: 'sync',   clase_id }  -> crea o actualiza el evento de esa clase  -> { ok, link, event_id }
 //   { action: 'remove', clase_id }  -> borra el evento de Google (la fila de clases la borra la página) -> { ok }
 
@@ -85,8 +85,9 @@ Deno.serve(async (req) => {
   let body: any;
   try { body = await req.json(); } catch { return json({ error: 'Invalid JSON body' }, 400); }
   const { action, clase_id } = body || {};
-  const quiet = body?.quiet === true;                 // quiet: crea/actualiza SIN mandar correos de invitación
-  const SU = quiet ? 'none' : 'all';
+  // Por defecto NO se mandan correos de invitación (Daniel, 2026-11-25): el evento igual aparece en el calendario
+  // de los invitados con cuenta Google. Para mandarlos, pasar notify: true.
+  const SU = body?.notify === true ? 'all' : 'none';
   if (!clase_id) return json({ error: 'Falta clase_id' }, 400);
 
   try {

@@ -315,10 +315,6 @@ async function syncProfesores(){
       if(error) throw error; profesores.push(data);
     }
   }
-  for(const p of profesores.filter(x => !x.airtable_id)){
-    const { id } = await at({ action: 'upsert', fields: pToAirtable(p) }, 'profesores');
-    await emnSupabase.from('profesores').update({ airtable_id: id }).eq('id', p.id); p.airtable_id = id;
-  }
 }
 
 async function syncAlumnos(){
@@ -343,11 +339,6 @@ async function syncAlumnos(){
       const { data, error } = await emnSupabase.from('alumnos').insert(row).select().single();
       if(error) throw error; alumnos.push(data);
     }
-  }
-  // app → Airtable: lo que solo existe aquí se sube.
-  for(const a of alumnos.filter(x => !x.airtable_id)){
-    const { id } = await at({ action: 'upsert', fields: toAirtable(a) }, 'alumnos');
-    await emnSupabase.from('alumnos').update({ airtable_id: id }).eq('id', a.id); a.airtable_id = id;
   }
 }
 
@@ -500,18 +491,7 @@ $('#form').addEventListener('submit', async e => {
   btn.disabled = false; btn.textContent = 'Guardar';
   $('#dlg').close(); renderAll();
 
-  try{   // app → Airtable
-    const { id } = await at({ action: 'upsert', id: saved.airtable_id || undefined, fields: toAirtable(saved) }, 'alumnos');
-    if(id !== saved.airtable_id){
-      await emnSupabase.from('alumnos').update({ airtable_id: id }).eq('id', saved.id);
-      const l = alumnos.find(x => x.id === saved.id); if(l) l.airtable_id = id;
-    }
-    setSync('Guardado y enviado a Airtable ✓');
-  }catch(err){
-    console.error(err);
-    setSync('Guardado aquí, pero no se pudo enviar a Airtable', true);
-    emnAlert('El alumno se guardó en la app, pero no se pudo enviar a Airtable: ' + err.message);
-  }
+  setSync('Guardado ✓');
 });
 
 /* ---------- formulario de profesor ---------- */
@@ -546,27 +526,15 @@ $('#pform').addEventListener('submit', async e => {
   }
   btn.disabled = false; btn.textContent = 'Guardar';
   $('#pdlg').close(); renderAll();
-  try{
-    const { id } = await at({ action: 'upsert', id: saved.airtable_id || undefined, fields: pToAirtable(saved) }, 'profesores');
-    if(id !== saved.airtable_id){
-      await emnSupabase.from('profesores').update({ airtable_id: id }).eq('id', saved.id);
-      const l = profesores.find(x => x.id === saved.id); if(l) l.airtable_id = id;
-    }
-    setSync('Guardado y enviado a Airtable ✓');
-  }catch(err){
-    console.error(err);
-    setSync('Guardado aquí, pero no se pudo enviar a Airtable', true);
-    emnAlert('El profesor se guardó en la app, pero no se pudo enviar a Airtable: ' + err.message);
-  }
+  setSync('Guardado ✓');
 });
 
 /* ---------- editar / eliminar ---------- */
 async function removeRow(kind, row){
   const isA = kind === 'al', table = isA ? 'alumnos' : 'profesores';
-  const msg = `¿Eliminar a ${row.nombre}?${isA ? ' Se borran también sus clases agendadas.' : ''}${row.airtable_id ? ' También se borra su registro en Airtable.' : ''} No se puede deshacer.`;
+  const msg = `¿Eliminar a ${row.nombre}?${isA ? ' Se borran también sus clases agendadas.' : ''}No se puede deshacer.`;
   if(!(await emnConfirm(msg, { yesLabel: 'Eliminar' }))) return;
   try{
-    if(row.airtable_id && airtableOk !== false) await at({ action: 'delete', id: row.airtable_id }, table);
     const { error } = await emnSupabase.from(table).delete().eq('id', row.id);
     if(error) throw error;
     if(isA) alumnos = alumnos.filter(x => x.id !== row.id); else profesores = profesores.filter(x => x.id !== row.id);
