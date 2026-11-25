@@ -4,14 +4,610 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% include emn-favicon.html %}
-<title>EMN — Collaba</title>
+<title>Collaba — EMN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/css/emn.css?v={{ site.time | date: '%s' }}">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/assets/js/emn-auth.js?v={{ site.time | date: '%s' }}"></script>
-<style>body{ margin:0; background:#fff; }</style>
+<style>
+body{ margin:0; background:#fff; }
+.cb{
+  --red:#C8102E; --red-dark:#9C0C24; --red-tint:#FCE9EB;
+  --ink:#1A1A1D; --g1:#F5F5F6; --g2:#E8E8EA; --g3:#C9C9CD; --g4:#8A8A90; --g5:#5B5B62;
+  display:grid; grid-template-columns:232px 1fr; min-height:calc(100vh - 64px);
+  font-family:Inter,system-ui,sans-serif; color:var(--ink); font-size:14px; line-height:1.4;
+}
+.cb *{ box-sizing:border-box; }
+.cb button{ font-family:inherit; cursor:pointer; }
+
+/* ---- sidebar ---- */
+.cb-side{ border-right:1px solid var(--g2); background:#fff; padding:28px 18px; display:flex; flex-direction:column; gap:6px; }
+.cb-brand{ display:flex; align-items:center; gap:10px; padding:0 10px 22px; }
+.cb-brand i{ width:34px; height:34px; border-radius:9px; background:var(--red); display:grid; place-items:center; }
+.cb-brand i svg{ width:18px; height:18px; fill:#fff; }
+.cb-brand b{ font-family:Fraunces,serif; font-size:21px; font-weight:600; letter-spacing:-.01em; }
+.cb-brand small{ display:block; font-size:11px; color:var(--g4); font-family:Inter; font-weight:500; letter-spacing:.04em; text-transform:uppercase; margin-top:-2px; }
+.cb-nav-label{ font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--g4); padding:10px 10px 6px; }
+.cb-nav{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:9px; color:var(--g5); font-weight:500; border:0; background:none; text-align:left; width:100%; }
+.cb-nav svg{ width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+.cb-nav.on{ background:var(--g1); color:var(--ink); box-shadow:inset 3px 0 0 var(--red); }
+.cb-nav[disabled]{ cursor:default; opacity:.55; }
+.cb-nav em{ margin-left:auto; font-style:normal; font-size:10px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--g4); background:var(--g1); padding:2px 7px; border-radius:99px; }
+.cb-side-foot{ margin-top:auto; padding:14px 12px; border-radius:10px; background:var(--g1); color:var(--g5); font-size:12.5px; }
+.cb-side-foot b{ color:var(--ink); display:block; margin-bottom:3px; font-weight:600; }
+
+/* ---- main ---- */
+.cb-main{ padding:30px 36px 56px; background:#FBFBFC; display:flex; flex-direction:column; gap:22px; min-width:0; }
+.cb-top{ display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap; }
+.cb-top h1{ font-family:Fraunces,serif; font-weight:600; font-size:32px; letter-spacing:-.02em; margin:0; line-height:1.1; }
+.cb-top p{ margin:6px 0 0; color:var(--g5); }
+.cb-chips{ display:flex; gap:10px; flex-wrap:wrap; }
+.cb-chip{ background:#fff; border:1px solid var(--g2); border-radius:12px; padding:9px 16px; min-width:104px; }
+.cb-chip span{ display:block; font-size:10.5px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--g4); }
+.cb-chip b{ font-size:19px; font-weight:600; font-variant-numeric:tabular-nums; }
+.cb-chip.red b{ color:var(--red); }
+.cb-tip{ display:flex; gap:10px; align-items:center; background:#fff; border:1px solid var(--g2); border-left:3px solid var(--red); border-radius:10px; padding:11px 16px; color:var(--g5); font-size:13px; }
+.cb-tip svg{ width:18px; height:18px; stroke:var(--red); fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+
+.cb-room{ display:flex; gap:14px; align-items:flex-start; background:#fff; border:1px solid var(--g2); border-radius:14px; padding:16px 20px; }
+.cb-room i{ width:10px; height:10px; border-radius:50%; background:var(--g3); margin-top:5px; flex:none; }
+.cb-room.ok i{ background:#2BA24C; box-shadow:0 0 0 4px #E3F4E8; }
+.cb-room.bad i{ background:var(--red); box-shadow:0 0 0 4px var(--red-tint); }
+.cb-room b{ display:block; font-size:15px; font-weight:600; }
+.cb-room span{ display:block; color:var(--g5); margin-top:2px; }
+.cb-room a{ color:var(--red); font-weight:600; }
+.cb-card{ background:#fff; border:1px solid var(--g2); border-radius:16px; padding:22px 24px; box-shadow:0 1px 2px rgba(20,20,30,.03); }
+.cb-card-h{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; flex-wrap:wrap; }
+.cb-card-h h2{ margin:0; font-size:15px; font-weight:600; letter-spacing:.01em; display:flex; align-items:center; gap:9px; }
+.cb-card-h h2::before{ content:''; width:8px; height:8px; border-radius:50%; background:var(--red); }
+.cb-status{ font-size:12px; color:var(--g4); display:flex; align-items:center; gap:6px; }
+.cb-status::before{ content:''; width:7px; height:7px; border-radius:50%; background:var(--g3); }
+.cb-status.ok{ color:var(--g5); } .cb-status.ok::before{ background:#2BA24C; }
+
+/* ---- metronome ---- */
+.cb-metro{ display:grid; grid-template-columns:minmax(260px,330px) 1fr; gap:34px; align-items:start; }
+.cb-bpm{ text-align:center; }
+.cb-bpm-num{ font-family:Fraunces,serif; font-size:84px; font-weight:500; line-height:1; letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
+.cb-bpm-unit{ color:var(--g4); font-size:13px; margin-top:4px; }
+.cb-bpm-unit b{ color:var(--ink); font-weight:600; }
+.cb-step{ display:flex; justify-content:center; gap:8px; margin:16px 0 12px; }
+.cb-step button{ min-width:46px; height:38px; border-radius:9px; border:1px solid var(--g2); background:#fff; color:var(--ink); font-weight:600; font-size:13px; transition:.12s; }
+.cb-step button:hover{ border-color:var(--g3); background:var(--g1); }
+.cb-step button:active{ transform:scale(.96); }
+.cb-range{ -webkit-appearance:none; appearance:none; width:100%; height:6px; border-radius:99px; background:var(--g2); outline:none; margin:8px 0 2px; }
+.cb-range::-webkit-slider-thumb{ -webkit-appearance:none; width:20px; height:20px; border-radius:50%; background:#fff; border:2px solid var(--red); cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,.15); }
+.cb-range::-moz-range-thumb{ width:16px; height:16px; border-radius:50%; background:#fff; border:2px solid var(--red); cursor:pointer; }
+.cb-range-ends{ display:flex; justify-content:space-between; font-size:11px; color:var(--g4); }
+.cb-play{ display:flex; gap:10px; margin-top:20px; }
+.cb-btn{ height:48px; border-radius:11px; border:1px solid var(--g2); background:#fff; color:var(--ink); font-weight:600; font-size:14px; padding:0 20px; display:inline-flex; align-items:center; justify-content:center; gap:9px; transition:.12s; }
+.cb-btn:hover{ background:var(--g1); }
+.cb-btn svg{ width:16px; height:16px; fill:currentColor; }
+.cb-btn.primary{ flex:1; background:var(--red); border-color:var(--red); color:#fff; }
+.cb-btn.primary:hover{ background:var(--red-dark); border-color:var(--red-dark); }
+.cb-btn.primary.on{ background:var(--ink); border-color:var(--ink); }
+.cb-metro-right{ display:flex; flex-direction:column; gap:22px; min-width:0; }
+.cb-lbl{ font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--g4); margin-bottom:9px; }
+.cb-seg{ display:inline-flex; background:var(--g1); border-radius:11px; padding:4px; gap:2px; }
+.cb-seg button{ border:0; background:none; padding:9px 22px; border-radius:8px; font-weight:600; color:var(--g5); font-size:13.5px; }
+.cb-seg button.on{ background:#fff; color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.1); }
+.cb-chipsrow{ display:flex; gap:8px; flex-wrap:wrap; }
+.cb-pill{ min-width:64px; height:42px; padding:0 16px; border-radius:10px; border:1px solid var(--g2); background:#fff; font-weight:600; font-size:15px; color:var(--g5); }
+.cb-pill:hover{ border-color:var(--g3); }
+.cb-pill.on{ border-color:var(--red); background:var(--red-tint); color:var(--red); }
+.cb-beats{ display:flex; gap:12px; flex-wrap:wrap; min-height:44px; align-items:center; }
+.cb-beat{ width:44px; height:44px; border-radius:50%; background:var(--g1); border:2px solid var(--g2); display:grid; place-items:center; font-weight:600; font-size:14px; color:var(--g4); transition:background .06s, transform .06s, border-color .06s; }
+.cb-beat.hit{ background:var(--ink); border-color:var(--ink); color:#fff; transform:scale(1.12); }
+.cb-beat.acc.hit{ background:var(--red); border-color:var(--red); }
+.cb-beat.acc{ border-color:#EBB3BB; }
+.cb-row2{ display:flex; gap:26px; flex-wrap:wrap; align-items:center; }
+.cb-toggle{ display:inline-flex; align-items:center; gap:10px; font-weight:500; color:var(--g5); cursor:pointer; user-select:none; }
+.cb-toggle input{ display:none; }
+.cb-toggle i{ width:38px; height:22px; border-radius:99px; background:var(--g3); position:relative; transition:.15s; flex:none; }
+.cb-toggle i::after{ content:''; position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; transition:.15s; box-shadow:0 1px 2px rgba(0,0,0,.2); }
+.cb-toggle input:checked + i{ background:var(--red); }
+.cb-toggle input:checked + i::after{ left:19px; }
+.cb-vol{ display:flex; align-items:center; gap:10px; color:var(--g5); font-weight:500; }
+.cb-vol svg{ width:18px; height:18px; stroke:var(--g4); fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.cb-vol .cb-range{ width:120px; margin:0; }
+
+/* ---- piano ---- */
+.cb-oct{ display:flex; align-items:center; gap:8px; color:var(--g5); font-size:13px; font-weight:500; }
+.cb-oct button{ width:34px; height:34px; border-radius:9px; border:1px solid var(--g2); background:#fff; font-weight:600; font-size:16px; line-height:1; color:var(--ink); }
+.cb-oct button:hover{ background:var(--g1); }
+.cb-oct kbd{ font-family:inherit; font-size:11px; font-weight:600; background:var(--g1); border:1px solid var(--g2); border-bottom-width:2px; border-radius:5px; padding:1px 6px; color:var(--g5); }
+.cb-oct .range{ min-width:92px; text-align:center; font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums; }
+.cb-keys{ position:relative; height:250px; user-select:none; -webkit-user-select:none; touch-action:none; background:var(--g2); border-radius:12px; overflow:hidden; border:1px solid var(--g3); }
+.cb-w{ position:absolute; top:0; bottom:0; background:linear-gradient(#fff,#F3F3F5); border-right:1px solid var(--g3); display:flex; flex-direction:column; justify-content:flex-end; align-items:center; padding-bottom:14px; gap:6px; cursor:pointer; transition:background .05s; }
+.cb-w .l{ width:34px; height:34px; border-radius:9px; background:#fff; border:1px solid var(--g3); border-bottom-width:3px; display:grid; place-items:center; font-weight:700; font-size:15px; color:var(--ink); }
+.cb-w .n{ font-size:11px; color:var(--g4); font-weight:500; }
+.cb-w.on{ background:linear-gradient(#F7C9D0,#EF9AA6); }
+.cb-w.on .l{ background:var(--red); color:#fff; border-color:var(--red-dark); }
+.cb-b{ position:absolute; top:0; height:60%; background:linear-gradient(#2c2c30,#111114); border-radius:0 0 7px 7px; z-index:2; display:flex; align-items:flex-end; justify-content:center; padding-bottom:12px; cursor:pointer; box-shadow:0 3px 5px rgba(0,0,0,.28); }
+.cb-b .l{ width:28px; height:28px; border-radius:8px; background:#3a3a40; border:1px solid #55555c; border-bottom-width:3px; display:grid; place-items:center; font-weight:700; font-size:13px; color:#fff; }
+.cb-b.on{ background:linear-gradient(#9C0C24,#6a0817); }
+.cb-b.on .l{ background:var(--red); border-color:#e0485f; }
+.cb-help{ margin-top:14px; display:flex; gap:22px; flex-wrap:wrap; color:var(--g4); font-size:12.5px; }
+.cb-help b{ color:var(--g5); font-weight:600; }
+
+@media (max-width:900px){
+  .cb{ grid-template-columns:1fr; }
+  .cb-side{ display:none; }
+  .cb-main{ padding:22px 16px 44px; }
+  .cb-metro{ grid-template-columns:1fr; gap:24px; }
+  .cb-keys{ height:200px; }
+  .cb-w .l{ width:26px; height:26px; font-size:12px; }
+  .cb-b .l{ width:22px; height:22px; font-size:11px; }
+  .cb-w .n{ display:none; }
+}
+</style>
 </head>
 <body>
 {% include emn-header.html %}
-<!-- Collaba: página en blanco por ahora -->
+
+<div class="cb">
+  <aside class="cb-side">
+    <div class="cb-brand">
+      <i><svg viewBox="0 0 24 24"><path d="M9 3v11.3A3.5 3.5 0 1 0 11 17.5V8.2l8-1.7v6.8a3.5 3.5 0 1 0 2 3.2V3.5z"/></svg></i>
+      <div><b>Collaba</b><small>by EMN</small></div>
+    </div>
+    <div class="cb-nav-label">Herramientas</div>
+    <button class="cb-nav on" type="button">
+      <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 5v8M12 5v14M16 5v8"/></svg>Instrumentos
+    </button>
+    <button class="cb-nav" type="button" disabled>
+      <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3.5 19c.6-3 2.8-4.6 5.5-4.6s4.9 1.6 5.5 4.6M15.5 14.6c2.2-.2 4 1 4.6 3.6"/></svg>Sala<em>Pronto</em>
+    </button>
+    <button class="cb-nav" type="button" disabled>
+      <svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>Pistas<em>Pronto</em>
+    </button>
+    <div class="cb-side-foot"><b>Atajos</b>Espacio: iniciar / detener metrónomo<br>↑ ↓: cambiar BPM<br>Z / X: bajar / subir octava</div>
+  </aside>
+
+  <main class="cb-main">
+    <div class="cb-top">
+      <div>
+        <h1>Panel de audio</h1>
+        <p>Piano y metrónomo para tus clases en vivo.</p>
+      </div>
+      <div class="cb-chips">
+        <div class="cb-chip red"><span>Tempo</span><b id="chBpm">100 BPM</b></div>
+        <div class="cb-chip"><span>Compás</span><b id="chMeter">4/4</b></div>
+        <div class="cb-chip"><span>Octava</span><b id="chOct">C4</b></div>
+      </div>
+    </div>
+
+    <div class="cb-room" id="room" aria-live="polite"><i></i><div><b id="roomT">Espacio personal</b><span id="roomD"></span></div></div>
+
+    <div class="cb-tip">
+      <svg viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4.5" height="6.5" rx="1.5"/><rect x="16.5" y="14" width="4.5" height="6.5" rx="1.5"/></svg>
+      <span>Usa audífonos durante la llamada. Así el micrófono no recoge el piano ni el metrónomo y nadie oye eco.</span>
+    </div>
+
+    <!-- ===== Metrónomo ===== -->
+    <section class="cb-card">
+      <div class="cb-card-h"><h2>Metrónomo</h2><div class="cb-status" id="metStatus">Detenido</div></div>
+      <div class="cb-metro">
+        <div>
+          <div class="cb-bpm">
+            <div class="cb-bpm-num" id="bpmNum">100</div>
+            <div class="cb-bpm-unit"><span id="bpmPulse">♩</span> = <b id="bpmWord">Andante</b></div>
+          </div>
+          <div class="cb-step">
+            <button type="button" data-d="-5">−5</button>
+            <button type="button" data-d="-1">−1</button>
+            <button type="button" data-d="1">+1</button>
+            <button type="button" data-d="5">+5</button>
+          </div>
+          <input class="cb-range" id="bpmRange" type="range" min="30" max="240" value="100" aria-label="BPM">
+          <div class="cb-range-ends"><span>30</span><span>240</span></div>
+          <div class="cb-play">
+            <button class="cb-btn primary" id="btnPlay" type="button"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg><span>Iniciar</span></button>
+            <button class="cb-btn" id="btnTap" type="button">Tap</button>
+          </div>
+        </div>
+
+        <div class="cb-metro-right">
+          <div>
+            <div class="cb-lbl">Tipo de compás</div>
+            <div class="cb-seg" id="segGroup">
+              <button type="button" data-g="bin" class="on">Binario</button>
+              <button type="button" data-g="ter">Ternario</button>
+            </div>
+          </div>
+          <div>
+            <div class="cb-lbl">Compás</div>
+            <div class="cb-chipsrow" id="meterRow"></div>
+          </div>
+          <div>
+            <div class="cb-lbl">Pulso</div>
+            <div class="cb-beats" id="beats"></div>
+          </div>
+          <div class="cb-row2">
+            <label class="cb-toggle"><input type="checkbox" id="subToggle"><i></i>Subdivisión</label>
+            <div class="cb-vol">
+              <svg viewBox="0 0 24 24"><path d="M4 9.5v5h3.5l5 4v-13l-5 4z"/><path d="M16 9a4.2 4.2 0 0 1 0 6"/></svg>
+              <input class="cb-range" id="metVol" type="range" min="0" max="100" value="80" aria-label="Volumen del metrónomo">
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Piano ===== -->
+    <section class="cb-card">
+      <div class="cb-card-h">
+        <h2>Piano</h2>
+        <div style="display:flex;align-items:center;gap:22px;flex-wrap:wrap">
+          <div class="cb-oct">
+            <kbd>Z</kbd><button type="button" id="octDown" aria-label="Bajar octava">−</button>
+            <span class="range" id="octRange">C4 – E5</span>
+            <button type="button" id="octUp" aria-label="Subir octava">+</button><kbd>X</kbd>
+          </div>
+          <div class="cb-vol">
+            <svg viewBox="0 0 24 24"><path d="M4 9.5v5h3.5l5 4v-13l-5 4z"/><path d="M16 9a4.2 4.2 0 0 1 0 6"/></svg>
+            <input class="cb-range" id="pianoVol" type="range" min="0" max="100" value="85" aria-label="Volumen del piano">
+          </div>
+          <div class="cb-status" id="pianoStatus">Toca una tecla para activar el sonido</div>
+        </div>
+      </div>
+      <div class="cb-keys" id="keys"></div>
+      <div class="cb-help">
+        <span><b>Fila central</b> (A S D F G H J K L Ñ): teclas blancas</span>
+        <span><b>Fila superior</b> (W E T Y U O P): teclas negras</span>
+        <span>También puedes tocar con el mouse o la pantalla táctil.</span>
+      </div>
+    </section>
+  </main>
+</div>
+
+{% raw %}
+<script>
+(function(){
+'use strict';
+const $ = id => document.getElementById(id);
+
+/* ============================= AUDIO CORE ============================= */
+let ctx = null, pianoBus = null, metBus = null;
+function getCtx(){
+  if(!ctx){
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    pianoBus = ctx.createGain(); pianoBus.gain.value = $('pianoVol').value / 100; pianoBus.connect(ctx.destination);
+    metBus   = ctx.createGain(); metBus.gain.value   = $('metVol').value / 100;   metBus.connect(ctx.destination);
+  }
+  if(ctx.state === 'suspended') ctx.resume();
+  return ctx;
+}
+const bufferCache = {};
+function loadBuffer(url){
+  if(bufferCache[url]) return bufferCache[url];
+  const c = getCtx();
+  const p = fetch(url).then(r => { if(!r.ok) throw new Error(url); return r.arrayBuffer(); }).then(b => c.decodeAudioData(b));
+  p.catch(() => { delete bufferCache[url]; });
+  bufferCache[url] = p; return p;
+}
+
+/* ---- piano samples: same Salamander bank as Sight Melody ---- */
+const SAL_PC = {0:'C', 3:'Ds', 6:'Fs', 9:'A'};
+function midiToSample(midi){
+  const clamped = Math.min(108, Math.max(21, midi));
+  const base = 21 + 3 * Math.round((clamped - 21) / 3);
+  const pc = ((base % 12) + 12) % 12;
+  const oct = Math.floor(base / 12) - 1;
+  return { url: `/assets/sounds/piano-salamander/${SAL_PC[pc]}${oct}.mp3`, rate: Math.pow(2, (midi - base) / 12) };
+}
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const noteName = m => NOTE_NAMES[((m % 12) + 12) % 12] + (Math.floor(m / 12) - 1);
+
+/* ============================= PIANO ============================= */
+// event.code -> semitones above the C of the current octave (standard DAW layout)
+const KEYMAP = { KeyA:0, KeyW:1, KeyS:2, KeyE:3, KeyD:4, KeyF:5, KeyT:6, KeyG:7, KeyY:8, KeyH:9, KeyU:10, KeyJ:11, KeyK:12, KeyO:13, KeyL:14, KeyP:15, Semicolon:16 };
+const SPAN = 17; // semitones shown: C .. E of the next octave
+const LETTER = {};
+Object.keys(KEYMAP).forEach(c => {
+  LETTER[KEYMAP[c]] = c === 'Semicolon' ? ((navigator.language || 'es').toLowerCase().startsWith('es') ? 'Ñ' : ';') : c.slice(3);
+});
+const BLACK_PC = [1,3,6,8,10];
+let octave = 4; // C4 = midi 60
+const baseMidi = () => (octave + 1) * 12;
+const keysEl = $('keys');
+const keyEls = {};      // midi -> element
+const held = new Map(); // key id (code or pointer) -> midi
+const voices = new Map(); // midi -> {gain, src, released}
+
+function renderKeys(){
+  keysEl.innerHTML = ''; Object.keys(keyEls).forEach(k => delete keyEls[k]);
+  const base = baseMidi();
+  let W = 0;
+  for(let o = 0; o < SPAN; o++) if(!BLACK_PC.includes((base + o) % 12)) W++;
+  const ww = 100 / W;
+  let wi = -1;
+  for(let o = 0; o < SPAN; o++){
+    const midi = base + o, isBlack = BLACK_PC.includes(midi % 12);
+    const el = document.createElement('div');
+    el.dataset.midi = midi;
+    if(!isBlack){
+      wi++;
+      el.className = 'cb-w';
+      el.style.left = (wi * ww) + '%'; el.style.width = ww + '%';
+      el.innerHTML = '<div class="l">' + (LETTER[o] || '') + '</div><div class="n">' + noteName(midi) + '</div>';
+    } else {
+      const bw = ww * 0.62;
+      el.className = 'cb-b';
+      el.style.left = ((wi + 1) * ww - bw / 2) + '%'; el.style.width = bw + '%';
+      el.innerHTML = '<div class="l">' + (LETTER[o] || '') + '</div>';
+    }
+    keysEl.appendChild(el); keyEls[midi] = el;
+  }
+  held.forEach(m => keyEls[m] && keyEls[m].classList.add('on'));
+  const lo = noteName(base), hi = noteName(base + SPAN - 1);
+  $('octRange').textContent = lo + ' – ' + hi;
+  $('chOct').textContent = lo;
+  preload();
+}
+
+function preload(){
+  if(!ctx) return;
+  const base = baseMidi(), urls = new Set();
+  for(let o = 0; o < SPAN; o++) urls.add(midiToSample(base + o).url);
+  const st = $('pianoStatus'); st.className = 'cb-status'; st.textContent = 'Cargando sonidos…';
+  Promise.all([...urls].map(loadBuffer))
+    .then(() => { st.className = 'cb-status ok'; st.textContent = 'Piano listo'; })
+    .catch(() => { st.className = 'cb-status'; st.textContent = 'No se pudieron cargar los sonidos'; });
+}
+
+async function noteOn(midi){
+  if(voices.has(midi)) return;
+  const c = getCtx();
+  const v = { released: false, gain: null, src: null };
+  voices.set(midi, v);
+  const s = midiToSample(midi);
+  let buf;
+  try { buf = await loadBuffer(s.url); } catch(e){ voices.delete(midi); return; }
+  if(voices.get(midi) !== v) return;
+  const src = c.createBufferSource(); src.buffer = buf; src.playbackRate.value = s.rate;
+  const g = c.createGain(); g.gain.value = 0.9;
+  src.connect(g); g.connect(pianoBus);
+  src.start();
+  v.src = src; v.gain = g;
+  src.onended = () => { if(voices.get(midi) === v) voices.delete(midi); };
+  if(v.released) release(midi, v, 0.25);
+}
+function release(midi, v, t){
+  if(!v.gain) return;
+  const now = ctx.currentTime, dur = t || 0.35;
+  try{
+    v.gain.gain.cancelScheduledValues(now);
+    v.gain.gain.setValueAtTime(v.gain.gain.value, now);
+    v.gain.gain.linearRampToValueAtTime(0, now + dur);
+    v.src.stop(now + dur + 0.02);
+  }catch(e){}
+  if(voices.get(midi) === v) voices.delete(midi);
+}
+function noteOff(midi){
+  const v = voices.get(midi); if(!v) return;
+  v.released = true;
+  if(v.gain) release(midi, v);
+}
+
+function press(id, midi){
+  if(held.has(id)) return;
+  held.set(id, midi);
+  if(keyEls[midi]) keyEls[midi].classList.add('on');
+  noteOn(midi);
+}
+function lift(id){
+  if(!held.has(id)) return;
+  const midi = held.get(id); held.delete(id);
+  let still = false; held.forEach(m => { if(m === midi) still = true; });
+  if(!still){ if(keyEls[midi]) keyEls[midi].classList.remove('on'); noteOff(midi); }
+}
+function liftAll(){ [...held.keys()].forEach(lift); }
+
+/* mouse / touch (drag across keys plays each one) */
+keysEl.addEventListener('pointerdown', e => {
+  const el = e.target.closest('[data-midi]'); if(!el) return;
+  e.preventDefault(); getCtx();
+  press('p' + e.pointerId, +el.dataset.midi);
+  if(keysEl.setPointerCapture) keysEl.setPointerCapture(e.pointerId);
+});
+keysEl.addEventListener('pointermove', e => {
+  const id = 'p' + e.pointerId; if(!held.has(id)) return;
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const k = el && el.closest && el.closest('[data-midi]');
+  if(k && +k.dataset.midi !== held.get(id)){ lift(id); press(id, +k.dataset.midi); }
+});
+['pointerup','pointercancel'].forEach(t => keysEl.addEventListener(t, e => lift('p' + e.pointerId)));
+
+function setOctave(o){
+  octave = Math.min(6, Math.max(1, o));
+  liftAll(); renderKeys();
+}
+$('octDown').onclick = () => setOctave(octave - 1);
+$('octUp').onclick   = () => setOctave(octave + 1);
+$('pianoVol').oninput = e => { if(pianoBus) pianoBus.gain.value = e.target.value / 100; };
+
+/* ============================= METRONOME ============================= */
+// Binary / ternary only. BPM = the pulse: a quarter note, or a dotted quarter in 6/8 and 9/8.
+const METERS = {
+  '2/4': { beats:2, sub:2, comp:false }, '4/4': { beats:4, sub:2, comp:false },
+  '3/4': { beats:3, sub:2, comp:false }, '6/8': { beats:2, sub:3, comp:true  }, '9/8': { beats:3, sub:3, comp:true }
+};
+const GROUPS = { bin:['2/4','4/4'], ter:['3/4','6/8','9/8'] };
+const met = { bpm:100, meter:'4/4', group:'bin', sub:false, running:false, timer:null, next:0, beat:0, tick:0, queue:[] };
+
+function wordFor(b){ return b < 60 ? 'Largo' : b < 76 ? 'Adagio' : b < 108 ? 'Andante' : b < 120 ? 'Moderato' : b < 168 ? 'Allegro' : 'Presto'; }
+function drawBpm(){
+  $('bpmNum').textContent = met.bpm;
+  $('bpmRange').value = met.bpm;
+  $('bpmWord').textContent = wordFor(met.bpm);
+  $('chBpm').textContent = met.bpm + ' BPM';
+  $('bpmPulse').textContent = METERS[met.meter].comp ? '♩.' : '♩';
+}
+function setBpm(v){ met.bpm = Math.min(240, Math.max(30, Math.round(v))); drawBpm(); }
+
+function drawMeters(){
+  const row = $('meterRow'); row.innerHTML = '';
+  GROUPS[met.group].forEach(m => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'cb-pill' + (m === met.meter ? ' on' : ''); b.textContent = m;
+    b.onclick = () => setMeter(m);
+    row.appendChild(b);
+  });
+  document.querySelectorAll('#segGroup button').forEach(b => b.classList.toggle('on', b.dataset.g === met.group));
+}
+function drawBeats(){
+  const n = METERS[met.meter].beats, box = $('beats'); box.innerHTML = '';
+  for(let i = 0; i < n; i++){
+    const d = document.createElement('div'); d.className = 'cb-beat' + (i === 0 ? ' acc' : ''); d.textContent = i + 1; box.appendChild(d);
+  }
+}
+function resetBeat(){ met.beat = 0; met.tick = 0; met.queue.length = 0; }
+function setMeter(m){
+  met.meter = m; resetBeat(); drawMeters(); drawBeats(); drawBpm(); $('chMeter').textContent = m;
+  if(met.running && ctx) met.next = Math.max(met.next, ctx.currentTime + 0.05); // restart the bar cleanly
+}
+
+document.querySelectorAll('#segGroup button').forEach(b => b.onclick = () => {
+  met.group = b.dataset.g;
+  setMeter(GROUPS[met.group].includes(met.meter) ? met.meter : GROUPS[met.group][0]);
+});
+document.querySelectorAll('.cb-step button').forEach(b => b.onclick = () => setBpm(met.bpm + (+b.dataset.d)));
+$('bpmRange').oninput = e => setBpm(+e.target.value);
+$('subToggle').onchange = e => { met.sub = e.target.checked; met.tick = 0; };
+$('metVol').oninput = e => { if(metBus) metBus.gain.value = e.target.value / 100; };
+
+// clicks: accent (beat 1) / normal beat / soft subdivision
+function click(when, kind){
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  const f = kind === 'acc' ? 1500 : kind === 'beat' ? 1000 : 700;
+  const peak = kind === 'acc' ? 0.9 : kind === 'beat' ? 0.6 : 0.28;
+  o.type = 'square'; o.frequency.setValueAtTime(f, when);
+  g.gain.setValueAtTime(peak, when); g.gain.exponentialRampToValueAtTime(0.001, when + 0.05);
+  o.connect(g); g.connect(metBus); o.start(when); o.stop(when + 0.06);
+}
+function scheduler(){
+  const M = METERS[met.meter], per = met.sub ? M.sub : 1;
+  while(met.next < ctx.currentTime + 0.12){
+    const isBeat = met.tick === 0;
+    click(met.next, isBeat ? (met.beat === 0 ? 'acc' : 'beat') : 'sub');
+    if(isBeat) met.queue.push({ t: met.next, beat: met.beat });
+    met.tick++;
+    if(met.tick >= per){ met.tick = 0; met.beat = (met.beat + 1) % M.beats; }
+    met.next += (60 / met.bpm) / per; // bpm is read live, so a tempo change applies from the next tick
+  }
+}
+function clearBeatLights(){ document.querySelectorAll('.cb-beat').forEach(e => e.classList.remove('hit')); }
+function animate(){
+  if(!met.running){ clearBeatLights(); return; }
+  const now = ctx.currentTime;
+  while(met.queue.length && met.queue[0].t <= now){
+    const q = met.queue.shift();
+    document.querySelectorAll('.cb-beat').forEach((e, i) => e.classList.toggle('hit', i === q.beat));
+  }
+  requestAnimationFrame(animate);
+}
+function startMet(){
+  getCtx(); resetBeat(); met.next = ctx.currentTime + 0.08; met.running = true;
+  met.timer = setInterval(scheduler, 25); scheduler(); requestAnimationFrame(animate);
+  const b = $('btnPlay'); b.classList.add('on');
+  b.innerHTML = '<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4.2" height="14" rx="1"/><rect x="13.8" y="5" width="4.2" height="14" rx="1"/></svg><span>Detener</span>';
+  const s = $('metStatus'); s.className = 'cb-status ok'; s.textContent = 'En marcha';
+}
+function stopMet(){
+  met.running = false; clearInterval(met.timer); met.queue.length = 0;
+  const b = $('btnPlay'); b.classList.remove('on');
+  b.innerHTML = '<svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg><span>Iniciar</span>';
+  const s = $('metStatus'); s.className = 'cb-status'; s.textContent = 'Detenido';
+  clearBeatLights();
+}
+const toggleMet = () => met.running ? stopMet() : startMet();
+$('btnPlay').onclick = toggleMet;
+
+// tap tempo (average of the last taps; a gap over 2 s starts over)
+let taps = [];
+$('btnTap').onclick = () => {
+  const t = performance.now();
+  if(taps.length && t - taps[taps.length - 1] > 2000) taps = [];
+  taps.push(t); if(taps.length > 5) taps.shift();
+  if(taps.length >= 2){
+    let sum = 0; for(let i = 1; i < taps.length; i++) sum += taps[i] - taps[i - 1];
+    setBpm(60000 / (sum / (taps.length - 1)));
+  }
+};
+
+/* ============================= KEYBOARD ============================= */
+const typing = t => t && (t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || (t.tagName === 'INPUT' && t.type !== 'range' && t.type !== 'checkbox'));
+document.addEventListener('keydown', e => {
+  if(e.ctrlKey || e.metaKey || e.altKey || typing(e.target)) return;
+  if(e.code in KEYMAP){
+    e.preventDefault();
+    if(e.repeat) return;
+    getCtx(); press(e.code, baseMidi() + KEYMAP[e.code]); return;
+  }
+  if(e.repeat) return;
+  if(e.code === 'KeyZ'){ setOctave(octave - 1); return; }
+  if(e.code === 'KeyX'){ setOctave(octave + 1); return; }
+  if(e.code === 'Space'){ e.preventDefault(); toggleMet(); return; }
+  if(e.target.type === 'range') return; // let a focused slider use its own arrows
+  if(e.code === 'ArrowUp'){ e.preventDefault(); setBpm(met.bpm + (e.shiftKey ? 5 : 1)); }
+  if(e.code === 'ArrowDown'){ e.preventDefault(); setBpm(met.bpm - (e.shiftKey ? 5 : 1)); }
+});
+document.addEventListener('keyup', e => {
+  if(e.code in KEYMAP) lift(e.code);
+  if(e.code === 'Space' && !typing(e.target)) e.preventDefault(); // stops a focused button from also clicking
+});
+window.addEventListener('blur', liftAll);
+document.addEventListener('visibilitychange', () => { if(document.hidden) liftAll(); });
+
+/* ============================= SALA DE LA CLASE ============================= */
+// La sala es una clase (?clase=<id>). La base de datos decide si esta cuenta puede entrar (collaba_acceso):
+// solo el alumno de esa clase y su profesor, 12 h antes y 12 h después. Si algo falla, no se entra a la sala
+// y la persona sigue en su espacio personal (el piano y el metrónomo funcionan igual).
+function setRoom(kind, title, text, linkHtml){
+  const r = $('room'); r.className = 'cb-room' + (kind ? ' ' + kind : '');
+  $('roomT').textContent = title;
+  const d = $('roomD'); d.textContent = text || '';
+  if(linkHtml){ d.append(' '); d.appendChild(linkHtml); }
+}
+const fmtWhen = iso => new Intl.DateTimeFormat('es', { weekday:'long', day:'numeric', month:'long', hour:'numeric', minute:'2-digit' }).format(new Date(iso));
+function linkTo(href, label){ const a = document.createElement('a'); a.href = href; a.textContent = label; return a; }
+const PERSONAL = 'Sigues en tu espacio personal: el piano y el metrónomo funcionan igual.';
+(async function checkRoom(){
+  const clase = new URLSearchParams(location.search).get('clase');
+  if(!clase){ setRoom('', 'Espacio personal', 'Práctica individual. Para entrar a la sala de tu clase usa el botón de Collaba en Mi Aula.'); return; }
+  if(!/^[0-9a-f-]{36}$/i.test(clase)){ setRoom('bad', 'Este enlace no es válido', PERSONAL, linkTo('/mi-aula', 'Volver a Mi Aula')); return; }
+  setRoom('', 'Verificando tu sala…', '');
+  try{
+    await emnInit();
+    if(!emnSession){ setRoom('bad', 'Inicia sesión para entrar a la sala', '', linkTo('/emn-login', 'Inicia sesión')); return; }
+    const { data, error } = await emnSupabase.rpc('collaba_acceso', { p_clase: clase });
+    if(error) throw error;
+    if(data && data.ok){
+      const quien = data.rol === 'profesor' ? 'Alumno: ' + data.alumno : 'Profesor: ' + (data.profesor || 'por asignar');
+      setRoom('ok', 'Sala privada · ' + data.curso, quien + ' · abierta hasta ' + fmtWhen(data.hasta) + '.');
+    } else if(data && data.motivo === 'aun_no'){
+      setRoom('bad', 'Esta sala aún no está abierta', 'Se abre ' + fmtWhen(data.desde) + ' (12 horas antes de la clase). ' + PERSONAL);
+    } else if(data && data.motivo === 'cerrada'){
+      setRoom('bad', 'Esta sala ya se cerró', 'Cerró ' + fmtWhen(data.hasta) + '. ' + PERSONAL, linkTo('/mi-aula', 'Ir a Mi Aula'));
+    } else if(data && data.motivo === 'sin_sesion'){
+      setRoom('bad', 'Inicia sesión para entrar a la sala', '', linkTo('/emn-login', 'Inicia sesión'));
+    } else {
+      setRoom('bad', 'Esta sala no es tuya', 'Solo el alumno de la clase y su profesor pueden entrar. ' + PERSONAL, linkTo('/mi-aula', 'Ir a Mi Aula'));
+    }
+  }catch(e){
+    console.error('collaba_acceso', e);
+    setRoom('bad', 'No se pudo verificar la sala', 'Intenta de nuevo en unos minutos. ' + PERSONAL);
+  }
+})();
+
+/* ============================= INIT ============================= */
+drawBpm(); drawMeters(); drawBeats(); renderKeys();
+// the first interaction anywhere unlocks audio and starts loading the piano
+['pointerdown','keydown'].forEach(t => document.addEventListener(t, function once(){
+  document.removeEventListener(t, once, true); getCtx(); preload();
+}, true));
+})();
+</script>
+{% endraw %}
 </body>
 </html>

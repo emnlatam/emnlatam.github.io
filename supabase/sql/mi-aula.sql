@@ -69,7 +69,7 @@ begin
               -- tareas de alumnos.datos._tareas ({id,curso,texto,hecha,hecha_por}); la página decide cuáles muestra
               'tareas', coalesce(v_al.datos->'_tareas', '[]'::jsonb)),
     'clases', coalesce((
-      select jsonb_agg(jsonb_build_object('curso', c.curso, 'fecha', c.fecha, 'hora', to_char(c.hora, 'HH24:MI'),
+      select jsonb_agg(jsonb_build_object('id', c.id, 'curso', c.curso, 'fecha', c.fecha, 'hora', to_char(c.hora, 'HH24:MI'),
                'link', coalesce(nullif(c.link, ''), (select m.link from public.cursos_meet m where m.curso = c.curso)))
              order by c.fecha, c.hora)
       from public.clases c where c.alumno_id = v_al.id), '[]'::jsonb),
