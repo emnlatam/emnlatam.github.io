@@ -132,7 +132,7 @@ const pad = n => String(n).padStart(2, '0');
 const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
-let alumnos = [], clases = [], meet = {}, cur = null, curso = null, sinCurso = false;
+let alumnos = [], clases = [], meet = {}, mockSlots = [], mockFechas = {}, cur = null, curso = null, sinCurso = false;
 let view = new Date(); view.setDate(1);
 
 // Último domingo de un mes (el Mock Audition es automático ese día).
@@ -212,7 +212,7 @@ function renderCal(){
       const nx = proxClase(a, curso), n = tareasDe(a, curso).filter(t => !t.hecha).length;
       if(nx && M(nx).f === k && n) tk = `<div class="ev tarea" title="Tareas para esta clase">✎ ${n} ${n === 1 ? 'tarea' : 'tareas'}</div>`;
     }
-    const mk = k === lastSunday(d.getFullYear(), d.getMonth()) ? `<div class="ev mock">${MOCK}</div>` : '';
+    const mk = k === lastSunday(d.getFullYear(), d.getMonth()) ? `<div class="ev mock" data-mock="${k}" style="cursor:pointer">${MOCK}</div>` : '';
     const has = clases.some(c => c.alumno_id === cur && M(c).f === k);
     cells.push(`<button type="button" class="day${has ? ' has' : ''}${outside ? ' out' : ''}${k === today ? ' today' : ''}${canPick && !outside ? ' pick' : ''}${canPick && fin && k > fin ? ' past' : ''}" data-d="${k}"${canPick && fin && k > fin ? ` title="Después de la fecha final del alumno (${fmt(fin)})"` : ''}><b>${d.getDate()}</b>${mk}${evs}${tk}</button>`);
   }
@@ -346,6 +346,15 @@ $('#side').addEventListener('change', async e => {
 });
 
 
+/* ---------- Mock Audition: entrada del alumno en el último domingo del mes ---------- */
+function mockDe(alId, k){
+  const d = new Date(k + 'T12:00:00');
+  if(k !== lastSunday(d.getFullYear(), d.getMonth())) return null;
+  const sl = mockSlots.find(x => x.fecha === k && x.alumno_id === alId);   // turno reservado (hora de Perú)
+  return { id: 'mock-' + k, mock: true, alumno_id: alId, curso: MOCK, fecha: k,
+           hora: sl ? String(sl.hora).padStart(2, '0') + ':00:00' : null, link: mockFechas[k] || meet[MOCK] || null };
+}
+
 /* ---------- ventana flotante con los datos de la clase ---------- */
 const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 function cerrarPop(){ document.getElementById('pop-bg')?.remove(); }
@@ -354,10 +363,10 @@ function abrirPop(titulo, items){
   const bg = document.createElement('div'); bg.className = 'pop-bg'; bg.id = 'pop-bg';
   bg.innerHTML = `<div class="pop" role="dialog" aria-modal="true"><button type="button" class="x" aria-label="Cerrar">×</button><h4>${esc(titulo)}</h4>` +
     (items.length ? items.map(c => {
-      const al = alumnos.find(x => x.id === c.alumno_id), m = M(c), d = new Date(m.f + 'T12:00:00');
+      const al = alumnos.find(x => x.id === c.alumno_id), m = c.hora ? M(c) : { f: c.fecha, h: null }, d = new Date(m.f + 'T12:00:00');
       return `<div class="cl" style="--cc:${colorCurso(c.curso)}">
         <div><b>Clase:</b> ${esc(c.curso)}${al ? ' · ' + esc(al.nombre) : ''}</div>
-        <div><b>Hora:</b> ${esc(m.h)} (Madrid)</div>
+        <div><b>Hora:</b> ${m.h ? esc(m.h) + ' (Madrid)' : 'Sin turno asignado este mes'}</div>
         <div><b>Fecha:</b> ${DIAS[d.getDay()]} ${fmt(m.f)}</div>
         <div><b>Link de la llamada:</b></div>
         ${c.link ? `<div class="lk"><a href="${esc(c.link)}" target="_blank" rel="noopener">${esc(c.link)}</a><button type="button" data-copy="${esc(c.link)}">Copiar</button></div>` : '<div class="none">Sin link todavía</div>'}
@@ -384,11 +393,14 @@ document.addEventListener('click', async e => {
 document.addEventListener('keydown', e => { if(e.key === 'Escape') cerrarPop(); });
 
 $('#grid').addEventListener('click', async e => {
+  const mkc = e.target.closest('.ev.mock');                // clic en el cuadro negro del Mock Audition
+  if(mkc){ const it = mockDe(cur, mkc.dataset.mock); if(it) abrirPop(`${alumno()?.nombre || ''} · ${fmt(it.fecha)}`, [it]); return; }
   const chip = e.target.closest('.ev[data-id]');          // clic en una clase: siempre abre su ventana
   if(chip){ const c = clases.find(x => x.id === chip.dataset.id); if(c) abrirPop(`${c.curso} · ${fmt(M(c).f)}`, [c]); return; }
   const dd = e.target.closest('.day');
   if(dd && !dd.classList.contains('pick') && !dd.classList.contains('out')){   // sin curso elegido: muestra las clases del alumno ese día
     const lst = clases.filter(c => c.alumno_id === cur && M(c).f === dd.dataset.d).sort((p, q) => M(p).h.localeCompare(M(q).h));
+    const mk0 = mockDe(cur, dd.dataset.d); if(mk0) lst.push(mk0);
     abrirPop(`${alumno()?.nombre || ''} · ${fmt(dd.dataset.d)}`, lst); return;
   }
   const d = e.target.closest('.day.pick'); if(!d || d.classList.contains('out')) return;
@@ -429,15 +441,18 @@ async function boot(){
     gate.innerHTML = emnSession ? 'Esta página es solo para administradores.' : 'Inicia sesión para continuar. <a href="/emn-login">Inicia sesión</a>';
     gate.style.display = 'block'; return;
   }
-  const [a, c, m] = await Promise.all([
+  const [a, c, m, ms, mf] = await Promise.all([
     emnSupabase.from('alumnos').select('*').order('created_at'),
     emnSupabase.from('clases').select('*').order('fecha'),
     emnSupabase.from('cursos_meet').select('*'),
+    emnSupabase.from('mock_slots').select('fecha,hora,alumno_id'),
+    emnSupabase.from('mock_fechas').select('fecha,link'),
   ]);
   if(a.error || c.error || m.error){ console.error(a.error || c.error || m.error); gate.textContent = 'No se pudo cargar el calendario.'; gate.style.display = 'block'; return; }
   alumnos = a.data.filter(x => x.activo !== false);   // los archivados no salen
   clases = c.data.map(x => ({ ...x, hora: x.hora.slice(0, 8) }));
   (m.data || []).forEach(x => meet[x.curso] = x.link);
+  mockSlots = ms.data || []; (mf.data || []).forEach(x => mockFechas[x.fecha] = x.link);   // sin ellos el Mock Audition simplemente no muestra turno
   const asked = new URLSearchParams(location.search).get('alumno');
   cur = alumnos.find(x => x.id === asked)?.id || alumnos[0]?.id || null;
   $('#body-c').style.display = 'block';
