@@ -73,8 +73,10 @@
 <div style="border: 1px solid #e3e5ea; border-radius: 14px; padding: 12px 18px">
 <div style="font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #5b6070; font-weight: 600">Racha de práctica</div>
 <div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600; margin-top: 2px">{{rachaTxt}}</div>
+<div style="font-size: 12px; color: #5b6070; margin-top: 2px">{{rachaSub}}</div>
 </div>
 </div>
+{{offBanner}}
 
 <!-- ROW 1: CALENDAR + TASKS / MOCK -->
 <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: stretch">
@@ -153,13 +155,13 @@
 <div style="height: 12px; border-radius: 999px; background: #eceef2; overflow: hidden"><div style="width: {{metaPct}}%; height: 100%; background: #C8102E; border-radius: 999px"></div></div>
 <div style="font-size: 14px; font-weight: 600">Horas trabajadas <strong style="color: #C8102E; font-size: 16px">{{horasTxt}}</strong></div>
 </div>
-<div style="flex: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 150px)); justify-content: space-between; align-content: center; gap: 10px">
-<button type="button" data-href="/improvisation-lab" style="aspect-ratio: 1 / 1; border: 0; border-radius: 14px; background: #FBDDE1; color: #6E0A1A; padding: 8px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; font-weight: 600; font-size: 13px; line-height: 1.2; text-align: center">
-<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>Piece Prep &amp; Improvisation</button>
-<button type="button" data-href="/sight-melody" style="aspect-ratio: 1 / 1; border: 0; border-radius: 14px; background: #D5E1F6; color: #14305F; padding: 8px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; font-weight: 600; font-size: 13px; line-height: 1.2; text-align: center">
-<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Sight-read &amp; Ear Training</button>
-<button type="button" data-href="/interview-prep" style="aspect-ratio: 1 / 1; border: 0; border-radius: 14px; background: #D3EEDD; color: #0F4A2A; padding: 8px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; font-weight: 600; font-size: 13px; line-height: 1.2; text-align: center">
-<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v4"/></svg>Interview Prep</button>
+<div style="flex: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-content: center; gap: 16px">
+<button type="button" data-href="/improvisation-lab" style="aspect-ratio: 8 / 5; border: 0; border-radius: 14px; background: #FBDDE1; color: #6E0A1A; padding: 10px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 14px; line-height: 1.25; text-align: center">
+<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>Piece Prep &amp; Improvisation</button>
+<button type="button" data-href="/sight-melody" style="aspect-ratio: 8 / 5; border: 0; border-radius: 14px; background: #D5E1F6; color: #14305F; padding: 10px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 14px; line-height: 1.25; text-align: center">
+<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Sight-read &amp; Ear Training</button>
+<button type="button" data-href="/interview-prep" style="aspect-ratio: 8 / 5; border: 0; border-radius: 14px; background: #D3EEDD; color: #0F4A2A; padding: 10px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 14px; line-height: 1.25; text-align: center">
+<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v4"/></svg>Interview Prep</button>
 </div>
 </section>
 
@@ -276,7 +278,7 @@ const conv = (fecha, hora) => { const dt = limaInstant(fecha, hora); return { f:
 function lastSunday(y, m){ const d = new Date(y, m+1, 0); d.setDate(d.getDate() - d.getDay()); return d; }
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-const S = { me: null, target: null, isAdmin: false, isProf: false, students: [], resumen: null, practice: [], career: null, vy: 0, vm: 0, area: 'all' };
+const S = { me: null, target: null, isAdmin: false, isProf: false, students: [], resumen: null, practice: [], offs: {}, career: null, vy: 0, vm: 0, area: 'all' };
 
 // Partes de la audición para "Tu progreso por área" (clave = campo de mi_aula_resumen.puntajes).
 const AREAS = [
@@ -340,17 +342,51 @@ function buildProgreso(now){
 
 async function loadTarget(){
   const sb = emnSupabase, tid = S.target;
-  S.resumen = null; S.practice = []; S.career = null;
+  S.resumen = null; S.practice = []; S.offs = {}; S.career = null;
   try{
     const { data, error } = await sb.rpc('mi_aula_resumen', { p_student: tid === S.me ? null : tid });
     if(error) throw error;
     S.resumen = data;
   }catch(e){ console.error('mi_aula_resumen', e); }
-  const since = new Date(); since.setDate(since.getDate() - 70);
-  const pa = await sb.from('practice_activity').select('activity_date,seconds').eq('student_id', tid).gte('activity_date', ymd(since));
+  // Todo el historial: la racha se calcula semana por semana desde la primera práctica.
+  const pa = await sb.from('practice_activity').select('activity_date,seconds').eq('student_id', tid).limit(20000);
   S.practice = pa.data || [];
+  const ow = await sb.from('practice_off_weeks').select('week_start,usada').eq('student_id', tid);
+  (ow.data || []).forEach(r => { S.offs[r.week_start] = r.usada; });
   const cp = await sb.from('career_progress').select('data').eq('student_id', tid).maybeSingle();
   S.career = cp.data?.data?.rows || null;
+}
+
+// ===== Racha en días con semanas off =====
+// Cada semana (lunes a domingo) con >= 5 h suma +7 días. Cada 4 semanas cumplidas se gana 1 semana off (máx. 4 guardadas).
+// Una semana sin meta: si el alumno usa una semana off la racha se protege (sin sumar); si no, vuelve a 0.
+// Máximo 2 semanas off seguidas; luego hay que cumplir una semana. La semana que acaba de terminar queda "pendiente" para decidir.
+const META_SEG = 5 * 3600;
+function calcRacha(secs, offs, now){
+  const r = { dias: 0, ciclo: 0, banco: 0, insignias: 0, pendiente: null };
+  const monOf = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; };
+  const parse = k => { const [a, b, c] = k.split('-').map(Number); return new Date(a, b - 1, c); };
+  const dates = Object.keys(secs).filter(k => secs[k] > 0).sort();
+  if(!dates.length) return r;
+  const wk = {};
+  Object.keys(secs).forEach(k => { const w = ymd(monOf(parse(k))); wk[w] = (wk[w] || 0) + secs[k]; });
+  const curMon = monOf(now), curKey = ymd(curMon);
+  const prev = new Date(curMon); prev.setDate(prev.getDate() - 7); const prevKey = ymd(prev);
+  let consec = 0;
+  for(const w = monOf(parse(dates[0])); w <= curMon; w.setDate(w.getDate() + 7)){
+    const key = ymd(w);
+    if((wk[key] || 0) >= META_SEG){
+      r.dias += 7; r.ciclo++; consec = 0;
+      if(r.ciclo >= 4){ r.ciclo = 0; r.banco = Math.min(4, r.banco + 1); r.insignias++; }
+      continue;
+    }
+    if(key === curKey || r.dias === 0) continue;   // semana en curso, o nada que proteger
+    const puede = r.banco > 0 && consec < 2;
+    if(offs[key] === true && puede){ r.banco--; consec++; continue; }
+    if(offs[key] === undefined && key === prevKey && puede){ r.pendiente = key; continue; }
+    r.dias = 0; r.ciclo = 0; consec = 0;   // racha rota
+  }
+  return r;
 }
 
 function getData(){
@@ -419,8 +455,18 @@ function getData(){
 
   const secs = {};
   S.practice.forEach(r => { secs[r.activity_date] = (secs[r.activity_date] || 0) + (r.seconds || 0); });
-  let racha = 0; const dcur = new Date(now); if(!(secs[ymd(dcur)] > 0)) dcur.setDate(dcur.getDate() - 1);
-  while(secs[ymd(dcur)] > 0){ racha++; dcur.setDate(dcur.getDate() - 1); }
+  const rc = calcRacha(secs, S.offs, now);
+  const racha = rc.dias;
+  const vistaAl = S.target === S.me && !S.isAdmin && !S.isProf;
+  let offBanner = '';
+  if(rc.pendiente){
+    const btn = 'border: 0; border-radius: 10px; padding: 10px 18px; min-height: 44px; font-size: 14px; font-weight: 600; ';
+    offBanner = '<div style="border: 1.5px solid #C8102E; background: #FDF1F3; border-radius: 14px; padding: 14px 18px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">' +
+      '<div style="font-size: 14.5px; line-height: 1.4"><strong>La semana pasada no llegaste a tu meta de 5 h.</strong><br>' +
+      (vistaAl ? '¿Usar una semana off para proteger tu racha de ' + racha + ' días? Te quedan ' + rc.banco + '. Si no la usas, tu racha vuelve a 0.' : 'El alumno debe decidir si usa una semana off (le quedan ' + rc.banco + '). Si no la usa, su racha vuelve a 0.') + '</div>' +
+      (vistaAl ? '<div style="display: flex; gap: 10px"><button type="button" data-act="off" data-v="1" style="' + btn + 'background: #C8102E; color: #fff">Usar semana off</button><button type="button" data-act="off" data-v="0" style="' + btn + 'background: #fff; color: #1a1a1d; border: 1px solid #d5d8df">No usar</button></div>' : '') + '</div>';
+  }
+  const rachaSub = (4 - rc.ciclo) + ' ' + (4 - rc.ciclo === 1 ? 'semana' : 'semanas') + ' para tu próxima semana off · Semanas off: ' + rc.banco;
   const mon = new Date(now); mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7)); const monStr = ymd(mon);
   let wk = 0; Object.keys(secs).forEach(f => { if(f >= monStr && f <= todayStr) wk += secs[f]; });
   const horas = Math.round(wk / 360) / 10;
@@ -466,10 +512,10 @@ function getData(){
 
   return {
     nombre: esc(first), sub: esc(sub), ringDash: (rutaPct * 157.1 / 100).toFixed(1), rutaPct, rutaNote, picker,
-    proxClase, tareasTxt: pendientes + ' por entregar', mockTxt, rachaTxt: racha + (racha === 1 ? ' día' : ' días'),
+    proxClase, tareasTxt: pendientes + ' por entregar', mockTxt, rachaTxt: racha + (racha === 1 ? ' día' : ' días'), rachaSub, offBanner,
     monthTitle: MESES[S.vm] + ' ' + S.vy, legend, cells,
     tasks, tasksCount: pendientes, tasksEmpty: tasks.length ? '' : (vistaAlumno ? 'No tienes tareas pendientes.' : 'Este alumno no tiene tareas.'),
-    metaTxt: '—', metaPct: 0, horasTxt: horas + ' h',
+    metaTxt: '5 h', metaPct: Math.min(100, Math.round(wk / META_SEG * 100)), horasTxt: horas + ' h',
     ...buildProgreso(now), progress, cpEmpty: progress.length ? '' : 'Aún no tienes elementos en tu Career Progress.'
   };
 }
@@ -543,6 +589,17 @@ emnInit().then(async () => {
       paint();
       emnSupabase.rpc('mi_aula_tarea_hecha', { p_id: a.dataset.id }).then(({ error }) => {
         if(error){ console.error(error); S.resumen.alumno.tareas = tl; paint(); }   // si falla, vuelve a aparecer
+      });
+      return;
+    }
+    if(act === 'off'){
+      if(!(S.target === S.me && !S.isAdmin && !S.isProf)) return;
+      const rc = calcRacha(Object.fromEntries(Object.entries(S.practice.reduce((o, r) => (o[r.activity_date] = (o[r.activity_date] || 0) + (r.seconds || 0), o), {}))), S.offs, new Date());
+      if(!rc.pendiente) return;
+      const wkey = rc.pendiente, v = a.dataset.v === '1';
+      S.offs[wkey] = v; paint();
+      emnSupabase.from('practice_off_weeks').insert({ student_id: S.me, week_start: wkey, usada: v }).then(({ error }) => {
+        if(error){ console.error(error); delete S.offs[wkey]; paint(); }
       });
       return;
     }
