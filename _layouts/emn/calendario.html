@@ -86,7 +86,9 @@
   .tasks .add:hover{ opacity:.9; }
   .tk{ display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:8px; align-items:start; padding:7px 0; border-top:1px solid var(--gray-100); font-size:13px; line-height:1.4; }
   .tk input{ margin-top:3px; accent-color:var(--red); }
+  .tk.done{ opacity:.55; }
   .tk.done span{ text-decoration:line-through; color:var(--gray-500); }
+  .tk .by{ font-size:11px; font-style:italic; text-decoration:none; }
   .tk button{ border:0; background:none; color:var(--gray-500); font-size:16px; cursor:pointer; padding:2px 6px; border-radius:5px; }
   .tk button:hover{ color:var(--red); background:var(--gray-100); }
   .ses.next{ background:#FFFBEA; }
@@ -239,7 +241,7 @@ function renderSide(){
       <textarea class="in" id="tkText" placeholder="Ej: repasar compases 12–24 con metrónomo a 80…"></textarea>
       <button type="button" class="add" id="tkAdd">Agregar tarea</button>
       ${pend.map(t => `<div class="tk" data-t="${esc(t.id)}"><input type="checkbox" aria-label="Hecha"><span>${esc(t.texto)}</span><button type="button" data-tdel aria-label="Quitar tarea">×</button></div>`).join('')}
-      ${hechas.map(t => `<div class="tk done" data-t="${esc(t.id)}"><input type="checkbox" checked aria-label="Hecha"><span>${esc(t.texto)}</span><button type="button" data-tdel aria-label="Quitar tarea">×</button></div>`).join('')}
+      ${hechas.map(t => `<div class="tk done" data-t="${esc(t.id)}"><input type="checkbox" checked aria-label="Hecha"><span>${esc(t.texto)}${t.hecha_por === 'alumno' ? ' <small class="by">· lo marcó el alumno</small>' : ''}</span><button type="button" data-tdel aria-label="Quitar tarea">×</button></div>`).join('')}
     </div>` : '';
   side.style.setProperty('--c', a.color);
   side.innerHTML = `
@@ -322,7 +324,7 @@ $('#side').addEventListener('change', async e => {
   const tk = e.target.closest('.tk');
   if(tk){
     const a0 = alumno();
-    const list = (a0.datos?._tareas || []).map(t => t.id === tk.dataset.t ? { ...t, hecha: e.target.checked } : t);
+    const list = (a0.datos?._tareas || []).map(t => t.id === tk.dataset.t ? { ...t, hecha: e.target.checked, hecha_por: e.target.checked ? 'profesor' : undefined } : t);
     if(await saveTareas(a0, list)) renderAll(); else e.target.checked = !e.target.checked;
     return;
   }

@@ -66,9 +66,8 @@ begin
   return jsonb_build_object(
     'alumno', jsonb_build_object('id', v_al.id, 'nombre', v_al.nombre,
               'instrumento', v_al.datos->>'instrumento', 'pais', v_al.datos->>'pais', 'cursos', v_al.cursos,
-              -- tareas pendientes: las de alumnos.datos._tareas ({id,curso,texto,hecha}) que aún no están hechas
-              'tareas', coalesce((select jsonb_agg(t) from jsonb_array_elements(coalesce(v_al.datos->'_tareas', '[]'::jsonb)) t
-                                   where coalesce((t->>'hecha')::boolean, false) = false), '[]'::jsonb)),
+              -- tareas de alumnos.datos._tareas ({id,curso,texto,hecha,hecha_por}); la página decide cuáles muestra
+              'tareas', coalesce(v_al.datos->'_tareas', '[]'::jsonb)),
     'clases', coalesce((
       select jsonb_agg(jsonb_build_object('curso', c.curso, 'fecha', c.fecha, 'hora', to_char(c.hora, 'HH24:MI'),
                'link', coalesce(nullif(c.link, ''), (select m.link from public.cursos_meet m where m.curso = c.curso)))
@@ -91,3 +90,36 @@ update public.alumnos set student_id = 'c50b70ac-e10c-45ed-9f1b-228a5d513be6'
  where id = '4e699ec0-e324-4a89-b83b-2785faf2a59e' and student_id is null;
 update public.alumnos set student_id = '58ae5ce5-3cc3-493b-81ac-436ca5a5f1e0'
  where id = 'ca13caaf-3b4f-49fe-80b0-69ef010d925b' and student_id is null;
+
+-- El alumno marca una de SUS tareas como hecha (los alumnos no pueden escribir en `alumnos`, por eso es un RPC).
+-- Devuelve la lista de tareas actualizada. La tarea queda guardada con hecha_por = 'alumno' para que el profesor la vea opaca.
+create or replace function public.mi_aula_tarea_hecha(p_id text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  uid uuid := auth.uid();
+  em text;
+  v_al public.alumnos;
+  nuevas jsonb;
+begin
+  if uid is null then raise exception 'No autenticado'; end if;
+  select email into em from public.students where id = uid;
+  select * into v_al from public.alumnos
+   where student_id = uid or (em is not null and lower(btrim(correo)) = lower(btrim(em)))
+   order by (student_id = uid) desc nulls last
+   limit 1;
+  if not found then raise exception 'Sin ficha de alumno'; end if;
+  select coalesce(jsonb_agg(case when t->>'id' = p_id
+                                 then t || jsonb_build_object('hecha', true, 'hecha_por', 'alumno', 'hecha_el', now())
+                                 else t end order by ord), '[]'::jsonb)
+    into nuevas
+    from jsonb_array_elements(coalesce(v_al.datos->'_tareas', '[]'::jsonb)) with ordinality as x(t, ord);
+  update public.alumnos set datos = jsonb_set(coalesce(datos, '{}'::jsonb), '{_tareas}', nuevas) where id = v_al.id;
+  return nuevas;
+end;
+$$;
+revoke all on function public.mi_aula_tarea_hecha(text) from public, anon;
+grant execute on function public.mi_aula_tarea_hecha(text) to authenticated;
