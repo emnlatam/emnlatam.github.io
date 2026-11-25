@@ -2,6 +2,37 @@
 -- Los alumnos no pueden leer alumnos/clases/cursos_meet (RLS solo staff), así que este RPC
 -- (security definer) devuelve solo SUS datos. El staff puede pasar p_student para ver a otro alumno.
 -- La ficha se liga por alumnos.student_id o, si no está ligada, por correo.
+-- Alumnos (con cuenta) de un profesor: los que lo tienen asignado en algún curso (alumnos.profes_curso).
+-- El profesor se reconoce por el correo de su cuenta = profesores.correo. Los nombres de Airtable traen ":" al final.
+create or replace function public.mi_aula_mis_alumnos()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  uid uuid := auth.uid();
+  em text;
+  pn text;
+begin
+  if uid is null then raise exception 'No autenticado'; end if;
+  select email into em from public.students where id = uid;
+  select lower(btrim(rtrim(btrim(nombre), ':'))) into pn from public.profesores
+   where em is not null and lower(btrim(correo)) = lower(btrim(em)) limit 1;
+  if pn is null then return '[]'::jsonb; end if;
+  return coalesce((
+    select jsonb_agg(jsonb_build_object('id', a.student_id, 'nombre', a.nombre) order by a.nombre)
+    from public.alumnos a
+    where a.student_id is not null and a.activo
+      and exists (select 1 from jsonb_each_text(a.profes_curso) j
+                   where lower(btrim(rtrim(btrim(j.value), ':'))) = pn)
+  ), '[]'::jsonb);
+end;
+$$;
+revoke all on function public.mi_aula_mis_alumnos() from public, anon;
+grant execute on function public.mi_aula_mis_alumnos() to authenticated;
+
+-- mi_aula_resumen: un profesor (no admin) solo puede ver a SUS alumnos.
 create or replace function public.mi_aula_resumen(p_student uuid default null)
 returns jsonb
 language plpgsql
@@ -18,6 +49,10 @@ begin
   tgt := uid;
   if p_student is not null and p_student <> uid then
     if not public.emn_is_staff() then raise exception 'Sin permiso'; end if;
+    if not exists (select 1 from public.students where id = uid and role = 'admin')
+       and not exists (select 1 from jsonb_array_elements(public.mi_aula_mis_alumnos()) x where (x->>'id')::uuid = p_student) then
+      raise exception 'Sin permiso';
+    end if;
     tgt := p_student;
   end if;
 

@@ -399,7 +399,7 @@ function renderProfes(){
     return `<div class="al" data-id="${p.id}">
       <div class="al__main">
         <div class="al__name">${esc(p.nombre)}</div>
-        <div class="al__meta">${[p.especializacion, p.tipo, p.pais, p.celular].filter(Boolean).map(esc).join(' · ') || '—'}</div>
+        <div class="al__meta">${[p.especializacion, p.tipo, p.pais, p.correo, p.celular].filter(Boolean).map(esc).join(' · ') || '—'}</div>
         ${cal ? `<div class="al__meta"><a href="${esc(cal)}" target="_blank" rel="noopener">Calendly →</a></div>` : ''}
       </div>
       <div class="al__acts">

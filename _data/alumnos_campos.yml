@@ -62,4 +62,5 @@ profesores_campos:
   - { key: tipo,            label: Tipo,           airtable: type }
   - { key: pais,            label: País,           airtable: professors country }
   - { key: calendly,        label: Calendly,       airtable: professors calendly,     type: url }
+  - { key: correo,          label: Correo,         airtable: Professors Email,        type: email }
   - { key: celular,         label: Celular,        airtable: Professors cell phone,   type: tel }

@@ -280,7 +280,7 @@ const conv = (fecha, hora) => { const dt = limaInstant(fecha, hora); return { f:
 function lastSunday(y, m){ const d = new Date(y, m+1, 0); d.setDate(d.getDate() - d.getDay()); return d; }
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-const S = { me: null, target: null, isAdmin: false, students: [], resumen: null, practice: [], career: null, vy: 0, vm: 0 };
+const S = { me: null, target: null, isAdmin: false, isProf: false, students: [], resumen: null, practice: [], career: null, vy: 0, vm: 0 };
 
 async function loadTarget(){
   const sb = emnSupabase, tid = S.target;
@@ -377,7 +377,10 @@ function getData(){
     progress.push({ label: name, count: done + ' / ' + rows.length, barStyle: 'height:100%;background:#C8102E;border-radius:999px;width:' + pct + '%;' });
   });
 
-  const picker = (S.isAdmin ? '<select data-act="student" aria-label="Ver como alumno" style="font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 600; color: #1a1a1d; background: #ffffff; border: 1.5px solid #d5d8df; border-radius: 999px; padding: 9px 14px; min-height: 44px">' +
+  const pickStyle = 'font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 600; color: #1a1a1d; background: #ffffff; border: 1.5px solid #d5d8df; border-radius: 999px; padding: 9px 14px; min-height: 44px';
+  const picker = S.isProf ? '<select data-act="student" aria-label="Ver alumno" style="' + pickStyle + '">' +
+    S.students.map(x => '<option value="' + x.id + '"' + (x.id === S.target ? ' selected' : '') + '>' + esc(x.full_name || x.email) + '</option>').join('') + '</select>'
+    : (S.isAdmin ? '<select data-act="student" aria-label="Ver como alumno" style="font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 600; color: #1a1a1d; background: #ffffff; border: 1.5px solid #d5d8df; border-radius: 999px; padding: 9px 14px; min-height: 44px">' +
     '<option value="' + S.me + '"' + (S.target === S.me ? ' selected' : '') + '>Mi vista (admin)</option>' +
     S.students.filter(x => x.id !== S.me).map(x => '<option value="' + x.id + '"' + (x.id === S.target ? ' selected' : '') + '>' + esc(x.full_name || x.email) + '</option>').join('') + '</select>' : '');
 
@@ -427,13 +430,22 @@ emnInit().then(async () => {
     gate.innerHTML = 'Inicia sesión para entrar a tu aula. <a href="/emn-login">Inicia sesión</a>';
     gate.hidden = false; return;
   }
-  if(role !== 'admin' && role !== 'student' && role !== 'alumno'){
+  if(role !== 'admin' && role !== 'professor' && role !== 'student' && role !== 'alumno'){
     gate.textContent = 'Tu vista de Mi Aula está en construcción.';
     gate.hidden = false; return;
   }
-  S.me = emnSession.user.id; S.target = S.me; S.isAdmin = role === 'admin';
+  S.me = emnSession.user.id; S.target = S.me; S.isAdmin = role === 'admin'; S.isProf = role === 'professor';
   const n = new Date(); S.vy = n.getFullYear(); S.vm = n.getMonth();
-  if(S.isAdmin){
+  if(S.isProf){
+    // El profesor ve a SUS alumnos (los que lo tienen asignado en algún curso) en un desplegable.
+    const r = await emnSupabase.rpc('mi_aula_mis_alumnos');
+    S.students = (r.data || []).map(x => ({ id: x.id, full_name: x.nombre }));
+    if(!S.students.length){
+      gate.textContent = 'Todavía no tienes alumnos asignados con cuenta en la app. Cuando Daniel te asigne un curso, aparecerán aquí.';
+      gate.hidden = false; return;
+    }
+    S.target = S.students[0].id;
+  } else if(S.isAdmin){
     const r = await emnSupabase.from('students').select('id,full_name,email,role').eq('role', 'student').order('full_name');
     S.students = r.data || [];
   }
