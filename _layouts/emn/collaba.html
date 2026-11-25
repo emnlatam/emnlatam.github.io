@@ -11,133 +11,139 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/assets/js/emn-auth.js?v={{ site.time | date: '%s' }}"></script>
 <style>
-body{ margin:0; background:#fff; }
+body{ margin:0; background:#FBFBFC; }
 .cb{
   --red:#C8102E; --red-dark:#9C0C24; --red-tint:#FCE9EB;
   --ink:#1A1A1D; --g1:#F5F5F6; --g2:#E8E8EA; --g3:#C9C9CD; --g4:#8A8A90; --g5:#5B5B62;
-  display:grid; grid-template-columns:232px 1fr; min-height:calc(100vh - 64px);
-  font-family:Inter,system-ui,sans-serif; color:var(--ink); font-size:14px; line-height:1.4;
+  max-width:1240px; margin:0 auto; padding:18px 28px 36px; display:flex; flex-direction:column; gap:12px;
+  font-family:Inter,system-ui,sans-serif; color:var(--ink); font-size:13.5px; line-height:1.35;
 }
 .cb *{ box-sizing:border-box; }
-.cb button{ font-family:inherit; cursor:pointer; }
+.cb button, .cb select{ font-family:inherit; cursor:pointer; }
 
-/* ---- sidebar ---- */
-.cb-side{ border-right:1px solid var(--g2); background:#fff; padding:28px 18px; display:flex; flex-direction:column; gap:6px; }
-.cb-brand{ display:flex; align-items:center; gap:10px; padding:0 10px 22px; }
-.cb-brand i{ width:34px; height:34px; border-radius:9px; background:var(--red); display:grid; place-items:center; }
-.cb-brand i svg{ width:18px; height:18px; fill:#fff; }
-.cb-brand b{ font-family:Fraunces,serif; font-size:21px; font-weight:600; letter-spacing:-.01em; }
-.cb-brand small{ display:block; font-size:11px; color:var(--g4); font-family:Inter; font-weight:500; letter-spacing:.04em; text-transform:uppercase; margin-top:-2px; }
-.cb-nav-label{ font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--g4); padding:10px 10px 6px; }
-.cb-nav{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:9px; color:var(--g5); font-weight:500; border:0; background:none; text-align:left; width:100%; }
-.cb-nav svg{ width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:none; }
-.cb-nav.on{ background:var(--g1); color:var(--ink); box-shadow:inset 3px 0 0 var(--red); }
-.cb-nav[disabled]{ cursor:default; opacity:.55; }
-.cb-nav em{ margin-left:auto; font-style:normal; font-size:10px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--g4); background:var(--g1); padding:2px 7px; border-radius:99px; }
-.cb-side-foot{ margin-top:auto; padding:14px 12px; border-radius:10px; background:var(--g1); color:var(--g5); font-size:12.5px; }
-.cb-side-foot b{ color:var(--ink); display:block; margin-bottom:3px; font-weight:600; }
-
-/* ---- main ---- */
-.cb-main{ padding:30px 36px 56px; background:#FBFBFC; display:flex; flex-direction:column; gap:22px; min-width:0; }
-.cb-top{ display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap; }
-.cb-top h1{ font-family:Fraunces,serif; font-weight:600; font-size:32px; letter-spacing:-.02em; margin:0; line-height:1.1; }
-.cb-top p{ margin:6px 0 0; color:var(--g5); }
-.cb-chips{ display:flex; gap:10px; flex-wrap:wrap; }
-.cb-chip{ background:#fff; border:1px solid var(--g2); border-radius:12px; padding:9px 16px; min-width:104px; }
-.cb-chip span{ display:block; font-size:10.5px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--g4); }
-.cb-chip b{ font-size:19px; font-weight:600; font-variant-numeric:tabular-nums; }
+/* ---- top strip ---- */
+.cb-top{ display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+.cb-top h1{ font-family:Fraunces,serif; font-weight:600; font-size:24px; letter-spacing:-.02em; margin:0; line-height:1.1; display:flex; align-items:center; gap:10px; }
+.cb-top h1 i{ width:28px; height:28px; border-radius:8px; background:var(--red); display:grid; place-items:center; }
+.cb-top h1 i svg{ width:15px; height:15px; fill:#fff; }
+.cb-chips{ display:flex; gap:8px; flex-wrap:wrap; }
+.cb-chip{ background:#fff; border:1px solid var(--g2); border-radius:10px; padding:5px 12px; display:flex; align-items:baseline; gap:8px; }
+.cb-chip span{ font-size:10px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--g4); }
+.cb-chip b{ font-size:14px; font-weight:600; font-variant-numeric:tabular-nums; }
 .cb-chip.red b{ color:var(--red); }
-.cb-tip{ display:flex; gap:10px; align-items:center; background:#fff; border:1px solid var(--g2); border-left:3px solid var(--red); border-radius:10px; padding:11px 16px; color:var(--g5); font-size:13px; }
-.cb-tip svg{ width:18px; height:18px; stroke:var(--red); fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:none; }
-
-.cb-room{ display:flex; gap:14px; align-items:flex-start; background:#fff; border:1px solid var(--g2); border-radius:14px; padding:16px 20px; }
-.cb-room i{ width:10px; height:10px; border-radius:50%; background:var(--g3); margin-top:5px; flex:none; }
+.cb-strip{ display:grid; grid-template-columns:1fr auto; gap:10px; }
+.cb-room{ display:flex; gap:12px; align-items:flex-start; background:#fff; border:1px solid var(--g2); border-radius:12px; padding:9px 16px; }
+.cb-room i{ width:9px; height:9px; border-radius:50%; background:var(--g3); margin-top:5px; flex:none; }
 .cb-room.ok i{ background:#2BA24C; box-shadow:0 0 0 4px #E3F4E8; }
 .cb-room.bad i{ background:var(--red); box-shadow:0 0 0 4px var(--red-tint); }
-.cb-room b{ display:block; font-size:15px; font-weight:600; }
-.cb-room span{ display:block; color:var(--g5); margin-top:2px; }
+.cb-room b{ display:block; font-size:13.5px; font-weight:600; }
+.cb-room span{ display:block; color:var(--g5); font-size:12.5px; }
 .cb-room a{ color:var(--red); font-weight:600; }
-.cb-card{ background:#fff; border:1px solid var(--g2); border-radius:16px; padding:22px 24px; box-shadow:0 1px 2px rgba(20,20,30,.03); }
-.cb-card-h{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; flex-wrap:wrap; }
-.cb-card-h h2{ margin:0; font-size:15px; font-weight:600; letter-spacing:.01em; display:flex; align-items:center; gap:9px; }
-.cb-card-h h2::before{ content:''; width:8px; height:8px; border-radius:50%; background:var(--red); }
+.cb-tip{ display:flex; gap:9px; align-items:center; background:#fff; border:1px solid var(--g2); border-left:3px solid var(--red); border-radius:12px; padding:9px 14px; color:var(--g5); font-size:12.5px; max-width:340px; }
+.cb-tip svg{ width:17px; height:17px; stroke:var(--red); fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+
+/* ---- cards ---- */
+.cb-card{ background:#fff; border:1px solid var(--g2); border-radius:14px; padding:12px 18px 14px; box-shadow:0 1px 2px rgba(20,20,30,.03); }
+.cb-card-h{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; flex-wrap:wrap; }
+.cb-card-h h2{ margin:0; font-size:13px; font-weight:600; letter-spacing:.02em; text-transform:uppercase; display:flex; align-items:center; gap:8px; }
+.cb-card-h h2::before{ content:''; width:7px; height:7px; border-radius:50%; background:var(--red); }
 .cb-status{ font-size:12px; color:var(--g4); display:flex; align-items:center; gap:6px; }
 .cb-status::before{ content:''; width:7px; height:7px; border-radius:50%; background:var(--g3); }
 .cb-status.ok{ color:var(--g5); } .cb-status.ok::before{ background:#2BA24C; }
+.cb-lbl{ font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--g4); margin-bottom:5px; }
 
-/* ---- metronome ---- */
-.cb-metro{ display:grid; grid-template-columns:minmax(260px,330px) 1fr; gap:34px; align-items:start; }
-.cb-bpm{ text-align:center; }
-.cb-bpm-num{ font-family:Fraunces,serif; font-size:84px; font-weight:500; line-height:1; letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
-.cb-bpm-unit{ color:var(--g4); font-size:13px; margin-top:4px; }
-.cb-bpm-unit b{ color:var(--ink); font-weight:600; }
-.cb-step{ display:flex; justify-content:center; gap:8px; margin:16px 0 12px; }
-.cb-step button{ min-width:46px; height:38px; border-radius:9px; border:1px solid var(--g2); background:#fff; color:var(--ink); font-weight:600; font-size:13px; transition:.12s; }
-.cb-step button:hover{ border-color:var(--g3); background:var(--g1); }
-.cb-step button:active{ transform:scale(.96); }
-.cb-range{ -webkit-appearance:none; appearance:none; width:100%; height:6px; border-radius:99px; background:var(--g2); outline:none; margin:8px 0 2px; }
-.cb-range::-webkit-slider-thumb{ -webkit-appearance:none; width:20px; height:20px; border-radius:50%; background:#fff; border:2px solid var(--red); cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,.15); }
-.cb-range::-moz-range-thumb{ width:16px; height:16px; border-radius:50%; background:#fff; border:2px solid var(--red); cursor:pointer; }
-.cb-range-ends{ display:flex; justify-content:space-between; font-size:11px; color:var(--g4); }
-.cb-play{ display:flex; gap:10px; margin-top:20px; }
-.cb-btn{ height:48px; border-radius:11px; border:1px solid var(--g2); background:#fff; color:var(--ink); font-weight:600; font-size:14px; padding:0 20px; display:inline-flex; align-items:center; justify-content:center; gap:9px; transition:.12s; }
+/* shared controls */
+.cb-range{ -webkit-appearance:none; appearance:none; width:100%; height:5px; border-radius:99px; background:var(--g2); outline:none; margin:0; }
+.cb-range::-webkit-slider-thumb{ -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:#fff; border:2px solid var(--red); cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,.15); }
+.cb-range::-moz-range-thumb{ width:12px; height:12px; border-radius:50%; background:#fff; border:2px solid var(--red); cursor:pointer; }
+.cb-btn{ height:34px; border-radius:9px; border:1px solid var(--g2); background:#fff; color:var(--ink); font-weight:600; font-size:13px; padding:0 14px; display:inline-flex; align-items:center; justify-content:center; gap:7px; transition:.12s; white-space:nowrap; }
 .cb-btn:hover{ background:var(--g1); }
-.cb-btn svg{ width:16px; height:16px; fill:currentColor; }
-.cb-btn.primary{ flex:1; background:var(--red); border-color:var(--red); color:#fff; }
+.cb-btn svg{ width:13px; height:13px; fill:currentColor; }
+.cb-btn.primary{ background:var(--red); border-color:var(--red); color:#fff; min-width:104px; }
 .cb-btn.primary:hover{ background:var(--red-dark); border-color:var(--red-dark); }
 .cb-btn.primary.on{ background:var(--ink); border-color:var(--ink); }
-.cb-metro-right{ display:flex; flex-direction:column; gap:22px; min-width:0; }
-.cb-lbl{ font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--g4); margin-bottom:9px; }
-.cb-seg{ display:inline-flex; background:var(--g1); border-radius:11px; padding:4px; gap:2px; }
-.cb-seg button{ border:0; background:none; padding:9px 22px; border-radius:8px; font-weight:600; color:var(--g5); font-size:13.5px; }
-.cb-seg button.on{ background:#fff; color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.1); }
-.cb-chipsrow{ display:flex; gap:8px; flex-wrap:wrap; }
-.cb-pill{ min-width:64px; height:42px; padding:0 16px; border-radius:10px; border:1px solid var(--g2); background:#fff; font-weight:600; font-size:15px; color:var(--g5); }
+.cb-vol{ display:flex; align-items:center; gap:8px; color:var(--g5); }
+.cb-vol svg{ width:16px; height:16px; stroke:var(--g4); fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+.cb-vol .cb-range{ width:90px; }
+.cb-sel{ height:34px; border-radius:9px; border:1px solid var(--g2); background:#fff; color:var(--ink); font-weight:600; font-size:13px; padding:0 8px; }
+
+/* ---- pistas ---- */
+.cb-trk-row{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.cb-trk-list{ display:flex; gap:6px; flex-wrap:wrap; min-width:0; flex:1; }
+.cb-trk{ display:inline-flex; align-items:center; gap:6px; max-width:230px; height:30px; padding:0 6px 0 12px; border-radius:99px; border:1px solid var(--g2); background:var(--g1); color:var(--g5); font-weight:500; font-size:12.5px; cursor:pointer; }
+.cb-trk span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cb-trk.on{ background:var(--red-tint); border-color:var(--red); color:var(--red); font-weight:600; }
+.cb-trk button{ border:0; background:none; color:inherit; font-size:15px; line-height:1; width:20px; height:20px; border-radius:50%; padding:0; }
+.cb-trk button:hover{ background:rgba(0,0,0,.08); }
+.cb-trk-empty{ color:var(--g4); font-size:12.5px; }
+.cb-player{ display:flex; align-items:center; gap:12px; margin-top:10px; flex-wrap:wrap; }
+.cb-round{ width:38px; height:38px; border-radius:50%; border:0; background:var(--red); color:#fff; display:grid; place-items:center; flex:none; transition:.12s; }
+.cb-round:hover{ background:var(--red-dark); }
+.cb-round:disabled{ background:var(--g3); cursor:default; }
+.cb-round svg{ width:15px; height:15px; fill:#fff; }
+.cb-time{ font-size:12px; color:var(--g5); font-variant-numeric:tabular-nums; min-width:38px; }
+.cb-seek{ flex:1; min-width:140px; }
+.cb-drop{ outline:2px dashed var(--red); outline-offset:-6px; background:var(--red-tint); }
+.cb-note{ margin-top:8px; font-size:11.5px; color:var(--g4); }
+
+/* ---- metrónomo (compacto, horizontal) ---- */
+.cb-met{ display:flex; flex-direction:column; gap:10px; }
+.cb-met-row{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.cb-bpm{ display:flex; align-items:center; gap:8px; }
+.cb-bpm-num{ font-family:Fraunces,serif; font-size:38px; font-weight:500; line-height:1; letter-spacing:-.03em; font-variant-numeric:tabular-nums; min-width:68px; text-align:center; }
+.cb-bpm-unit{ color:var(--g4); font-size:12px; line-height:1.2; min-width:76px; }
+.cb-bpm-unit b{ color:var(--ink); font-weight:600; display:block; }
+.cb-step{ width:30px; height:30px; border-radius:8px; border:1px solid var(--g2); background:#fff; font-weight:600; font-size:15px; line-height:1; color:var(--ink); padding:0; }
+.cb-step:hover{ background:var(--g1); }
+.cb-step:active{ transform:scale(.94); }
+.cb-slider{ flex:1; min-width:150px; }
+.cb-seg{ display:inline-flex; background:var(--g1); border-radius:9px; padding:3px; gap:2px; }
+.cb-seg button{ border:0; background:none; padding:6px 14px; border-radius:7px; font-weight:600; color:var(--g5); font-size:12.5px; }
+.cb-seg button.on{ background:#fff; color:var(--ink); box-shadow:0 1px 2px rgba(0,0,0,.1); }
+.cb-chipsrow{ display:flex; gap:6px; }
+.cb-pill{ min-width:46px; height:30px; padding:0 10px; border-radius:8px; border:1px solid var(--g2); background:#fff; font-weight:600; font-size:13px; color:var(--g5); }
 .cb-pill:hover{ border-color:var(--g3); }
 .cb-pill.on{ border-color:var(--red); background:var(--red-tint); color:var(--red); }
-.cb-beats{ display:flex; gap:12px; flex-wrap:wrap; min-height:44px; align-items:center; }
-.cb-beat{ width:44px; height:44px; border-radius:50%; background:var(--g1); border:2px solid var(--g2); display:grid; place-items:center; font-weight:600; font-size:14px; color:var(--g4); transition:background .06s, transform .06s, border-color .06s; }
-.cb-beat.hit{ background:var(--ink); border-color:var(--ink); color:#fff; transform:scale(1.12); }
+.cb-beats{ display:flex; gap:7px; align-items:center; }
+.cb-beat{ width:26px; height:26px; border-radius:50%; background:var(--g1); border:2px solid var(--g2); display:grid; place-items:center; font-weight:600; font-size:11px; color:var(--g4); transition:background .06s, transform .06s, border-color .06s; }
+.cb-beat.hit{ background:var(--ink); border-color:var(--ink); color:#fff; transform:scale(1.15); }
 .cb-beat.acc.hit{ background:var(--red); border-color:var(--red); }
 .cb-beat.acc{ border-color:#EBB3BB; }
-.cb-row2{ display:flex; gap:26px; flex-wrap:wrap; align-items:center; }
-.cb-toggle{ display:inline-flex; align-items:center; gap:10px; font-weight:500; color:var(--g5); cursor:pointer; user-select:none; }
+.cb-toggle{ display:inline-flex; align-items:center; gap:8px; font-weight:500; color:var(--g5); cursor:pointer; user-select:none; font-size:12.5px; }
 .cb-toggle input{ display:none; }
-.cb-toggle i{ width:38px; height:22px; border-radius:99px; background:var(--g3); position:relative; transition:.15s; flex:none; }
-.cb-toggle i::after{ content:''; position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; transition:.15s; box-shadow:0 1px 2px rgba(0,0,0,.2); }
+.cb-toggle i{ width:32px; height:19px; border-radius:99px; background:var(--g3); position:relative; transition:.15s; flex:none; }
+.cb-toggle i::after{ content:''; position:absolute; top:2.5px; left:2.5px; width:14px; height:14px; border-radius:50%; background:#fff; transition:.15s; box-shadow:0 1px 2px rgba(0,0,0,.2); }
 .cb-toggle input:checked + i{ background:var(--red); }
-.cb-toggle input:checked + i::after{ left:19px; }
-.cb-vol{ display:flex; align-items:center; gap:10px; color:var(--g5); font-weight:500; }
-.cb-vol svg{ width:18px; height:18px; stroke:var(--g4); fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
-.cb-vol .cb-range{ width:120px; margin:0; }
+.cb-toggle input:checked + i::after{ left:15.5px; }
+.cb-sep{ width:1px; align-self:stretch; background:var(--g2); }
 
 /* ---- piano ---- */
-.cb-oct{ display:flex; align-items:center; gap:8px; color:var(--g5); font-size:13px; font-weight:500; }
-.cb-oct button{ width:34px; height:34px; border-radius:9px; border:1px solid var(--g2); background:#fff; font-weight:600; font-size:16px; line-height:1; color:var(--ink); }
+.cb-oct{ display:flex; align-items:center; gap:7px; color:var(--g5); font-size:12.5px; font-weight:500; }
+.cb-oct button{ width:30px; height:30px; border-radius:8px; border:1px solid var(--g2); background:#fff; font-weight:600; font-size:15px; line-height:1; color:var(--ink); padding:0; }
 .cb-oct button:hover{ background:var(--g1); }
-.cb-oct kbd{ font-family:inherit; font-size:11px; font-weight:600; background:var(--g1); border:1px solid var(--g2); border-bottom-width:2px; border-radius:5px; padding:1px 6px; color:var(--g5); }
-.cb-oct .range{ min-width:92px; text-align:center; font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums; }
-.cb-keys{ position:relative; height:250px; user-select:none; -webkit-user-select:none; touch-action:none; background:var(--g2); border-radius:12px; overflow:hidden; border:1px solid var(--g3); }
-.cb-w{ position:absolute; top:0; bottom:0; background:linear-gradient(#fff,#F3F3F5); border-right:1px solid var(--g3); display:flex; flex-direction:column; justify-content:flex-end; align-items:center; padding-bottom:14px; gap:6px; cursor:pointer; transition:background .05s; }
-.cb-w .l{ width:34px; height:34px; border-radius:9px; background:#fff; border:1px solid var(--g3); border-bottom-width:3px; display:grid; place-items:center; font-weight:700; font-size:15px; color:var(--ink); }
-.cb-w .n{ font-size:11px; color:var(--g4); font-weight:500; }
+.cb-oct kbd{ font-family:inherit; font-size:10.5px; font-weight:600; background:var(--g1); border:1px solid var(--g2); border-bottom-width:2px; border-radius:5px; padding:1px 6px; color:var(--g5); }
+.cb-oct .range{ min-width:84px; text-align:center; font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums; }
+.cb-keys{ position:relative; height:210px; user-select:none; -webkit-user-select:none; touch-action:none; background:var(--g2); border-radius:11px; overflow:hidden; border:1px solid var(--g3); }
+.cb-w{ position:absolute; top:0; bottom:0; background:linear-gradient(#fff,#F3F3F5); border-right:1px solid var(--g3); display:flex; flex-direction:column; justify-content:flex-end; align-items:center; padding-bottom:12px; gap:5px; cursor:pointer; transition:background .05s; }
+.cb-w .l{ width:32px; height:32px; border-radius:9px; background:#fff; border:1px solid var(--g3); border-bottom-width:3px; display:grid; place-items:center; font-weight:700; font-size:14px; color:var(--ink); }
+.cb-w .n{ font-size:10.5px; color:var(--g4); font-weight:500; }
 .cb-w.on{ background:linear-gradient(#F7C9D0,#EF9AA6); }
 .cb-w.on .l{ background:var(--red); color:#fff; border-color:var(--red-dark); }
-.cb-b{ position:absolute; top:0; height:60%; background:linear-gradient(#2c2c30,#111114); border-radius:0 0 7px 7px; z-index:2; display:flex; align-items:flex-end; justify-content:center; padding-bottom:12px; cursor:pointer; box-shadow:0 3px 5px rgba(0,0,0,.28); }
-.cb-b .l{ width:28px; height:28px; border-radius:8px; background:#3a3a40; border:1px solid #55555c; border-bottom-width:3px; display:grid; place-items:center; font-weight:700; font-size:13px; color:#fff; }
+.cb-b{ position:absolute; top:0; height:60%; background:linear-gradient(#2c2c30,#111114); border-radius:0 0 7px 7px; z-index:2; display:flex; align-items:flex-end; justify-content:center; padding-bottom:10px; cursor:pointer; box-shadow:0 3px 5px rgba(0,0,0,.28); }
+.cb-b .l{ width:26px; height:26px; border-radius:8px; background:#3a3a40; border:1px solid #55555c; border-bottom-width:3px; display:grid; place-items:center; font-weight:700; font-size:12.5px; color:#fff; }
 .cb-b.on{ background:linear-gradient(#9C0C24,#6a0817); }
 .cb-b.on .l{ background:var(--red); border-color:#e0485f; }
-.cb-help{ margin-top:14px; display:flex; gap:22px; flex-wrap:wrap; color:var(--g4); font-size:12.5px; }
+.cb-help{ margin-top:9px; display:flex; gap:18px; flex-wrap:wrap; color:var(--g4); font-size:12px; }
 .cb-help b{ color:var(--g5); font-weight:600; }
 
-@media (max-width:900px){
-  .cb{ grid-template-columns:1fr; }
-  .cb-side{ display:none; }
-  .cb-main{ padding:22px 16px 44px; }
-  .cb-metro{ grid-template-columns:1fr; gap:24px; }
-  .cb-keys{ height:200px; }
-  .cb-w .l{ width:26px; height:26px; font-size:12px; }
-  .cb-b .l{ width:22px; height:22px; font-size:11px; }
+@media (max-width:760px){
+  .cb{ padding:14px 12px 30px; }
+  .cb-strip{ grid-template-columns:1fr; }
+  .cb-tip{ max-width:none; }
+  .cb-sep{ display:none; }
+  .cb-keys{ height:180px; }
+  .cb-w .l{ width:24px; height:24px; font-size:11.5px; }
+  .cb-b .l{ width:21px; height:21px; font-size:10.5px; }
   .cb-w .n{ display:none; }
 }
 </style>
@@ -146,119 +152,107 @@ body{ margin:0; background:#fff; }
 {% include emn-header.html %}
 
 <div class="cb">
-  <aside class="cb-side">
-    <div class="cb-brand">
-      <i><svg viewBox="0 0 24 24"><path d="M9 3v11.3A3.5 3.5 0 1 0 11 17.5V8.2l8-1.7v6.8a3.5 3.5 0 1 0 2 3.2V3.5z"/></svg></i>
-      <div><b>Collaba</b><small>by EMN</small></div>
+  <div class="cb-top">
+    <h1><i><svg viewBox="0 0 24 24"><path d="M9 3v11.3A3.5 3.5 0 1 0 11 17.5V8.2l8-1.7v6.8a3.5 3.5 0 1 0 2 3.2V3.5z"/></svg></i>Collaba</h1>
+    <div class="cb-chips">
+      <div class="cb-chip red"><span>Tempo</span><b id="chBpm">100 BPM</b></div>
+      <div class="cb-chip"><span>Compás</span><b id="chMeter">4/4</b></div>
+      <div class="cb-chip"><span>Octava</span><b id="chOct">C4</b></div>
     </div>
-    <div class="cb-nav-label">Herramientas</div>
-    <button class="cb-nav on" type="button">
-      <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 5v8M12 5v14M16 5v8"/></svg>Instrumentos
-    </button>
-    <button class="cb-nav" type="button" disabled>
-      <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3.5 19c.6-3 2.8-4.6 5.5-4.6s4.9 1.6 5.5 4.6M15.5 14.6c2.2-.2 4 1 4.6 3.6"/></svg>Sala<em>Pronto</em>
-    </button>
-    <button class="cb-nav" type="button" disabled>
-      <svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>Pistas<em>Pronto</em>
-    </button>
-    <div class="cb-side-foot"><b>Atajos</b>Espacio: iniciar / detener metrónomo<br>↑ ↓: cambiar BPM<br>Z / X: bajar / subir octava</div>
-  </aside>
+  </div>
 
-  <main class="cb-main">
-    <div class="cb-top">
-      <div>
-        <h1>Panel de audio</h1>
-        <p>Piano y metrónomo para tus clases en vivo.</p>
-      </div>
-      <div class="cb-chips">
-        <div class="cb-chip red"><span>Tempo</span><b id="chBpm">100 BPM</b></div>
-        <div class="cb-chip"><span>Compás</span><b id="chMeter">4/4</b></div>
-        <div class="cb-chip"><span>Octava</span><b id="chOct">C4</b></div>
-      </div>
-    </div>
-
+  <div class="cb-strip">
     <div class="cb-room" id="room" aria-live="polite"><i></i><div><b id="roomT">Espacio personal</b><span id="roomD"></span></div></div>
-
     <div class="cb-tip">
       <svg viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4.5" height="6.5" rx="1.5"/><rect x="16.5" y="14" width="4.5" height="6.5" rx="1.5"/></svg>
-      <span>Usa audífonos durante la llamada. Así el micrófono no recoge el piano ni el metrónomo y nadie oye eco.</span>
+      <span>Usa audífonos en la llamada para que nadie oiga eco.</span>
     </div>
+  </div>
 
-    <!-- ===== Metrónomo ===== -->
-    <section class="cb-card">
-      <div class="cb-card-h"><h2>Metrónomo</h2><div class="cb-status" id="metStatus">Detenido</div></div>
-      <div class="cb-metro">
-        <div>
-          <div class="cb-bpm">
-            <div class="cb-bpm-num" id="bpmNum">100</div>
-            <div class="cb-bpm-unit"><span id="bpmPulse">♩</span> = <b id="bpmWord">Andante</b></div>
-          </div>
-          <div class="cb-step">
-            <button type="button" data-d="-5">−5</button>
-            <button type="button" data-d="-1">−1</button>
-            <button type="button" data-d="1">+1</button>
-            <button type="button" data-d="5">+5</button>
-          </div>
-          <input class="cb-range" id="bpmRange" type="range" min="30" max="240" value="100" aria-label="BPM">
-          <div class="cb-range-ends"><span>30</span><span>240</span></div>
-          <div class="cb-play">
-            <button class="cb-btn primary" id="btnPlay" type="button"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg><span>Iniciar</span></button>
-            <button class="cb-btn" id="btnTap" type="button">Tap</button>
-          </div>
-        </div>
-
-        <div class="cb-metro-right">
-          <div>
-            <div class="cb-lbl">Tipo de compás</div>
-            <div class="cb-seg" id="segGroup">
-              <button type="button" data-g="bin" class="on">Binario</button>
-              <button type="button" data-g="ter">Ternario</button>
-            </div>
-          </div>
-          <div>
-            <div class="cb-lbl">Compás</div>
-            <div class="cb-chipsrow" id="meterRow"></div>
-          </div>
-          <div>
-            <div class="cb-lbl">Pulso</div>
-            <div class="cb-beats" id="beats"></div>
-          </div>
-          <div class="cb-row2">
-            <label class="cb-toggle"><input type="checkbox" id="subToggle"><i></i>Subdivisión</label>
-            <div class="cb-vol">
-              <svg viewBox="0 0 24 24"><path d="M4 9.5v5h3.5l5 4v-13l-5 4z"/><path d="M16 9a4.2 4.2 0 0 1 0 6"/></svg>
-              <input class="cb-range" id="metVol" type="range" min="0" max="100" value="80" aria-label="Volumen del metrónomo">
-            </div>
-          </div>
-        </div>
+  <!-- ===== Pistas ===== -->
+  <section class="cb-card" id="trkCard">
+    <div class="cb-card-h"><h2>Pistas</h2><div class="cb-status" id="trkStatus">Sin pista cargada</div></div>
+    <div class="cb-trk-row">
+      <label class="cb-btn" for="trkFile" style="cursor:pointer">
+        <svg viewBox="0 0 24 24"><path d="M11 4h2v8h3l-4 5-4-5h3zM5 18h14v2H5z" transform="rotate(180 12 12)"/></svg>Cargar audio
+      </label>
+      <input type="file" id="trkFile" accept="audio/*" multiple hidden>
+      <div class="cb-trk-list" id="trkList"><span class="cb-trk-empty">Carga un audio o arrástralo aquí (mp3, wav, m4a…).</span></div>
+    </div>
+    <div class="cb-player">
+      <button class="cb-round" id="trkPlay" type="button" disabled aria-label="Reproducir"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg></button>
+      <span class="cb-time" id="trkCur">0:00</span>
+      <input class="cb-range cb-seek" id="trkSeek" type="range" min="0" max="1000" value="0" disabled aria-label="Posición">
+      <span class="cb-time" id="trkDur">0:00</span>
+      <select class="cb-sel" id="trkRate" aria-label="Velocidad">
+        <option value="0.5">0.5×</option><option value="0.6">0.6×</option><option value="0.7">0.7×</option><option value="0.8">0.8×</option><option value="0.9">0.9×</option>
+        <option value="1" selected>1×</option><option value="1.1">1.1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option>
+      </select>
+      <div class="cb-vol">
+        <svg viewBox="0 0 24 24"><path d="M4 9.5v5h3.5l5 4v-13l-5 4z"/><path d="M16 9a4.2 4.2 0 0 1 0 6"/></svg>
+        <input class="cb-range" id="trkVol" type="range" min="0" max="100" value="85" aria-label="Volumen de la pista">
       </div>
-    </section>
+    </div>
+    <div class="cb-note">Por ahora la pista suena solo en tu computadora. Subirla a la sala para que suene a la vez en las dos, con play sincronizado, es el siguiente paso.</div>
+  </section>
 
-    <!-- ===== Piano ===== -->
-    <section class="cb-card">
-      <div class="cb-card-h">
-        <h2>Piano</h2>
-        <div style="display:flex;align-items:center;gap:22px;flex-wrap:wrap">
-          <div class="cb-oct">
-            <kbd>Z</kbd><button type="button" id="octDown" aria-label="Bajar octava">−</button>
-            <span class="range" id="octRange">C4 – E5</span>
-            <button type="button" id="octUp" aria-label="Subir octava">+</button><kbd>X</kbd>
-          </div>
-          <div class="cb-vol">
-            <svg viewBox="0 0 24 24"><path d="M4 9.5v5h3.5l5 4v-13l-5 4z"/><path d="M16 9a4.2 4.2 0 0 1 0 6"/></svg>
-            <input class="cb-range" id="pianoVol" type="range" min="0" max="100" value="85" aria-label="Volumen del piano">
-          </div>
-          <div class="cb-status" id="pianoStatus">Toca una tecla para activar el sonido</div>
+  <!-- ===== Metrónomo ===== -->
+  <section class="cb-card">
+    <div class="cb-card-h"><h2>Metrónomo</h2><div class="cb-status" id="metStatus">Detenido</div></div>
+    <div class="cb-met">
+      <div class="cb-met-row">
+        <div class="cb-bpm">
+          <button class="cb-step" type="button" data-d="-1" aria-label="Bajar un BPM">−</button>
+          <div class="cb-bpm-num" id="bpmNum">100</div>
+          <button class="cb-step" type="button" data-d="1" aria-label="Subir un BPM">+</button>
+          <div class="cb-bpm-unit"><span id="bpmPulse">♩</span> BPM<b id="bpmWord">Andante</b></div>
+        </div>
+        <input class="cb-range cb-slider" id="bpmRange" type="range" min="30" max="240" value="100" aria-label="BPM">
+        <button class="cb-btn primary" id="btnPlay" type="button"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg><span>Iniciar</span></button>
+        <button class="cb-btn" id="btnTap" type="button">Tap</button>
+      </div>
+      <div class="cb-met-row">
+        <div class="cb-seg" id="segGroup">
+          <button type="button" data-g="bin" class="on">Binario</button>
+          <button type="button" data-g="ter">Ternario</button>
+        </div>
+        <div class="cb-chipsrow" id="meterRow"></div>
+        <div class="cb-sep"></div>
+        <div class="cb-beats" id="beats" aria-label="Pulso"></div>
+        <div class="cb-sep"></div>
+        <label class="cb-toggle"><input type="checkbox" id="subToggle"><i></i>Subdivisión</label>
+        <div class="cb-vol">
+          <svg viewBox="0 0 24 24"><path d="M4 9.5v5h3.5l5 4v-13l-5 4z"/><path d="M16 9a4.2 4.2 0 0 1 0 6"/></svg>
+          <input class="cb-range" id="metVol" type="range" min="0" max="100" value="80" aria-label="Volumen del metrónomo">
         </div>
       </div>
-      <div class="cb-keys" id="keys"></div>
-      <div class="cb-help">
-        <span><b>Fila central</b> (A S D F G H J K L Ñ): teclas blancas</span>
-        <span><b>Fila superior</b> (W E T Y U O P): teclas negras</span>
-        <span>También puedes tocar con el mouse o la pantalla táctil.</span>
+    </div>
+  </section>
+
+  <!-- ===== Piano ===== -->
+  <section class="cb-card">
+    <div class="cb-card-h">
+      <h2>Piano</h2>
+      <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+        <div class="cb-oct">
+          <kbd>Z</kbd><button type="button" id="octDown" aria-label="Bajar octava">−</button>
+          <span class="range" id="octRange">C4 – E5</span>
+          <button type="button" id="octUp" aria-label="Subir octava">+</button><kbd>X</kbd>
+        </div>
+        <div class="cb-vol">
+          <svg viewBox="0 0 24 24"><path d="M4 9.5v5h3.5l5 4v-13l-5 4z"/><path d="M16 9a4.2 4.2 0 0 1 0 6"/></svg>
+          <input class="cb-range" id="pianoVol" type="range" min="0" max="100" value="85" aria-label="Volumen del piano">
+        </div>
+        <div class="cb-status" id="pianoStatus">Toca una tecla para activar el sonido</div>
       </div>
-    </section>
-  </main>
+    </div>
+    <div class="cb-keys" id="keys"></div>
+    <div class="cb-help">
+      <span><b>Fila central</b> (A S D F G H J K L Ñ): blancas</span>
+      <span><b>Fila superior</b> (W E T Y U O P): negras</span>
+      <span><b>Espacio</b>: metrónomo · <b>↑ ↓</b>: BPM</span>
+    </div>
+  </section>
 </div>
 
 {% raw %}
@@ -311,8 +305,8 @@ const BLACK_PC = [1,3,6,8,10];
 let octave = 4; // C4 = midi 60
 const baseMidi = () => (octave + 1) * 12;
 const keysEl = $('keys');
-const keyEls = {};      // midi -> element
-const held = new Map(); // key id (code or pointer) -> midi
+const keyEls = {};        // midi -> element
+const held = new Map();   // key id (code or pointer) -> midi
 const voices = new Map(); // midi -> {gain, src, released}
 
 function renderKeys(){
@@ -471,7 +465,7 @@ document.querySelectorAll('#segGroup button').forEach(b => b.onclick = () => {
   met.group = b.dataset.g;
   setMeter(GROUPS[met.group].includes(met.meter) ? met.meter : GROUPS[met.group][0]);
 });
-document.querySelectorAll('.cb-step button').forEach(b => b.onclick = () => setBpm(met.bpm + (+b.dataset.d)));
+document.querySelectorAll('.cb-step').forEach(b => b.onclick = () => setBpm(met.bpm + (+b.dataset.d)));
 $('bpmRange').oninput = e => setBpm(+e.target.value);
 $('subToggle').onchange = e => { met.sub = e.target.checked; met.tick = 0; };
 $('metVol').oninput = e => { if(metBus) metBus.gain.value = e.target.value / 100; };
@@ -535,6 +529,85 @@ $('btnTap').onclick = () => {
   }
 };
 
+/* ============================= PISTAS ============================= */
+// Local player for now: the audio stays on this computer (nothing is uploaded).
+// Speed keeps the pitch (preservesPitch). Cloud upload + synced play between teacher and student is the next step.
+const tracks = [];           // { id, name, url }
+let curTrack = null;         // index in tracks
+let seeking = false, trkSeq = 0;
+const au = new Audio();
+au.preload = 'auto';
+au.preservesPitch = true; au.webkitPreservesPitch = true; au.mozPreservesPitch = true;
+au.volume = $('trkVol').value / 100;
+
+const mmss = s => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const PLAY_SVG = '<svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>';
+const PAUSE_SVG = '<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4.2" height="14" rx="1"/><rect x="13.8" y="5" width="4.2" height="14" rx="1"/></svg>';
+
+function drawTracks(){
+  const box = $('trkList'); box.innerHTML = '';
+  if(!tracks.length){
+    const e = document.createElement('span'); e.className = 'cb-trk-empty';
+    e.textContent = 'Carga un audio o arrástralo aquí (mp3, wav, m4a…).'; box.appendChild(e); return;
+  }
+  tracks.forEach((t, i) => {
+    const c = document.createElement('div'); c.className = 'cb-trk' + (i === curTrack ? ' on' : ''); c.title = t.name;
+    const n = document.createElement('span'); n.textContent = t.name;
+    const x = document.createElement('button'); x.type = 'button'; x.textContent = '×'; x.setAttribute('aria-label', 'Quitar ' + t.name);
+    x.onclick = ev => { ev.stopPropagation(); removeTrack(i); };
+    c.onclick = () => selectTrack(i);
+    c.append(n, x); box.appendChild(c);
+  });
+}
+function drawTransport(){
+  const has = curTrack !== null;
+  $('trkPlay').disabled = !has; $('trkSeek').disabled = !has;
+  $('trkPlay').innerHTML = (has && !au.paused) ? PAUSE_SVG : PLAY_SVG;
+  $('trkPlay').setAttribute('aria-label', (has && !au.paused) ? 'Pausar' : 'Reproducir');
+  const st = $('trkStatus');
+  if(!has){ st.className = 'cb-status'; st.textContent = 'Sin pista cargada'; }
+  else { st.className = 'cb-status' + (au.paused ? '' : ' ok'); st.textContent = (au.paused ? 'En pausa · ' : 'Sonando · ') + tracks[curTrack].name; }
+}
+function selectTrack(i){
+  if(i === curTrack) return;
+  au.pause(); curTrack = i; au.src = tracks[i].url; au.playbackRate = +$('trkRate').value;
+  $('trkSeek').value = 0; $('trkCur').textContent = '0:00'; $('trkDur').textContent = '0:00';
+  drawTracks(); drawTransport();
+}
+function removeTrack(i){
+  const t = tracks[i];
+  if(i === curTrack){ au.pause(); au.removeAttribute('src'); au.load(); curTrack = null; $('trkSeek').value = 0; $('trkCur').textContent = '0:00'; $('trkDur').textContent = '0:00'; }
+  else if(curTrack !== null && i < curTrack) curTrack--;
+  URL.revokeObjectURL(t.url); tracks.splice(i, 1);
+  if(curTrack === null && tracks.length) selectTrack(0); else { drawTracks(); drawTransport(); }
+}
+function addFiles(files){
+  const ok = [...files].filter(f => f.type.startsWith('audio/') || /\.(mp3|wav|m4a|aac|ogg|flac)$/i.test(f.name));
+  if(!ok.length){ const st = $('trkStatus'); st.className = 'cb-status'; st.textContent = 'Ese archivo no es un audio'; return; }
+  const first = tracks.length;
+  ok.forEach(f => tracks.push({ id: ++trkSeq, name: f.name.replace(/\.[^.]+$/, ''), url: URL.createObjectURL(f) }));
+  if(curTrack === null) selectTrack(first); else { drawTracks(); drawTransport(); }
+}
+$('trkFile').onchange = e => { addFiles(e.target.files); e.target.value = ''; };
+$('trkPlay').onclick = () => { if(curTrack === null) return; au.paused ? au.play().catch(() => {}) : au.pause(); };
+$('trkRate').onchange = e => { au.playbackRate = +e.target.value; e.target.blur(); };  // blur: so the piano letters keep working
+$('trkVol').oninput = e => { au.volume = e.target.value / 100; };
+$('trkSeek').oninput = e => { seeking = true; if(au.duration) $('trkCur').textContent = mmss(au.duration * e.target.value / 1000); };
+$('trkSeek').onchange = e => { if(au.duration) au.currentTime = au.duration * e.target.value / 1000; seeking = false; e.target.blur(); };
+au.addEventListener('timeupdate', () => {
+  if(seeking || !au.duration) return;
+  $('trkSeek').value = Math.round(au.currentTime / au.duration * 1000); $('trkCur').textContent = mmss(au.currentTime);
+});
+au.addEventListener('loadedmetadata', () => { $('trkDur').textContent = mmss(au.duration); });
+['play','pause','ended'].forEach(t => au.addEventListener(t, drawTransport));
+au.addEventListener('error', () => { if(curTrack !== null){ const st = $('trkStatus'); st.className = 'cb-status'; st.textContent = 'No se pudo leer ese audio'; } });
+// drag & drop onto the card
+const card = $('trkCard');
+['dragenter','dragover'].forEach(t => card.addEventListener(t, e => { e.preventDefault(); card.classList.add('cb-drop'); }));
+['dragleave','drop'].forEach(t => card.addEventListener(t, e => { e.preventDefault(); card.classList.remove('cb-drop'); }));
+card.addEventListener('drop', e => { if(e.dataTransfer && e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
+window.addEventListener('pagehide', () => tracks.forEach(t => URL.revokeObjectURL(t.url)));
+
 /* ============================= KEYBOARD ============================= */
 const typing = t => t && (t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || (t.tagName === 'INPUT' && t.type !== 'range' && t.type !== 'checkbox'));
 document.addEventListener('keydown', e => {
@@ -562,7 +635,7 @@ document.addEventListener('visibilitychange', () => { if(document.hidden) liftAl
 /* ============================= SALA DE LA CLASE ============================= */
 // La sala es una clase (?clase=<id>). La base de datos decide si esta cuenta puede entrar (collaba_acceso):
 // solo el alumno de esa clase y su profesor, 12 h antes y 12 h después. Si algo falla, no se entra a la sala
-// y la persona sigue en su espacio personal (el piano y el metrónomo funcionan igual).
+// y la persona sigue en su espacio personal (el piano, el metrónomo y las pistas funcionan igual).
 function setRoom(kind, title, text, linkHtml){
   const r = $('room'); r.className = 'cb-room' + (kind ? ' ' + kind : '');
   $('roomT').textContent = title;
@@ -571,10 +644,10 @@ function setRoom(kind, title, text, linkHtml){
 }
 const fmtWhen = iso => new Intl.DateTimeFormat('es', { weekday:'long', day:'numeric', month:'long', hour:'numeric', minute:'2-digit' }).format(new Date(iso));
 function linkTo(href, label){ const a = document.createElement('a'); a.href = href; a.textContent = label; return a; }
-const PERSONAL = 'Sigues en tu espacio personal: el piano y el metrónomo funcionan igual.';
+const PERSONAL = 'Sigues en tu espacio personal: todo funciona igual.';
 (async function checkRoom(){
   const clase = new URLSearchParams(location.search).get('clase');
-  if(!clase){ setRoom('', 'Espacio personal', 'Práctica individual. Para entrar a la sala de tu clase usa el botón de Collaba en Mi Aula.'); return; }
+  if(!clase){ setRoom('', 'Espacio personal', 'Práctica individual. Para la sala de tu clase usa el botón de Collaba en Mi Aula.'); return; }
   if(!/^[0-9a-f-]{36}$/i.test(clase)){ setRoom('bad', 'Este enlace no es válido', PERSONAL, linkTo('/mi-aula', 'Volver a Mi Aula')); return; }
   setRoom('', 'Verificando tu sala…', '');
   try{
@@ -601,7 +674,7 @@ const PERSONAL = 'Sigues en tu espacio personal: el piano y el metrónomo funcio
 })();
 
 /* ============================= INIT ============================= */
-drawBpm(); drawMeters(); drawBeats(); renderKeys();
+drawBpm(); drawMeters(); drawBeats(); renderKeys(); drawTracks(); drawTransport();
 // the first interaction anywhere unlocks audio and starts loading the piano
 ['pointerdown','keydown'].forEach(t => document.addEventListener(t, function once(){
   document.removeEventListener(t, once, true); getCtx(); preload();
