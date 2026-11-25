@@ -39,12 +39,16 @@ body{ margin:0; background:#FBFBFC; }
 .cb-room span{ display:block; color:var(--g5); font-size:12.5px; }
 .cb-room a{ color:var(--red); font-weight:600; }
 /* ventana flotante: audífonos */
-.cb-phones{ border:0; border-radius:18px; padding:30px 34px 26px; max-width:380px; width:calc(100% - 32px); text-align:center; box-shadow:0 24px 70px rgba(20,20,30,.28); font-family:Inter,system-ui,sans-serif; color:#1A1A1D; }
+.cb-phones{ border:0; border-radius:18px; padding:30px 34px 26px; max-width:420px; width:calc(100% - 32px); text-align:center; box-shadow:0 24px 70px rgba(20,20,30,.28); font-family:Inter,system-ui,sans-serif; color:#1A1A1D; }
 .cb-phones::backdrop{ background:rgba(20,20,30,.5); }
 .cb-phones .ic{ width:58px; height:58px; border-radius:50%; background:#FCE9EB; display:grid; place-items:center; margin:0 auto 14px; }
 .cb-phones .ic svg{ width:28px; height:28px; stroke:#C8102E; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 .cb-phones h3{ margin:0 0 8px; font-family:Fraunces,serif; font-size:21px; font-weight:600; letter-spacing:-.01em; line-height:1.25; }
 .cb-phones p{ margin:0 0 20px; color:#5B5B62; font-size:13.5px; line-height:1.45; }
+.cb-phones .tips{ list-style:none; margin:0 0 20px; padding:0; text-align:left; color:#5B5B62; font-size:13.5px; line-height:1.4; }
+.cb-phones .tips li{ position:relative; padding:0 0 9px 18px; }
+.cb-phones .tips li::before{ content:''; position:absolute; left:2px; top:6px; width:7px; height:7px; border-radius:50%; background:#C8102E; }
+.cb-phones .tips b{ color:#1A1A1D; font-weight:600; }
 .cb-phones button{ font-family:inherit; cursor:pointer; width:100%; height:42px; border-radius:11px; border:0; background:#C8102E; color:#fff; font-weight:600; font-size:14px; }
 .cb-phones button:hover{ background:#9C0C24; }
 /* sala: quién toca + retraso de Meet */
@@ -325,8 +329,13 @@ body{ margin:0; background:#FBFBFC; }
 <!-- Aviso al entrar -->
 <dialog class="cb-phones" id="phones" aria-labelledby="phonesT">
   <div class="ic"><svg viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4.5" height="6.5" rx="1.5"/><rect x="16.5" y="14" width="4.5" height="6.5" rx="1.5"/></svg></div>
-  <h3 id="phonesT">Usa audífonos en la llamada para que nadie oiga eco</h3>
-  <p>Así el micrófono no recoge el piano, el metrónomo ni las pistas.</p>
+  <h3 id="phonesT">Antes de entrar, prepara tu computadora</h3>
+  <ul class="tips">
+    <li><b>Usa audífonos</b> para que nadie oiga eco.</li>
+    <li><b>Cierra las demás pestañas</b> del navegador, sobre todo las de video o música.</li>
+    <li><b>Cierra los programas</b> que no necesites: Zoom, Meet, Teams, Discord, juegos y descargas.</li>
+    <li>Si usas una interfaz de audio, conéctala <b>antes</b> de entrar y elígela en Llamada.</li>
+  </ul>
   <button type="button" id="phonesOk">Entendido</button>
 </dialog>
 
