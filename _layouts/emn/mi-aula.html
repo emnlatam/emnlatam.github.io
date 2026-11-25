@@ -377,7 +377,10 @@ function getData(){
     progress.push({ label: name, count: done + ' / ' + rows.length, barStyle: 'height:100%;background:#C8102E;border-radius:999px;width:' + pct + '%;' });
   });
 
-  const pickStyle = 'font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 600; color: #1a1a1d; background: #ffffff; border: 1.5px solid #d5d8df; border-radius: 999px; padding: 9px 14px; min-height: 44px';
+  // Tareas pendientes: las que el profesor deja en /calendario (alumnos.datos._tareas) y aún no están hechas.
+  const linkify = txt => esc(txt).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:#C8102E;text-decoration:underline">Abrir link</a>').replace(/\n/g, '<br>');
+  const tasks = (S.resumen?.alumno?.tareas || []).map(t => ({ title: linkify(t.texto), meta: esc(t.curso || '') }));
+  const pickStyle ='font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 600; color: #1a1a1d; background: #ffffff; border: 1.5px solid #d5d8df; border-radius: 999px; padding: 9px 14px; min-height: 44px';
   const picker = S.isProf ? '<select data-act="student" aria-label="Ver alumno" style="' + pickStyle + '">' +
     S.students.map(x => '<option value="' + x.id + '"' + (x.id === S.target ? ' selected' : '') + '>' + esc(x.full_name || x.email) + '</option>').join('') + '</select>'
     : (S.isAdmin ? '<select data-act="student" aria-label="Ver como alumno" style="font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 600; color: #1a1a1d; background: #ffffff; border: 1.5px solid #d5d8df; border-radius: 999px; padding: 9px 14px; min-height: 44px">' +
@@ -386,9 +389,9 @@ function getData(){
 
   return {
     nombre: esc(first), sub: esc(sub), ringDash: 0, rutaPct: 0, picker,
-    proxClase, tareasTxt: '0 por entregar', mockTxt, rachaTxt: racha + (racha === 1 ? ' día' : ' días'),
+    proxClase, tareasTxt: tasks.length + ' por entregar', mockTxt, rachaTxt: racha + (racha === 1 ? ' día' : ' días'),
     monthTitle: MESES[S.vm] + ' ' + S.vy, legend, cells,
-    tasks: [], tasksCount: 0, tasksEmpty: 'No tienes tareas pendientes.',
+    tasks, tasksCount: tasks.length, tasksEmpty: tasks.length ? '' : 'No tienes tareas pendientes.',
     metaTxt: '—', metaPct: 0, horasTxt: horas + ' h',
     lines: [], progress, cpEmpty: progress.length ? '' : 'Aún no tienes elementos en tu Career Progress.'
   };

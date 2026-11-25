@@ -65,7 +65,10 @@ begin
 
   return jsonb_build_object(
     'alumno', jsonb_build_object('id', v_al.id, 'nombre', v_al.nombre,
-              'instrumento', v_al.datos->>'instrumento', 'pais', v_al.datos->>'pais', 'cursos', v_al.cursos),
+              'instrumento', v_al.datos->>'instrumento', 'pais', v_al.datos->>'pais', 'cursos', v_al.cursos,
+              -- tareas pendientes: las de alumnos.datos._tareas ({id,curso,texto,hecha}) que aún no están hechas
+              'tareas', coalesce((select jsonb_agg(t) from jsonb_array_elements(coalesce(v_al.datos->'_tareas', '[]'::jsonb)) t
+                                   where coalesce((t->>'hecha')::boolean, false) = false), '[]'::jsonb)),
     'clases', coalesce((
       select jsonb_agg(jsonb_build_object('curso', c.curso, 'fecha', c.fecha, 'hora', to_char(c.hora, 'HH24:MI'),
                'link', coalesce(nullif(c.link, ''), (select m.link from public.cursos_meet m where m.curso = c.curso)))
