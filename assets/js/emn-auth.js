@@ -329,7 +329,7 @@ function emnOpenAccountModal(){
   });
 }
 
-// "Administrar" dropdown (Usuarios / Actividad / Calendar) — Admin and Professor only.
+// "Administrar" tab (Mi Aula header only) — Admin and Professor only.
 // Students never see this tab at all. Built by hand (not the shared
 // caret-toggle script those other dropdowns use) because it's injected
 // after that script has already wired up whatever `.emn-nav__item`s
@@ -378,48 +378,47 @@ function emnInjectAskBerklee(){
   nav.appendChild(a);
 }
 
-// "Mi Aula" dropdown (Calendario, Career Progress) — any signed-in person
-// (student, professor or admin), never shown to a signed-out visitor since
-// everything underneath it is personal, per-account data. Built by hand for
-// the same reason as emnInjectAdminMenu(): it's injected after the shared
-// caret-toggle script has already wired up whatever `.emn-nav__item`s
-// existed at page load.
-function emnInjectCareerMenu(st){
+// "Mi Aula" tab: a plain link to /career (the hub with the Career Progress and
+// Mock Audition buttons) — any signed-in person, never a signed-out visitor.
+// `front` puts it first (the Mi Aula header); otherwise it goes after Ask Berklee.
+const EMN_AULA_PATHS = ['/career', '/career-progress', '/mock-audition'];
+function emnInjectCareerMenu(st, front){
   if(!st.in) return;
   const nav = document.querySelector('.emn-nav');
   if(!nav) return;
-
   const path = location.pathname.replace(/\/$/, '');
-  const item = document.createElement('div');
-  item.className = 'emn-nav__item';
-  item.setAttribute('data-emn-inj', '');
-  item.innerHTML = `
-    <a href="#" class="emn-nav__link">Mi Aula</a>
-    <button class="emn-nav__caret" aria-label="Abrir submenú de Mi Aula" aria-expanded="false">&#9662;</button>
-    <div class="emn-nav__dropdown">
-      <a href="/career" class="emn-nav__dropdown-item ${path === '/career' ? 'is-active' : ''}">Calendario</a>
-      <a href="/career-progress" class="emn-nav__dropdown-item ${path === '/career-progress' ? 'is-active' : ''}">Career Progress</a>
-      <a href="/mock-audition" class="emn-nav__dropdown-item ${path === '/mock-audition' ? 'is-active' : ''}">Berklee Mock Audition</a>
-    </div>
-  `;
-  nav.appendChild(item);
+  const a = document.createElement('a');
+  a.setAttribute('data-emn-inj', '');
+  a.className = 'emn-nav__link' + (EMN_AULA_PATHS.includes(path) ? ' is-active' : '');
+  a.href = '/career';
+  a.textContent = 'Mi Aula';
+  if(front) nav.insertBefore(a, nav.firstChild); else nav.appendChild(a);
+}
 
-  const caret = item.querySelector('.emn-nav__caret');
-  const label = item.querySelector('.emn-nav__link');
-  const toggle = (e) => {
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    const isOpen = item.classList.contains('is-open');
-    document.querySelectorAll('.emn-nav__item').forEach((i) => i.classList.remove('is-open'));
-    item.classList.toggle('is-open', !isOpen);
-    caret.setAttribute('aria-expanded', String(!isOpen));
-  };
-  caret.addEventListener('click', toggle);
-  label.addEventListener('click', toggle);
+// "+ Cursos" tab: only in the Mi Aula header, right after Ask Berklee.
+function emnInjectCursosTab(){
+  const nav = document.querySelector('.emn-nav');
+  if(!nav) return;
+  const path = location.pathname.replace(/\/$/, '');
+  const a = document.createElement('a');
+  a.setAttribute('data-emn-inj', '');
+  a.className = 'emn-nav__link' + (path === '/cursos' ? ' is-active' : '');
+  a.href = '/cursos';
+  a.textContent = '+ Cursos';
+  nav.appendChild(a);
+}
 
-  document.addEventListener('click', (e) => {
-    if(!item.contains(e.target)) item.classList.remove('is-open');
-  });
+// The Mi Aula header (Mi Aula / Practice Lab / Ask Berklee / + Cursos / Administrar) replaces the
+// public one once someone opens Mi Aula, and stays while they move between those tabs (a
+// sessionStorage flag). Clicking the EMN logo goes back to the public header.
+const EMN_AULA_KEY = 'emn.aula';
+function emnAulaMode(st){
+  if(!st.in) return false;
+  const path = location.pathname.replace(/\/$/, '');
+  try{
+    if(EMN_AULA_PATHS.includes(path)) sessionStorage.setItem(EMN_AULA_KEY, '1');
+    return sessionStorage.getItem(EMN_AULA_KEY) === '1';
+  }catch(e){ return EMN_AULA_PATHS.includes(path); }
 }
 
 // Click outside a floating panel closes it — everywhere on the site:
@@ -456,7 +455,8 @@ function emnNavFromCache(){
 function emnNavSave(st){ try{ localStorage.setItem(EMN_NAV_KEY, JSON.stringify(st)); }catch(e){} }
 
 function emnRenderNav(st){
-  const key = JSON.stringify(st);
+  const aula = emnAulaMode(st);
+  const key = JSON.stringify({ ...st, aula });
   if(key === emnNavDrawn) return;
   const nav = document.querySelector('.emn-nav');
   if(!nav) return;
@@ -464,16 +464,25 @@ function emnRenderNav(st){
   // phones: signed in -> the user's name sits in the header bar (Practice Lab moves into the hamburger panel)
   document.documentElement.classList.toggle('emn-in', !!st.in);
   document.querySelectorAll('.emn-m-name').forEach((n) => { n.textContent = st.in ? (st.name || '') : ''; });
-  emnInjectCareerMenu(st);
-  emnInjectAskBerklee();
-  emnInjectAdminMenu(st);
-  // Keep the "Cursos" button right beside the account/login link, after the
-  // dropdowns injected above.
+  // Static tabs that depend on the mode / session.
+  nav.querySelectorAll('a[href="/mentores"], a[href="/nosotros"]').forEach((a) => { a.style.display = aula ? 'none' : ''; });
+  nav.querySelectorAll('.emn-nav__dropdown a[href="/feedback"]').forEach((a) => { a.style.display = st.in ? 'none' : ''; });
   const cursos = nav.querySelector('.emn-nav__link--cta');
-  if(cursos){
-    cursos.parentElement.appendChild(cursos);
-    cursos.hidden = !st.in;   // Cursos is for signed-in users only
+  if(cursos) cursos.hidden = true;   // replaced by Mi Aula (+ Cursos lives inside the Mi Aula header)
+  if(aula){
+    emnInjectCareerMenu(st, true);
+    emnInjectAskBerklee();
+    emnInjectCursosTab();
+    emnInjectAdminMenu(st);
+  } else {
+    emnInjectAskBerklee();
+    emnInjectCareerMenu(st, false);
   }
+  document.querySelectorAll('.emn-logo').forEach((l) => {
+    if(l.dataset.emnAula) return;
+    l.dataset.emnAula = '1';
+    l.addEventListener('click', () => { try{ sessionStorage.removeItem(EMN_AULA_KEY); }catch(e){} });
+  });
   emnInjectAuthLink(st);
   emnNavDrawn = key;
 }

@@ -115,9 +115,15 @@ addEventListener('message', e => {
 
 emnInit().then(() => {
   const gate = $('#gate-msg');
-  if(['admin','professor'].includes(emnStudentProfile?.role)){
+  const role = emnStudentProfile?.role;
+  if(['admin','professor'].includes(role)){
+    // Profesores solo ven Calendario y Actividad; el admin ve todo.
+    if(role !== 'admin'){
+      ['comunidad', 'usuarios', 'invoices'].forEach(v => document.querySelector(`.btn-a[data-v="${v}"]`)?.remove());
+      VIEWS.splice(0, VIEWS.length, 'calendario', 'actividad');
+    }
     $('#adm-body').style.display = 'block';
-    setView('comunidad');   // al entrar se abre Comunidad, con la barra de botones arriba
+    setView(role === 'admin' ? 'comunidad' : 'calendario');   // al entrar se abre la primera sección, con la barra de botones arriba
     if(location.hash) history.replaceState(null, '', location.pathname);
   } else {
     gate.innerHTML = emnSession ? 'Esta página es solo para administradores.' : 'Inicia sesión para continuar. <a href="/emn-login">Inicia sesión</a>';

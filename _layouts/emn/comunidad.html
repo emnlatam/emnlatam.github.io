@@ -638,7 +638,7 @@ $('#potbody').addEventListener('click', async e => {
 /* ---------- arranque ---------- */
 async function boot(){
   const gate = $('#gate-msg');
-  if(!['admin','professor'].includes(emnStudentProfile?.role)){
+  if(emnStudentProfile?.role !== 'admin'){
     gate.innerHTML = emnSession ? 'Esta página es solo para administradores.' : 'Inicia sesión para continuar. <a href="/emn-login">Inicia sesión</a>';
     gate.style.display = 'block'; return;
   }

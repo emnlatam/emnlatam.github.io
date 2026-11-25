@@ -15,6 +15,12 @@
   .career-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
   .career-head h1{ font-family:var(--font-display); font-size:26px; margin:0; }
   .career-head a.back{ font-size:13px; color:var(--gray-700); text-decoration:none; }
+  .aula-btns{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:22px; }
+  @media (max-width:600px){ .aula-btns{ grid-template-columns:1fr; } }
+  .aula-btn{ display:flex; flex-direction:column; gap:4px; padding:16px 18px; background:var(--paper); border:1px solid var(--gray-300); border-radius:var(--radius); text-decoration:none; color:var(--ink); transition:.15s; }
+  .aula-btn:hover{ border-color:var(--red); }
+  .aula-btn strong{ font-family:var(--font-display); font-size:16px; color:var(--red); }
+  .aula-btn span{ font-size:13px; color:var(--gray-700); }
   #gate-msg{ text-align:center; padding:80px 20px; color:var(--gray-700); }
   #gate-msg a{ color:var(--red); }
 
@@ -91,6 +97,11 @@
   <div class="career-head">
     <h1>Career Calendar</h1>
     <a class="back" href="/practice-lab">&larr; Volver a Practice Lab</a>
+  </div>
+
+  <div class="aula-btns">
+    <a class="aula-btn" href="/career-progress"><strong>Career Progress</strong><span>Tu seguimiento de canciones, contenido, prensa y más.</span></a>
+    <a class="aula-btn" href="/mock-audition"><strong>Berklee Mock Audition</strong><span>Reserva o revisa tu simulacro de audición.</span></a>
   </div>
 
   <div id="gate-msg" style="display:none"></div>
