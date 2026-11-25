@@ -53,10 +53,21 @@
   .side h3 i{ width:12px; height:12px; border-radius:50%; background:var(--c); flex-shrink:0; }
   .lbl{ display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--gray-500); margin:14px 0 6px; }
   .courses{ display:flex; flex-direction:column; gap:7px; }
-  .course{ text-align:left; border:1px solid var(--gray-300); border-left:6px solid var(--cc, var(--gray-300)); background:var(--paper); border-radius:8px; padding:10px 12px; font-size:13.5px; font-weight:600; cursor:pointer; color:var(--ink); }
-  .course:hover{ border-color:var(--red); }
-  .course[aria-pressed="true"]{ border-color:var(--cc, var(--c)); box-shadow:inset 0 0 0 1px var(--cc, var(--c)); background:color-mix(in srgb, var(--cc, #fff) 12%, #fff); }
+  .course{ text-align:left; border:1px solid var(--gray-300); border-left:6px solid var(--cc, var(--gray-300)); background:color-mix(in srgb, var(--cc, #fff) 8%, #fff); border-radius:8px; padding:10px 12px; font-size:13.5px; font-weight:600; cursor:pointer; color:var(--ink); }
+  .course:hover{ box-shadow:0 0 0 1px var(--cc, var(--red)); }
+  .course[aria-pressed="true"]{ border-color:var(--cc, var(--c)); box-shadow:inset 0 0 0 1px var(--cc, var(--c)); background:color-mix(in srgb, var(--cc, #fff) 20%, #fff); }
   .ses .dot{ display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--cc); margin-right:5px; }
+  .ev[data-id]{ cursor:pointer; }
+  button.day.has{ cursor:pointer; }
+  .pop-bg{ position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .pop{ background:#fff; border-radius:14px; padding:20px 22px; width:min(420px,100%); max-height:80vh; overflow:auto; box-shadow:0 18px 50px rgba(0,0,0,.28); }
+  .pop h4{ margin:0 0 4px; font-family:var(--font-display); font-size:17px; }
+  .pop .x{ float:right; border:0; background:none; font-size:22px; line-height:1; cursor:pointer; color:var(--gray-500); }
+  .pop .cl{ border-left:6px solid var(--cc); background:color-mix(in srgb, var(--cc) 10%, #fff); border-radius:8px; padding:10px 12px; margin-top:12px; font-size:14px; line-height:1.55; }
+  .pop .cl b{ font-weight:700; color:#1a1a1d; }
+  .pop .lk{ display:flex; gap:8px; align-items:center; margin-top:6px; }
+  .pop .lk a{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--red); font-size:13px; }
+  .pop .lk button{ border:0; background:var(--red); color:#fff; border-radius:7px; padding:6px 12px; font-size:12.5px; font-weight:600; cursor:pointer; flex-shrink:0; }
   .tz{ font-size:12px; color:var(--gray-500); margin:0 0 10px; }
   .course small{ display:block; font-weight:400; color:var(--gray-500); font-size:12px; margin-top:2px; }
   .in{ width:100%; box-sizing:border-box; padding:9px 11px; border:1px solid var(--gray-300); border-radius:8px; font-size:13.5px; background:#fff; color:var(--ink); }
@@ -121,7 +132,7 @@ const pad = n => String(n).padStart(2, '0');
 const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
-let alumnos = [], clases = [], meet = {}, cur = null, curso = null;
+let alumnos = [], clases = [], meet = {}, cur = null, curso = null, sinCurso = false;
 let view = new Date(); view.setDate(1);
 
 // Último domingo de un mes (el Mock Audition es automático ese día).
@@ -194,7 +205,7 @@ function renderCal(){
     if(i >= 35 && outside) break;
     const evs = clases.map(c => ({ c, m: M(c) })).filter(x => x.m.f === k).sort((p, q) => p.m.h.localeCompare(q.m.h)).map(({ c, m }) => {
       const al = alumnos.find(x => x.id === c.alumno_id); if(!al) return '';
-      return `<div class="ev${c.alumno_id === cur ? '' : ' dim'}" style="--c:${esc(al.color)};--cc:${colorCurso(c.curso)}" title="${esc(al.nombre)} · ${esc(c.curso)} · ${esc(m.h)} (Madrid)">${esc(m.h)} ${esc(al.nombre.split(' ')[0])} · ${esc(c.curso)}</div>`;
+      return `<div class="ev${c.alumno_id === cur ? '' : ' dim'}" data-id="${c.id}" style="--c:${esc(al.color)};--cc:${colorCurso(c.curso)}" title="${esc(al.nombre)} · ${esc(c.curso)} · ${esc(m.h)} (Madrid)">${esc(m.h)} ${esc(al.nombre.split(' ')[0])} · ${esc(c.curso)}</div>`;
     }).join('');
     let tk = '';
     if(a && curso && curso !== MOCK){
@@ -202,7 +213,8 @@ function renderCal(){
       if(nx && M(nx).f === k && n) tk = `<div class="ev tarea" title="Tareas para esta clase">✎ ${n} ${n === 1 ? 'tarea' : 'tareas'}</div>`;
     }
     const mk = k === lastSunday(d.getFullYear(), d.getMonth()) ? `<div class="ev mock">${MOCK}</div>` : '';
-    cells.push(`<button type="button" class="day${outside ? ' out' : ''}${k === today ? ' today' : ''}${canPick && !outside ? ' pick' : ''}${canPick && fin && k > fin ? ' past' : ''}" data-d="${k}"${canPick && fin && k > fin ? ` title="Después de la fecha final del alumno (${fmt(fin)})"` : ''}><b>${d.getDate()}</b>${mk}${evs}${tk}</button>`);
+    const has = clases.some(c => c.alumno_id === cur && M(c).f === k);
+    cells.push(`<button type="button" class="day${has ? ' has' : ''}${outside ? ' out' : ''}${k === today ? ' today' : ''}${canPick && !outside ? ' pick' : ''}${canPick && fin && k > fin ? ' past' : ''}" data-d="${k}"${canPick && fin && k > fin ? ` title="Después de la fecha final del alumno (${fmt(fin)})"` : ''}><b>${d.getDate()}</b>${mk}${evs}${tk}</button>`);
   }
   $('#grid').innerHTML = cells.join('');
 }
@@ -212,7 +224,8 @@ function renderSide(){
   const a = alumno(), side = $('#side');
   if(!a){ side.innerHTML = '<p class="none">Elige un alumno para agendar sus clases.</p>'; return; }
   const list = [...a.cursos, TUTORING, MOCK];
-  if(!list.includes(curso)) curso = a.cursos[0] || TUTORING;
+  if(sinCurso) curso = null;
+  else if(!list.includes(curso)) curso = a.cursos[0] || TUTORING;
   const ses = curso && curso !== MOCK ? clases.filter(c => c.alumno_id === a.id && c.curso === curso).sort((p, q) => (p.fecha + p.hora).localeCompare(q.fecha + q.hora)) : [];
   const nx = curso && curso !== MOCK ? proxClase(a, curso) : null;
   const tks = curso && curso !== MOCK ? tareasDe(a, curso) : [];
@@ -280,7 +293,7 @@ $('#side').addEventListener('click', async e => {
     return;
   }
   const c = e.target.closest('.course');
-  if(c){ curso = c.dataset.c; renderAll(); return; }
+  if(c){ curso = c.dataset.c; sinCurso = false; renderAll(); return; }
   if(e.target.closest('[data-del]')){
     const id = e.target.closest('.ses').dataset.id;
     if(clases.find(x => x.id === id)?.google_event_id) await gcal('remove', id);
@@ -332,7 +345,52 @@ $('#side').addEventListener('change', async e => {
   if(cl.google_event_id){ const r = await gcal('sync', cl.id); if(r?.ok) renderCal(); }
 });
 
+
+/* ---------- ventana flotante con los datos de la clase ---------- */
+const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+function cerrarPop(){ document.getElementById('pop-bg')?.remove(); }
+function abrirPop(titulo, items){
+  cerrarPop();
+  const bg = document.createElement('div'); bg.className = 'pop-bg'; bg.id = 'pop-bg';
+  bg.innerHTML = `<div class="pop" role="dialog" aria-modal="true"><button type="button" class="x" aria-label="Cerrar">×</button><h4>${esc(titulo)}</h4>` +
+    (items.length ? items.map(c => {
+      const al = alumnos.find(x => x.id === c.alumno_id), m = M(c), d = new Date(m.f + 'T12:00:00');
+      return `<div class="cl" style="--cc:${colorCurso(c.curso)}">
+        <div><b>Clase:</b> ${esc(c.curso)}${al ? ' · ' + esc(al.nombre) : ''}</div>
+        <div><b>Hora:</b> ${esc(m.h)} (Madrid)</div>
+        <div><b>Fecha:</b> ${DIAS[d.getDay()]} ${fmt(m.f)}</div>
+        <div><b>Link de la llamada:</b></div>
+        ${c.link ? `<div class="lk"><a href="${esc(c.link)}" target="_blank" rel="noopener">${esc(c.link)}</a><button type="button" data-copy="${esc(c.link)}">Copiar</button></div>` : '<div class="none">Sin link todavía</div>'}
+      </div>`; }).join('') : '<p class="none" style="margin-top:12px">No hay clases este día.</p>') + '</div>';
+  document.body.appendChild(bg);
+}
+document.addEventListener('click', async e => {
+  const bg = document.getElementById('pop-bg');
+  if(bg){
+    if(e.target === bg || e.target.closest('.pop .x')){ cerrarPop(); return; }
+    const cp = e.target.closest('[data-copy]');
+    if(cp){
+      try{ await navigator.clipboard.writeText(cp.dataset.copy); }
+      catch{ const t = document.createElement('textarea'); t.value = cp.dataset.copy; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
+      cp.textContent = 'Copiado ✓'; setTimeout(() => { cp.textContent = 'Copiar'; }, 1600);
+    }
+    return;
+  }
+  // Clic en un espacio vacío de la página: se deselecciona el curso (así los días solo muestran la info de la clase).
+  if(!document.getElementById('body-c') || document.getElementById('body-c').style.display === 'none') return;
+  if(e.target.closest('.card, .people, header, a, button, input, textarea, select, label, dialog, .pop-bg')) return;
+  if(curso){ sinCurso = true; curso = null; renderAll(); }
+});
+document.addEventListener('keydown', e => { if(e.key === 'Escape') cerrarPop(); });
+
 $('#grid').addEventListener('click', async e => {
+  const chip = e.target.closest('.ev[data-id]');          // clic en una clase: siempre abre su ventana
+  if(chip){ const c = clases.find(x => x.id === chip.dataset.id); if(c) abrirPop(`${c.curso} · ${fmt(M(c).f)}`, [c]); return; }
+  const dd = e.target.closest('.day');
+  if(dd && !dd.classList.contains('pick') && !dd.classList.contains('out')){   // sin curso elegido: muestra las clases del alumno ese día
+    const lst = clases.filter(c => c.alumno_id === cur && M(c).f === dd.dataset.d).sort((p, q) => M(p).h.localeCompare(M(q).h));
+    abrirPop(`${alumno()?.nombre || ''} · ${fmt(dd.dataset.d)}`, lst); return;
+  }
   const d = e.target.closest('.day.pick'); if(!d || d.classList.contains('out')) return;
   const a = alumno(); if(!a || !curso || curso === MOCK) return;
   const fecha = d.dataset.d, fin = finDe(a);
