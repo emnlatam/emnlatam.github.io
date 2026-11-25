@@ -163,7 +163,7 @@ async function ask(question){
     const { data, error } = await emnSupabase.functions.invoke('berkli-chat', { body: { question, history } });
     if(error || data?.error) throw new Error(error?.message || data.error);
     // the model writes a "Fuentes: [1][2]" line; the real links are drawn as cards below instead
-    const clean = data.answer.replace(/\n*\s*(Fuentes|Sources)\s*:.*$/is, '').trim();
+    const clean = data.answer.replace(/\n*\s*(Fuentes|Sources)\s*:.*$/is, '').replace(/[ \t]*\[\d+\](?:\s*,?\s*\[\d+\])*/g, '').replace(/[ \t]+([.,;:])/g, '$1').trim();
     wait.className = 'card'; wait.innerHTML = renderAnswer(data, clean);
     history.push({ role: 'user', text: question }, { role: 'bot', text: clean });
   }catch(e){

@@ -1,4 +1,4 @@
 ---
-layout: emn/career
+layout: emn/mi-aula
 permalink: /mi-aula
 ---

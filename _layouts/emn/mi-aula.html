@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="es" class="emn-landing">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% include emn-favicon.html %}
+<title>EMN — Mi Aula</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/emn.css?v={{ site.time | date: '%s' }}">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/assets/js/emn-auth.js?v={{ site.time | date: '%s' }}"></script>
+<style>
+  body{ margin:0; background:#fff; }
+  #mi-aula-app button{ font-family:Inter,system-ui,sans-serif; cursor:pointer; }
+  #mi-aula-app button:hover{ filter:brightness(0.95); }
+  #aula-gate{ text-align:center; padding:80px 20px; color:#5b6070; font-family:Inter,system-ui,sans-serif; }
+  #aula-gate a{ color:#C8102E; font-weight:600; }
+</style>
+</head>
+<body>
+
+{% include emn-header.html %}
+
+<div id="aula-gate" hidden></div>
+<div id="mi-aula-app" hidden></div>
+
+{% raw %}
+<script type="text/x-template" id="tpl">
+<div style="min-height: 100%; background: #ffffff; color: #1a1a1d; font-family: Inter, system-ui, sans-serif; font-size: 14px; line-height: 1.4">
+
+
+<div style="max-width: 1760px; margin: 0 auto; padding: 24px 32px 64px; display: flex; flex-direction: column; gap: 24px">
+
+<!-- HEADER -->
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px">
+<div style="display: flex; align-items: center; gap: 16px">
+<div>
+<h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 700; font-size: 34px; line-height: 1.1; color: #17171a">Hola, {{nombre}}</h1>
+<p style="margin: 4px 0 0; color: #5b6070; font-size: 14px">{{sub}}</p>
+</div>
+<div style="position: relative; width: 60px; height: 60px; flex: none" role="img" aria-label="Progreso hacia tu audición: {{rutaPct}} por ciento">
+<svg width="60" height="60" viewBox="0 0 60 60" aria-hidden="true" style="display: block">
+<circle cx="30" cy="30" r="25" style="fill: none; stroke: #eceef2; stroke-width: 6px"/>
+<circle cx="30" cy="30" r="25" style="fill: none; stroke: #C8102E; stroke-width: 6px; stroke-linecap: round; stroke-dasharray: {{ringDash}} 157.1; transform: rotate(-90deg); transform-origin: 30px 30px"/>
+</svg>
+<span style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'Source Serif 4', Georgia, serif; font-weight: 700; font-size: 17px; color: #17171a">{{rutaPct}}%</span>
+</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+{{picker}}
+<button type="button" style="background: #ffffff; color: #C8102E; border: 1.5px solid #C8102E; border-radius: 999px; padding: 10px 22px; min-height: 48px; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; gap: 8px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Mi Drive</button>
+<button type="button" data-href="/collaba" style="background: #C8102E; color: #ffffff; border: 0; border-radius: 999px; padding: 10px 24px; min-height: 48px; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; gap: 8px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h3l3-8 4 16 3-8h5"/></svg>Entrar a Collaba</button>
+</div>
+</div>
+
+<!-- STATS -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px">
+<div style="border: 1px solid #e3e5ea; border-radius: 14px; padding: 12px 18px">
+<div style="font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #5b6070; font-weight: 600">Próxima clase</div>
+<div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600; margin-top: 2px">{{proxClase}}</div>
+</div>
+<div style="border: 1px solid #e3e5ea; border-radius: 14px; padding: 12px 18px">
+<div style="font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #5b6070; font-weight: 600">Tareas pendientes</div>
+<div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600; margin-top: 2px">{{tareasTxt}}</div>
+</div>
+<div style="border: 1px solid #e3e5ea; border-radius: 14px; padding: 12px 18px">
+<div style="font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #5b6070; font-weight: 600">Mock Audition</div>
+<div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600; margin-top: 2px">{{mockTxt}}</div>
+</div>
+<div style="border: 1px solid #e3e5ea; border-radius: 14px; padding: 12px 18px">
+<div style="font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #5b6070; font-weight: 600">Racha de práctica</div>
+<div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600; margin-top: 2px">{{rachaTxt}}</div>
+</div>
+</div>
+
+<!-- ROW 1: CALENDAR + TASKS / MOCK -->
+<div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: stretch">
+
+<section style="flex: 2.4 1 640px; min-width: 0; border: 1px solid #e3e5ea; border-radius: 18px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px">
+<div style="display: flex; align-items: center; gap: 10px">
+<button type="button" data-act="prev" aria-label="Mes anterior" style="width: 40px; height: 40px; border-radius: 50%; border: 1px solid #d5d8df; background: #fff; color: #C8102E; font-size: 17px">‹</button>
+<h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 24px">{{monthTitle}}</h2>
+<button type="button" data-act="next" aria-label="Mes siguiente" style="width: 40px; height: 40px; border-radius: 50%; border: 1px solid #d5d8df; background: #fff; color: #C8102E; font-size: 17px">›</button>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px">
+<span style="font-size: 12px; font-weight: 600; color: #5b6070; margin-right: 2px">Mis clases:</span>
+<sc-for list="{{legend}}" as="lg" hint-placeholder-count="3">
+<span style="{{lg.style}}">{{lg.label}}</span>
+</sc-for>
+</div>
+<button type="button" data-act="today" style="background: #fff; border: 1px solid #d5d8df; border-radius: 10px; padding: 8px 16px; min-height: 40px; font-size: 14px; font-weight: 500; color: #1a1a1d">Hoy</button>
+</div>
+<div style="overflow-x: auto">
+<div style="min-width: 560px">
+<div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-bottom: 6px; text-align: center; font-size: 11.5px; letter-spacing: 0.06em; color: #5b6070; font-weight: 600">
+<span>DOM</span><span>LUN</span><span>MAR</span><span>MIÉ</span><span>JUE</span><span>VIE</span><span>SÁB</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px">
+<sc-for list="{{cells}}" as="day" hint-placeholder-count="35">
+<div style="{{day.cellStyle}}">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 4px; min-height: 28px">
+<span style="{{day.numStyle}}">{{day.n}}</span>
+<sc-if value="{{day.hasLink}}" hint-placeholder-val="{{ true }}">
+<a href="{{day.link}}" target="_blank" rel="noopener" aria-label="{{day.btnLabel}}" style="{{day.btnStyle}}text-decoration:none;">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="13" height="12" rx="2"/><path d="M15 10l7-4v12l-7-4z"/></svg>
+</a>
+</sc-if>
+<sc-if value="{{day.noLink}}" hint-placeholder-val="{{ true }}">
+<button type="button" disabled title="Aún no hay link de la clase" aria-label="{{day.btnLabel}}" style="{{day.btnStyle}}opacity:0.35;cursor:default;">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="13" height="12" rx="2"/><path d="M15 10l7-4v12l-7-4z"/></svg>
+</button>
+</sc-if>
+</div>
+{{day.chips}}
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</section>
+
+<div style="flex: 1 1 400px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<section style="flex: 1; border: 1px solid #e3e5ea; border-radius: 18px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+<h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 24px; color: #C8102E">Tareas pendientes</h2>
+<span style="background: #FDE8EB; color: #8F0B20; font-weight: 700; font-size: 13px; border-radius: 999px; padding: 3px 11px">{{tasksCount}}</span>
+</div>
+<div style="color: #5b6070; font-size: 14px; padding: 6px 0">{{tasksEmpty}}</div>
+<sc-for list="{{tasks}}" as="t" hint-placeholder-count="4">
+<div style="display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #eceef2; padding-bottom: 10px">
+<span style="width: 22px; height: 22px; border-radius: 6px; border: 2px solid #b8bcc7; flex: none"></span>
+<div style="flex: 1; min-width: 0"><div style="font-weight: 600; font-size: 14.5px">{{t.title}}</div><div style="font-size: 12.5px; color: #5b6070">{{t.meta}}</div></div>
+</div>
+</sc-for>
+</section>
+
+</div>
+</div>
+
+<!-- ROWS 2-3 -->
+<div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: stretch">
+
+<section style="flex: 1 1 600px; min-width: 0; border: 1px solid #e3e5ea; border-radius: 18px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px">
+<div>
+<h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 24px; color: #C8102E">Comienza a practicar</h2>
+</div>
+<div style="border: 1px solid #eceef2; background: #FAFAFB; border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px"><span style="font-weight: 700; font-size: 15px">Meta semanal</span><strong style="font-size: 18px">{{metaTxt}}</strong></div>
+<div style="height: 12px; border-radius: 999px; background: #eceef2; overflow: hidden"><div style="width: {{metaPct}}%; height: 100%; background: #C8102E; border-radius: 999px"></div></div>
+<div style="font-size: 14px; font-weight: 600">Horas trabajadas <strong style="color: #C8102E; font-size: 16px">{{horasTxt}}</strong></div>
+</div>
+<div style="flex: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 150px)); justify-content: space-between; align-content: center; gap: 10px">
+<button type="button" data-href="/improvisation-lab" style="aspect-ratio: 1 / 1; border: 0; border-radius: 14px; background: #FBDDE1; color: #6E0A1A; padding: 8px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; font-weight: 600; font-size: 13px; line-height: 1.2; text-align: center">
+<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>Piece Prep &amp; Improvisation</button>
+<button type="button" data-href="/sight-melody" style="aspect-ratio: 1 / 1; border: 0; border-radius: 14px; background: #D5E1F6; color: #14305F; padding: 8px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; font-weight: 600; font-size: 13px; line-height: 1.2; text-align: center">
+<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Sight-read &amp; Ear Training</button>
+<button type="button" data-href="/interview-prep" style="aspect-ratio: 1 / 1; border: 0; border-radius: 14px; background: #D3EEDD; color: #0F4A2A; padding: 8px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; font-weight: 600; font-size: 13px; line-height: 1.2; text-align: center">
+<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v4"/></svg>Interview Prep</button>
+</div>
+</section>
+
+<section style="flex: 1 1 600px; min-width: 0; border: 1px solid #e3e5ea; border-radius: 18px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px 16px">
+<div>
+<h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 24px; color: #C8102E">Tu progreso por área</h2>
+<p style="margin: 2px 0 0; color: #5b6070; font-size: 13px">% de avance por área desde el inicio de tu programa.</p>
+</div>
+<select aria-label="Filtrar por curso" style="font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 600; color: #1a1a1d; background: #ffffff; border: 1.5px solid #C8102E; border-radius: 999px; padding: 9px 14px; min-height: 44px">
+<option selected>Todas las áreas</option>
+<option>Piece Prep &amp; Improvisation</option>
+<option>Sight Read</option>
+<option>Ear Training</option>
+<option>Interview Prep</option>
+</select>
+</div>
+<div style="display: flex; gap: 8px">
+<div style="width: 36px; flex: none; position: relative; height: 220px; font-size: 11px; color: #5b6070; text-align: right">
+<span style="position: absolute; right: 0; top: 4%; transform: translateY(-50%)">100%</span>
+<span style="position: absolute; right: 0; top: 50%; transform: translateY(-50%)">50%</span>
+<span style="position: absolute; right: 0; top: 96%; transform: translateY(-50%)">0%</span>
+</div>
+<div style="flex: 1; min-width: 0">
+<div style="position: relative; height: 220px">
+<svg viewBox="0 0 100 100" preserveAspectRatio="none" width="100%" height="100%" style="position: absolute; inset: 0; overflow: visible" aria-hidden="true">
+<line x1="0" x2="100" y1="4" y2="4" style="stroke: #e3e5ea; stroke-width: 1px; vector-effect: non-scaling-stroke"/>
+<line x1="0" x2="100" y1="27" y2="27" style="stroke: #f0f1f4; stroke-width: 1px; vector-effect: non-scaling-stroke"/>
+<line x1="0" x2="100" y1="50" y2="50" style="stroke: #e3e5ea; stroke-width: 1px; vector-effect: non-scaling-stroke"/>
+<line x1="0" x2="100" y1="73" y2="73" style="stroke: #f0f1f4; stroke-width: 1px; vector-effect: non-scaling-stroke"/>
+<line x1="0" x2="100" y1="96" y2="96" style="stroke: #c9ccd4; stroke-width: 1px; vector-effect: non-scaling-stroke"/>
+<sc-for list="{{lines}}" as="l" hint-placeholder-count="5">
+<polyline points="{{l.points}}" style="{{l.lineStyle}}"/>
+</sc-for>
+</svg>
+<sc-for list="{{lines}}" as="l" hint-placeholder-count="5">
+<span style="{{l.dotStyle}}"></span>
+</sc-for>
+</div>
+<div style="position: relative; height: 20px; margin-top: 4px; font-size: 11px; color: #5b6070">
+<span style="position: absolute; left: 2%; transform: translateX(-50%)">Inicio</span>
+<span style="position: absolute; left: 18%; transform: translateX(-50%)">19 oct</span>
+<span style="position: absolute; left: 34%; transform: translateX(-50%)">26 oct</span>
+<span style="position: absolute; left: 50%; transform: translateX(-50%)">2 nov</span>
+<span style="position: absolute; left: 66%; transform: translateX(-50%)">9 nov</span>
+<span style="position: absolute; left: 82%; transform: translateX(-50%)">16 nov</span>
+<span style="position: absolute; left: 98%; transform: translateX(-50%)">23 nov</span>
+</div>
+</div>
+</div>
+</section>
+
+<section style="flex: 1 1 600px; min-width: 0; border: 1px solid #e3e5ea; border-radius: 18px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px">
+<div>
+<h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 24px; color: #C8102E">Career Progress</h2>
+<p style="margin: 2px 0 0; color: #5b6070; font-size: 13px">Tu seguimiento de canciones, contenido, prensa y más.</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div style="color: #5b6070; font-size: 14px">{{cpEmpty}}</div>
+<sc-for list="{{progress}}" as="c" hint-placeholder-count="4">
+<div>
+<div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; margin-bottom: 6px"><span>{{c.label}}</span><span style="color: #4a4f5c; font-weight: 500">{{c.count}}</span></div>
+<div style="height: 10px; border-radius: 999px; background: #eceef2; overflow: hidden"><div style="{{c.barStyle}}"></div></div>
+</div>
+</sc-for>
+</div>
+<button type="button" data-href="/career-progress" style="align-self: flex-start; background: #ffffff; color: #C8102E; border: 1.5px solid #C8102E; border-radius: 999px; padding: 10px 20px; min-height: 44px; font-weight: 600; font-size: 14px">Ver mi Career Progress</button>
+</section>
+
+<section style="flex: 1 1 600px; min-width: 0; border: 1px solid #e3e5ea; border-radius: 18px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px">
+<div>
+<h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 24px; color: #C8102E">Ruta hacia tu audición</h2>
+<p style="margin: 2px 0 0; color: #5b6070; font-size: 13px">Avance de tu preparación para Berklee.</p>
+</div>
+<div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 40px; font-weight: 700; line-height: 1">{{rutaPct}}%</div>
+<div style="height: 8px; border-radius: 999px; background: #eceef2; overflow: hidden"><div style="width: {{rutaPct}}%; height: 100%; background: #C8102E"></div></div>
+</section>
+</div>
+
+</div>
+</div>
+</script>
+
+<script>
+// ===== Datos reales (Supabase EMN) =====
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DIAS = ['dom','lun','mar','mié','jue','vie','sáb'], MES_C = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const KIND = {
+  piece:     { label: 'Piece Prep & Improvisation',  bg: '#FBDDE1', fg: '#6E0A1A' },
+  sight:     { label: 'Sight Read & Audio Training', bg: '#D5E1F6', fg: '#14305F' },
+  interview: { label: 'Interview Prep',              bg: '#D3EEDD', fg: '#0F4A2A' },
+  tutor:     { label: 'Tutoring',                    bg: '#E6DDF5', fg: '#3E1F73' },
+  mock:      { label: 'Mock Audition',               bg: '#1a1a1d', fg: '#ffffff' }
+};
+function kindOf(curso){
+  const c = String(curso || '').toLowerCase();
+  if(c.includes('piece') || c.includes('improv')) return KIND.piece;
+  if(c.includes('audio') || c.includes('sight') || c.includes('read') || c.includes('ear')) return KIND.sight;
+  if(c.includes('interview')) return KIND.interview;
+  if(c.includes('mock')) return KIND.mock;
+  if(c.includes('tutor')) return KIND.tutor;
+  return { label: curso, bg: '#E9EAEE', fg: '#3a3d45' };
+}
+const CP = [
+  ['social','Contenido Social Media','estado','Publicado'], ['canciones','Canciones Publicadas','progreso','Publicado'],
+  ['tv','TV','estado','Emitido'], ['diarios','Diarios','estado','Publicado'], ['presskit','PressKit','estado','Listo'],
+  ['portfolio','Portfolio/Website','estado','Publicado'], ['concursos','Concursos Musicales','estado','Resultado recibido'],
+  ['voluntariado','Voluntariado','estado','Completado']
+];
+const ymd = (d) => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+const getTz = () => emnGetTz();
+// A class is saved as a date + hour in Lima time (UTC-5). Returns the real instant.
+const limaInstant = (fecha, hora) => { const [y,mo,d] = fecha.split('-').map(Number); const [h,mi] = (hora || '00:00').split(':').map(Number); return new Date(Date.UTC(y, mo-1, d, h + 5, mi || 0)); };
+const dayIn = (dt) => new Intl.DateTimeFormat('en-CA', { timeZone: getTz(), year: 'numeric', month: '2-digit', day: '2-digit' }).format(dt);
+const timeIn = (dt) => new Intl.DateTimeFormat('es-PE', { timeZone: getTz(), hour: 'numeric', minute: '2-digit', hour12: true }).format(dt);
+// date + Lima time -> { f: 'YYYY-MM-DD' in the chosen zone, t: '6:00 p. m.' in the chosen zone }
+const conv = (fecha, hora) => { const dt = limaInstant(fecha, hora); return { f: dayIn(dt), t: timeIn(dt), dt }; };
+function lastSunday(y, m){ const d = new Date(y, m+1, 0); d.setDate(d.getDate() - d.getDay()); return d; }
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const S = { me: null, target: null, isAdmin: false, students: [], resumen: null, practice: [], career: null, vy: 0, vm: 0 };
+
+async function loadTarget(){
+  const sb = emnSupabase, tid = S.target;
+  S.resumen = null; S.practice = []; S.career = null;
+  try{
+    const { data, error } = await sb.rpc('mi_aula_resumen', { p_student: tid === S.me ? null : tid });
+    if(error) throw error;
+    S.resumen = data;
+  }catch(e){ console.error('mi_aula_resumen', e); }
+  const since = new Date(); since.setDate(since.getDate() - 70);
+  const pa = await sb.from('practice_activity').select('activity_date,seconds').eq('student_id', tid).gte('activity_date', ymd(since));
+  S.practice = pa.data || [];
+  const cp = await sb.from('career_progress').select('data').eq('student_id', tid).maybeSingle();
+  S.career = cp.data?.data?.rows || null;
+}
+
+function getData(){
+  const now = new Date(), todayStr = dayIn(now);
+  const al = S.resumen?.alumno || null;
+  const prof = S.students.find(x => x.id === S.target);
+  const first = (al?.nombre || prof?.full_name || (S.target === S.me ? emnStudentProfile?.full_name : '') || '').trim().split(/\s+/)[0] || '';
+  const sub = al ? [al.instrumento, al.pais === 'Peru' ? 'Perú' : al.pais].filter(Boolean).join(' | ') : '';
+  const clases = (S.resumen?.clases || []);
+  const mock = (S.resumen?.mock || []);
+
+  const ev = {};
+  const add = (f, e) => (ev[f] = ev[f] || []).push(e);
+  clases.forEach(c => { const x = conv(c.fecha, c.hora); add(x.f, { k: kindOf(c.curso), t: x.t, link: c.link }); });
+  if(al){
+    for(let i = -1; i <= 1; i++){
+      const d = lastSunday(S.vy, S.vm + i);
+      const f = ymd(d), slot = mock.find(x => x.fecha === f);
+      if(slot){ const x = conv(f, String(slot.hora).padStart(2,'0') + ':00'); add(x.f, { k: KIND.mock, t: x.t, link: slot.link || null }); }
+      else add(f, { k: KIND.mock, t: '', link: null });
+    }
+  }
+
+  const first1 = new Date(S.vy, S.vm, 1), dim = new Date(S.vy, S.vm + 1, 0).getDate();
+  const total = Math.ceil((first1.getDay() + dim) / 7) * 7;
+  const cells = [];
+  for(let i = 0; i < total; i++){
+    const d = new Date(S.vy, S.vm, 1 - first1.getDay() + i);
+    const inMonth = d.getMonth() === S.vm, f = ymd(d);
+    const today = f === todayStr, past = f < todayStr;
+    const list = inMonth ? (ev[f] || []) : [];
+    const link = (list.find(e => e.link) || {}).link || '';
+    const cellStyle = 'min-height: 64px; box-sizing: border-box; border-radius: 10px; padding: 5px 6px; overflow: hidden; display: flex; flex-direction: column; gap: 3px;' +
+      (today ? 'background:#FDE8EB;border:1.5px solid #C8102E;' : 'background:#F4F5F7;border:1.5px solid transparent;') + (inMonth ? '' : 'opacity:0.4;');
+    const numStyle = 'font-family:"Source Serif 4",Georgia,serif;font-size:14px;font-weight:' + (today ? '700' : '500') + ';color:' + (today ? '#A50D26' : '#2b2e36') + ';';
+    const btnBase = 'width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;padding:0;flex:none;box-sizing:border-box;';
+    const btnStyle = btnBase + (today ? 'background:#C8102E;color:#fff;border:0;' : 'background:#fff;color:#C8102E;border:1.5px solid #C8102E;') + (past ? 'opacity:0.5;' : '');
+    const chips = list.map(e => '<div title="' + esc(e.t || '') + '" style="font-size:11.5px;font-weight:600;border-radius:5px;padding:2px 6px;line-height:1.25;background:' + e.k.bg + ';color:' + e.k.fg + ';' + (past ? 'opacity:0.6;' : '') + '">' + esc(e.k.label) + '</div>').join('');
+    cells.push({
+      n: d.getDate(), cellStyle, numStyle, chips, link: esc(link), btnStyle,
+      hasLink: list.length > 0 && !!link, noLink: list.length > 0 && !link,
+      btnLabel: list.length ? 'Videollamada de ' + list[0].k.label + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()].toLowerCase() : ''
+    });
+  }
+  const legendKinds = [];
+  (al?.cursos || []).concat(al ? ['Tutoring'] : [], clases.map(c => c.curso)).forEach(c => { const k = kindOf(c); if(!legendKinds.includes(k.label) && k !== KIND.mock) legendKinds.push(k.label); });
+  const legend = legendKinds.map(l => { const k = Object.values(KIND).find(x => x.label === l) || { bg: '#E9EAEE', fg: '#3a3d45' };
+    return { label: esc(l), style: 'display: inline-flex; align-items: center; gap: 6px; background:' + k.bg + '; color:' + k.fg + '; font-weight: 600; font-size: 12.5px; border-radius: 999px; padding: 5px 11px' }; });
+
+  const upcoming = clases.map(c => ({ c, dt: limaInstant(c.fecha, c.hora) })).filter(x => x.dt >= now).sort((a,b) => a.dt - b.dt)[0];
+  let proxClase = 'Sin clases programadas';
+  if(upcoming){
+    const toDay = (f) => { const [y,mo,d] = f.split('-').map(Number); return new Date(y, mo-1, d); };
+    const dd = toDay(dayIn(upcoming.dt)), t0 = toDay(dayIn(now));
+    const diff = Math.round((dd - t0) / 86400000);
+    const dn = DIAS[dd.getDay()];
+    const when = diff === 0 ? 'Hoy' : diff === 1 ? 'Mañana' : dn[0].toUpperCase() + dn.slice(1) + ' ' + dd.getDate() + ' ' + MES_C[dd.getMonth()];
+    proxClase = when + ' · ' + timeIn(upcoming.dt);
+  }
+
+  let ms = lastSunday(now.getFullYear(), now.getMonth());
+  if(ymd(ms) < todayStr) ms = lastSunday(now.getFullYear(), now.getMonth() + 1);
+  const slot = mock.find(x => x.fecha === ymd(ms));
+  let mockTxt = al ? 'Dom ' + ms.getDate() + ' ' + MES_C[ms.getMonth()] : '—';
+  if(slot) mockTxt += ' · ' + conv(ymd(ms), String(slot.hora).padStart(2,'0') + ':00').t;
+
+  const secs = {};
+  S.practice.forEach(r => { secs[r.activity_date] = (secs[r.activity_date] || 0) + (r.seconds || 0); });
+  let racha = 0; const dcur = new Date(now); if(!(secs[ymd(dcur)] > 0)) dcur.setDate(dcur.getDate() - 1);
+  while(secs[ymd(dcur)] > 0){ racha++; dcur.setDate(dcur.getDate() - 1); }
+  const mon = new Date(now); mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7)); const monStr = ymd(mon);
+  let wk = 0; Object.keys(secs).forEach(f => { if(f >= monStr && f <= todayStr) wk += secs[f]; });
+  const horas = Math.round(wk / 360) / 10;
+
+  const progress = [];
+  CP.forEach(([id, name, key, last]) => {
+    const rows = (S.career && S.career[id]) || [];
+    if(!rows.length) return;
+    const done = rows.filter(r => r[key] === last).length, pct = Math.round(done / rows.length * 100);
+    progress.push({ label: name, count: done + ' / ' + rows.length, barStyle: 'height:100%;background:#C8102E;border-radius:999px;width:' + pct + '%;' });
+  });
+
+  const picker = (S.isAdmin ? '<select data-act="student" aria-label="Ver como alumno" style="font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 600; color: #1a1a1d; background: #ffffff; border: 1.5px solid #d5d8df; border-radius: 999px; padding: 9px 14px; min-height: 44px">' +
+    '<option value="' + S.me + '"' + (S.target === S.me ? ' selected' : '') + '>Mi vista (admin)</option>' +
+    S.students.filter(x => x.id !== S.me).map(x => '<option value="' + x.id + '"' + (x.id === S.target ? ' selected' : '') + '>' + esc(x.full_name || x.email) + '</option>').join('') + '</select>' : '');
+
+  return {
+    nombre: esc(first), sub: esc(sub), ringDash: 0, rutaPct: 0, picker,
+    proxClase, tareasTxt: '0 por entregar', mockTxt, rachaTxt: racha + (racha === 1 ? ' día' : ' días'),
+    monthTitle: MESES[S.vm] + ' ' + S.vy, legend, cells,
+    tasks: [], tasksCount: 0, tasksEmpty: 'No tienes tareas pendientes.',
+    metaTxt: '—', metaPct: 0, horasTxt: horas + ' h',
+    lines: [], progress, cpEmpty: progress.length ? '' : 'Aún no tienes elementos en tu Career Progress.'
+  };
+}
+
+// ===== Renderizador minimo: sc-for / sc-if / {{ruta}} =====
+function lookup(ctx, path) {
+  return path.trim().split('.').reduce((o, k) => (o == null ? undefined : o[k]), ctx);
+}
+function renderIfs(str, ctx) {
+  return str.replace(/<sc-if value="\{\{\s*([\w.]+)\s*\}\}"[^>]*>([\s\S]*?)<\/sc-if>/g, (_, path, inner) => (lookup(ctx, path) ? inner : ''));
+}
+function renderHoles(str, ctx) {
+  return str.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, path) => {
+    const v = lookup(ctx, path);
+    return v == null ? '' : String(v);
+  });
+}
+function render(tpl, data) {
+  let out = tpl.replace(/<sc-for list="\{\{\s*(\w+)\s*\}\}" as="(\w+)"[^>]*>([\s\S]*?)<\/sc-for>/g, (_, list, as, inner) =>
+    (data[list] || []).map((item, i) => {
+      const ctx = Object.assign({}, data, { [as]: item, $index: i });
+      return renderHoles(renderIfs(inner, ctx), ctx);
+    }).join('')
+  );
+  return renderHoles(renderIfs(out, data), data);
+}
+
+// ===== Arranque: alumno (su propia vista) o admin (puede elegir alumno) =====
+function paint(){
+  const app = document.getElementById('mi-aula-app');
+  app.innerHTML = render(document.getElementById('tpl').textContent, getData());
+  app.hidden = false;
+}
+emnInit().then(async () => {
+  const gate = document.getElementById('aula-gate');
+  const role = emnStudentProfile?.role || null;
+  if(!emnSession){
+    gate.innerHTML = 'Inicia sesión para entrar a tu aula. <a href="/emn-login">Inicia sesión</a>';
+    gate.hidden = false; return;
+  }
+  if(role !== 'admin' && role !== 'student' && role !== 'alumno'){
+    gate.textContent = 'Tu vista de Mi Aula está en construcción.';
+    gate.hidden = false; return;
+  }
+  S.me = emnSession.user.id; S.target = S.me; S.isAdmin = role === 'admin';
+  const n = new Date(); S.vy = n.getFullYear(); S.vm = n.getMonth();
+  if(S.isAdmin){
+    const r = await emnSupabase.from('students').select('id,full_name,email,role').eq('role', 'student').order('full_name');
+    S.students = r.data || [];
+  }
+  await loadTarget();
+  paint();
+  const app = document.getElementById('mi-aula-app');
+  app.addEventListener('click', (e) => {
+    const h = e.target.closest('[data-href]'); if(h){ location.href = h.dataset.href; return; }
+    const a = e.target.closest('[data-act]'); if(!a) return;
+    const act = a.dataset.act;
+    if(act === 'prev'){ S.vm--; if(S.vm < 0){ S.vm = 11; S.vy--; } paint(); }
+    else if(act === 'next'){ S.vm++; if(S.vm > 11){ S.vm = 0; S.vy++; } paint(); }
+    else if(act === 'today'){ const t = new Date(); S.vy = t.getFullYear(); S.vm = t.getMonth(); paint(); }
+  });
+  app.addEventListener('change', async (e) => {
+    if(e.target.dataset.act !== 'student') return;
+    S.target = e.target.value; await loadTarget(); paint();
+  });
+});
+</script>
+{% endraw %}
+
+</body>
+</html>

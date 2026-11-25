@@ -123,6 +123,11 @@ let view = new Date(); view.setDate(1);
 function lastSunday(y, m){ const d = new Date(y, m + 1, 0); d.setDate(d.getDate() - d.getDay()); return ymd(d); }
 const alumno = () => alumnos.find(a => a.id === cur);
 const finDe = a => /^\d{4}-\d{2}-\d{2}$/.test(a?.datos?.fin || '') ? a.datos.fin : null;   // "Fecha de fin" del alumno
+// Máximo de clases de un curso, para TODO alumno y TODO curso (salvo el Mock Audition, que es automático):
+// clases por mes × meses del programa. Clases por mes = lo de Comunidad; si no está, Tutoring 1 y los demás 4
+// (el mismo 4 que usa el generador de invoices). Meses = campo "Duración" de la ficha, o 6 si está vacío.
+const maxDe = (a, c) => { if(!a || !c || c === MOCK) return null; const pm = a.clases_mes?.[c] || (c === TUTORING ? 1 : 4); return Math.round(pm * (parseFloat(a.datos?.duracion) || 6)); };
+const nDe = (a, c) => clases.filter(x => x.alumno_id === a.id && x.curso === c).length;
 const fmt = k => `${k.slice(8)}/${k.slice(5, 7)}/${k.slice(0, 4)}`;
 
 /* ---------- tareas para la próxima clase ----------
@@ -200,7 +205,7 @@ function renderSide(){
   side.innerHTML = `
     <h3><i></i>Clases de ${esc(a.nombre)}</h3>
     <div class="courses">
-      ${[...a.cursos, TUTORING].map(c => `<button type="button" class="course" data-c="${esc(c)}" aria-pressed="${c === curso}">${esc(c)}<small>${a.profes_curso?.[c] ? 'Profesor: ' + esc(a.profes_curso[c]) + ' · ' : ''}${clases.filter(x => x.alumno_id === a.id && x.curso === c).length} clases agendadas</small></button>`).join('')}
+      ${[...a.cursos, TUTORING].map(c => `<button type="button" class="course" data-c="${esc(c)}" aria-pressed="${c === curso}">${esc(c)}<small>${a.profes_curso?.[c] ? 'Profesor: ' + esc(a.profes_curso[c]) + ' · ' : ''}${nDe(a, c)}${maxDe(a, c) ? ' / ' + maxDe(a, c) : ''} clases agendadas</small></button>`).join('')}
       <button type="button" class="course" data-c="${MOCK}" aria-pressed="${curso === MOCK}">${MOCK}<small>Automático · último domingo de cada mes</small></button>
     </div>
     ${a.cursos.length ? '' : '<p class="help">Este alumno todavía no tiene cursos asignados. Asígnaselos en <a href="/comunidad" style="color:var(--red)">Comunidad</a>.</p>'}
@@ -211,6 +216,7 @@ function renderSide(){
       ${curso === MOCK
         ? '<p class="help">Se agenda solo el último domingo de cada mes (verde en el calendario). Aquí solo defines el link.</p>'
         : `<p class="help">Haz clic en los días del calendario para agendar <strong>${esc(curso)}</strong>. Cada clase queda con este link y puedes cambiar su hora o su link abajo.</p>
+           <p class="help"><strong>${nDe(a, curso)} / ${maxDe(a, curso)}</strong> clases de ${esc(curso)} agendadas${nDe(a, curso) >= maxDe(a, curso) ? ' · <strong>máximo alcanzado</strong>' : ''}. Haz clic en un día ya agendado para quitar la clase.</p>
            <span class="lbl">Clases agendadas</span>
            ${ses.length ? ses.map(s => `<div class="ses${nx && nx.id === s.id ? ' next' : ''}" data-id="${s.id}">
                <span>${esc(s.fecha.slice(8))}/${esc(s.fecha.slice(5, 7))}</span>
@@ -288,7 +294,18 @@ $('#grid').addEventListener('click', async e => {
     await emnAlert(`${a.nombre} termina el ${fmt(fin)}. No se pueden agendar clases después de la fecha final (${fmt(fecha)} ya la pasa). Si necesitas más tiempo, cambia su fecha de fin en Comunidad.`);
     return;
   }
-  if(clases.some(x => x.alumno_id === a.id && x.curso === curso && x.fecha === fecha)) return;
+  const ya = clases.find(x => x.alumno_id === a.id && x.curso === curso && x.fecha === fecha);
+  if(ya){   // clic en un día ya agendado de este curso: la quita
+    if(!await emnConfirm(`¿Quitar la clase de ${curso} del ${fmt(fecha)}?`, { yesLabel: 'Quitar' })) return;
+    const { error } = await emnSupabase.from('clases').delete().eq('id', ya.id);
+    if(error) return emnAlert('No se pudo quitar la clase: ' + error.message);
+    clases = clases.filter(x => x.id !== ya.id); renderAll(); return;
+  }
+  const mx = maxDe(a, curso);
+  if(mx && nDe(a, curso) >= mx){
+    await emnAlert(`${a.nombre} ya tiene las ${mx} clases de ${curso} de su programa. Quita una antes de agendar otra.`);
+    return;
+  }
   // La hora por defecto es la de la última clase de este curso (o 18:00).
   const prev = clases.filter(x => x.alumno_id === a.id && x.curso === curso).pop();
   const row = { alumno_id: a.id, curso, fecha, hora: prev?.hora || '18:00', link: meet[curso] || null };

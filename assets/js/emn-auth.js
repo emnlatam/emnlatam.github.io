@@ -148,7 +148,7 @@ function emnEnsureModalStyles(){
     .emn-modal-box h3{ font-size:17px; margin:0 0 16px; color:#1A1A1A; }
     .emn-modal-field{ margin-bottom:12px; }
     .emn-modal-field label{ display:block; font-size:11px; font-weight:600; color:#666; margin-bottom:4px; }
-    .emn-modal-field input{ width:100%; padding:9px 10px; border:1px solid #D9D6D1; border-radius:7px; font-size:13.5px; box-sizing:border-box; font-family:inherit; }
+    .emn-modal-field input, .emn-modal-field select{ width:100%; padding:9px 10px; border:1px solid #D9D6D1; border-radius:7px; font-size:13.5px; box-sizing:border-box; font-family:inherit; }
     .emn-modal-field input:disabled{ color:#999; background:#F5F4F2; }
     .emn-modal-avatar-row{ display:flex; align-items:center; gap:12px; margin-bottom:16px; }
     .emn-modal-avatar{ width:52px; height:52px; border-radius:50%; background:#C8102E; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px; overflow:hidden; flex-shrink:0; }
@@ -241,6 +241,23 @@ function emnAlert(message, { okLabel = 'Entendido' } = {}){
 // in the `avatars` Storage bucket), and set a new password. Needs
 // `students.avatar_url` (text column) and a public `avatars` bucket to
 // exist — see the SQL given alongside this feature.
+// Time zones for class hours (classes are stored in Lima time). Lima and Boston first, then US + LatAm.
+const EMN_TZS = [
+  ['America/Lima','Lima (Perú)'], ['America/New_York','Boston / Nueva York (EE. UU. Este)'],
+  ['America/Chicago','Chicago (EE. UU. Centro)'], ['America/Denver','Denver (EE. UU. Montaña)'], ['America/Phoenix','Phoenix (Arizona)'],
+  ['America/Los_Angeles','Los Ángeles (EE. UU. Pacífico)'], ['America/Puerto_Rico','Puerto Rico'],
+  ['America/Bogota','Bogotá (Colombia)'], ['America/Guayaquil','Quito (Ecuador)'], ['America/Mexico_City','Ciudad de México'],
+  ['America/Panama','Panamá'], ['America/Costa_Rica','Costa Rica'], ['America/Guatemala','Guatemala'], ['America/Santo_Domingo','Santo Domingo'],
+  ['America/Havana','La Habana (Cuba)'], ['America/Caracas','Caracas (Venezuela)'], ['America/La_Paz','La Paz (Bolivia)'],
+  ['America/Santiago','Santiago (Chile)'], ['America/Argentina/Buenos_Aires','Buenos Aires (Argentina)'], ['America/Montevideo','Montevideo (Uruguay)'],
+  ['America/Asuncion','Asunción (Paraguay)'], ['America/Sao_Paulo','São Paulo (Brasil)']
+];
+// Saved once per account (auth user_metadata, follows the person across devices); Lima by default.
+function emnGetTz(){
+  const v = emnSession?.user?.user_metadata?.timezone;
+  return EMN_TZS.some(z => z[0] === v) ? v : 'America/Lima';
+}
+
 function emnOpenAccountModal(){
   emnEnsureModalStyles();
   const profile = emnStudentProfile || {};
@@ -256,6 +273,7 @@ function emnOpenAccountModal(){
       </div>
       <div class="emn-modal-field"><label>Nombre</label><input type="text" id="emn-account-name" value="${(profile.full_name || '').replace(/"/g, '&quot;')}"></div>
       <div class="emn-modal-field"><label>Correo</label><input type="email" value="${emnSession.user.email}" disabled></div>
+      <div class="emn-modal-field"><label>Zona horaria (para ver las horas de tus clases)</label><select id="emn-account-tz">${EMN_TZS.map(z => `<option value="${z[0]}"${z[0] === emnGetTz() ? ' selected' : ''}>${z[1]}</option>`).join('')}</select></div>
       <div class="emn-modal-field"><label>Nueva contraseña</label><input type="password" id="emn-account-password" placeholder="Dejar en blanco para no cambiar" autocomplete="new-password" minlength="6"></div>
       <p class="emn-modal-msg" id="emn-account-msg"></p>
       <hr class="emn-modal-sep">
@@ -306,6 +324,12 @@ function emnOpenAccountModal(){
         .update({ full_name: newName, avatar_url: avatarUrl })
         .eq('id', emnSession.user.id);
       if(updateError) throw updateError;
+
+      const newTz = overlay.querySelector('#emn-account-tz').value;
+      if(newTz !== emnGetTz()){
+        const { error: tzError } = await emnSupabase.auth.updateUser({ data: { timezone: newTz } });
+        if(tzError) throw tzError;
+      }
 
       if(newPassword){
         if(newPassword.length < 6) throw new Error('La contraseña debe tener al menos 6 caracteres.');
@@ -390,7 +414,7 @@ function emnInjectAskBerklee(st){
 // "Mi Aula" tab: a plain link to /mi-aula (the hub with the Career Progress and
 // Mock Audition buttons) — any signed-in person, never a signed-out visitor.
 // A red button that never moves: always the last tab before the user button, in both headers.
-const EMN_AULA_PATHS = ['/mi-aula', '/career', '/career-progress', '/mock-audition'];
+const EMN_AULA_PATHS = ['/mi-aula', '/mi-aula-anterior', '/collaba', '/career', '/career-progress', '/mock-audition'];
 function emnInjectCareerMenu(st){
   if(!st.in) return;
   const nav = document.querySelector('.emn-nav');
