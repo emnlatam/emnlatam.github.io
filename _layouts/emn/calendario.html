@@ -59,6 +59,8 @@
   .course small{ display:block; font-weight:400; color:var(--gray-500); font-size:12px; margin-top:2px; }
   .in{ width:100%; box-sizing:border-box; padding:9px 11px; border:1px solid var(--gray-300); border-radius:8px; font-size:13.5px; background:#fff; color:var(--ink); }
   .in:focus{ border-color:var(--red); outline:none; }
+  .lbl.sub{ font-size:15px; font-weight:700; text-transform:none; letter-spacing:0; color:#1a1a1d; margin:18px 0 6px; }
+  .fin{ font-weight:700; color:#1a1a1d; }
   .help{ font-size:12.5px; color:var(--gray-500); line-height:1.45; margin:8px 0 0; }
   .ses{ display:grid; grid-template-columns:auto 92px minmax(0,1fr) auto; gap:6px; align-items:center; padding:7px 0; border-top:1px solid var(--gray-100); font-size:12.5px; }
   .ses .in{ padding:6px 8px; font-size:12.5px; }
@@ -209,15 +211,14 @@ function renderSide(){
       <button type="button" class="course" data-c="${MOCK}" aria-pressed="${curso === MOCK}">${MOCK}<small>Automático · último domingo de cada mes</small></button>
     </div>
     ${a.cursos.length ? '' : '<p class="help">Este alumno todavía no tiene cursos asignados. Asígnaselos en <a href="/comunidad" style="color:var(--red)">Comunidad</a>.</p>'}
-    ${finDe(a) ? `<p class="help">Fecha final: <strong>${fmt(finDe(a))}</strong>. No se pueden agendar clases después de esa fecha.</p>` : '<p class="help">Este alumno no tiene fecha final: puedes agendar sin límite. Defínela en <a href="/comunidad" style="color:var(--red)">Comunidad</a>.</p>'}
+    ${finDe(a) ? `<p class="help"><strong class="fin">Fecha final: ${fmt(finDe(a))}</strong> No se pueden agendar clases después de esa fecha.</p>` : '<p class="help">Este alumno no tiene fecha final: puedes agendar sin límite. Defínela en <a href="/comunidad" style="color:var(--red)">Comunidad</a>.</p>'}
     ${curso ? `
-      <label class="lbl" for="meet">Link de Meet de ${esc(curso)}</label>
+      <label class="lbl sub" for="meet">Link de Meet de ${esc(curso)}</label>
       <input class="in" id="meet" type="url" placeholder="https://meet.google.com/…" value="${esc(meet[curso] || '')}">
       ${curso === MOCK
         ? '<p class="help">Se agenda solo el último domingo de cada mes (verde en el calendario). Aquí solo defines el link.</p>'
-        : `<p class="help">Haz clic en los días del calendario para agendar <strong>${esc(curso)}</strong>. Cada clase queda con este link y puedes cambiar su hora o su link abajo.</p>
-           <p class="help"><strong>${nDe(a, curso)} / ${maxDe(a, curso)}</strong> clases de ${esc(curso)} agendadas${nDe(a, curso) >= maxDe(a, curso) ? ' · <strong>máximo alcanzado</strong>' : ''}. Haz clic en un día ya agendado para quitar la clase.</p>
-           <span class="lbl">Clases agendadas</span>
+        : `<p class="help"><strong>${nDe(a, curso)} / ${maxDe(a, curso)}</strong> clases de ${esc(curso)} agendadas${nDe(a, curso) >= maxDe(a, curso) ? ' · <strong>máximo alcanzado</strong>' : ''}. Haz clic en un día ya agendado para quitar la clase.</p>
+           <span class="lbl sub">Clases agendadas</span>
            ${ses.length ? ses.map(s => `<div class="ses${nx && nx.id === s.id ? ' next' : ''}" data-id="${s.id}">
                <span>${esc(s.fecha.slice(8))}/${esc(s.fecha.slice(5, 7))}</span>
                <input class="in" type="time" value="${esc(s.hora.slice(0, 5))}" data-f="hora" aria-label="Hora">
