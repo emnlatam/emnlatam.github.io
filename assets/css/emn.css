@@ -266,8 +266,9 @@
 }
 
 .emn-landing .emn-nav__link--user {
-  background: var(--red);
-  color: #fff;
+  background: #fff;
+  color: var(--red);
+  border: 2px solid var(--red);
   border-radius: 999px;
 }
 
@@ -275,9 +276,12 @@
 .emn-landing .emn-nav__link--aula:hover { background: var(--red-dark); color: #fff; }
 
 .emn-landing .emn-nav__link--user:hover {
-  background: var(--red-dark);
-  color: #fff;
+  background: var(--red-tint);
+  color: var(--red);
 }
+/* también sobre el header oscuro (el botón siempre es blanco con borde rojo) */
+.emn-landing .emn-header--dark .emn-nav__link--user,
+.emn-landing .emn-header--dark .emn-nav__link--user:hover { color: var(--red); }
 
 .emn-landing .emn-nav__link.is-active::after {
   content: '';
