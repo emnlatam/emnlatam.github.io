@@ -45,17 +45,19 @@
   .day.today{ border-color:var(--red); background:var(--red-tint); }
   .day b{ font-family:var(--font-display); font-size:12.5px; color:var(--gray-700); font-weight:400; }
   .day.today b{ color:var(--red); font-weight:700; }
-  .ev{ font-size:10.5px; line-height:1.25; padding:2px 4px 2px 5px; border-radius:4px; background:#fff; border:1px solid var(--gray-300); border-left:4px solid var(--c); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ev{ font-size:10.5px; line-height:1.25; padding:2px 4px 2px 5px; border-radius:4px; background:color-mix(in srgb, var(--cc, #fff) 15%, #fff); border:1px solid var(--gray-300); border-left:4px solid var(--cc, var(--c)); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .ev.dim{ opacity:.4; }
-  .ev.mock{ background:#E8F5EE; border-color:#1E8E5A; color:#0B7A43; font-weight:700; }
+  .ev.mock{ background:#111; border-color:#111; color:#fff; font-weight:700; }
 
   .side h3{ font-family:var(--font-display); font-size:17px; margin:0 0 12px; display:flex; align-items:center; gap:8px; }
   .side h3 i{ width:12px; height:12px; border-radius:50%; background:var(--c); flex-shrink:0; }
   .lbl{ display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--gray-500); margin:14px 0 6px; }
   .courses{ display:flex; flex-direction:column; gap:7px; }
-  .course{ text-align:left; border:1px solid var(--gray-300); background:var(--paper); border-radius:8px; padding:10px 12px; font-size:13.5px; font-weight:600; cursor:pointer; color:var(--ink); }
+  .course{ text-align:left; border:1px solid var(--gray-300); border-left:6px solid var(--cc, var(--gray-300)); background:var(--paper); border-radius:8px; padding:10px 12px; font-size:13.5px; font-weight:600; cursor:pointer; color:var(--ink); }
   .course:hover{ border-color:var(--red); }
-  .course[aria-pressed="true"]{ border-color:var(--c); box-shadow:inset 0 0 0 1px var(--c); background:#fff; }
+  .course[aria-pressed="true"]{ border-color:var(--cc, var(--c)); box-shadow:inset 0 0 0 1px var(--cc, var(--c)); background:color-mix(in srgb, var(--cc, #fff) 12%, #fff); }
+  .ses .dot{ display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--cc); margin-right:5px; }
+  .tz{ font-size:12px; color:var(--gray-500); margin:0 0 10px; }
   .course small{ display:block; font-weight:400; color:var(--gray-500); font-size:12px; margin-top:2px; }
   .in{ width:100%; box-sizing:border-box; padding:9px 11px; border:1px solid var(--gray-300); border-radius:8px; font-size:13.5px; background:#fff; color:var(--ink); }
   .in:focus{ border-color:var(--red); outline:none; }
@@ -101,6 +103,7 @@
           <button type="button" id="next" aria-label="Mes siguiente">›</button>
           <button type="button" class="today" id="today">Hoy</button>
         </div>
+        <p class="tz">Horas en hora de Madrid (España).</p>
         <div class="wd"><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span></div>
         <div class="grid" id="grid"></div>
       </div>
@@ -131,6 +134,28 @@ const finDe = a => /^\d{4}-\d{2}-\d{2}$/.test(a?.datos?.fin || '') ? a.datos.fin
 const maxDe = (a, c) => { if(!a || !c || c === MOCK) return null; const pm = a.clases_mes?.[c] || (c === TUTORING ? 1 : 4); return Math.round(pm * (parseFloat(a.datos?.duracion) || 6)); };
 const nDe = (a, c) => clases.filter(x => x.alumno_id === a.id && x.curso === c).length;
 const fmt = k => `${k.slice(8)}/${k.slice(5, 7)}/${k.slice(0, 4)}`;
+
+/* ---------- colores por curso (siempre los mismos) ---------- */
+const CURSO_COLOR = [[/piece|improv/i, '#D7263D'], [/audio|read/i, '#1E9E5A'], [/tutor/i, '#7A3FD1'], [/interview/i, '#F2B705'], [/mock/i, '#111111']];
+const colorCurso = c => (CURSO_COLOR.find(([re]) => re.test(c || '')) || [0, '#8A8F98'])[1];
+
+/* ---------- horas: la base guarda hora de Lima; en esta vista se muestran en hora de Madrid ---------- */
+const LIMA_UTC = -5;   // Lima no cambia de horario
+const _mad = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+function madWall(ms){ const p = Object.fromEntries(_mad.formatToParts(new Date(ms)).map(x => [x.type, x.value])); return { f: `${p.year}-${p.month}-${p.day}`, h: `${p.hour}:${p.minute}`, ms: Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute) }; }
+function toMadrid(fecha, hora){            // fecha+hora de Lima -> { f, h } de Madrid
+  const [y, m, d] = fecha.split('-').map(Number), [hh, mm] = hora.split(':').map(Number);
+  const w = madWall(Date.UTC(y, m - 1, d, hh - LIMA_UTC, mm)); return { f: w.f, h: w.h };
+}
+function fromMadrid(f, h){                  // fecha+hora de Madrid -> { fecha, hora } de Lima
+  const [y, m, d] = f.split('-').map(Number), [hh, mm] = h.split(':').map(Number);
+  const wall = Date.UTC(y, m - 1, d, hh, mm);
+  let ms = wall - 3600000;
+  for(let i = 0; i < 2; i++) ms = wall - (madWall(ms).ms - ms);
+  const t = new Date(ms + LIMA_UTC * 3600000), p = n => String(n).padStart(2, '0');
+  return { fecha: `${t.getUTCFullYear()}-${p(t.getUTCMonth() + 1)}-${p(t.getUTCDate())}`, hora: `${p(t.getUTCHours())}:${p(t.getUTCMinutes())}` };
+}
+const M = c => toMadrid(c.fecha, c.hora.slice(0, 5));
 
 /* ---------- tareas para la próxima clase ----------
    Viven en alumnos.datos._tareas = [{id, curso, texto, hecha}] (solo el personal las ve, no hace falta tabla nueva).
@@ -167,14 +192,14 @@ function renderCal(){
     const d = new Date(start); d.setDate(start.getDate() + i);
     const k = ymd(d), outside = d.getMonth() !== m;
     if(i >= 35 && outside) break;
-    const evs = clases.filter(c => c.fecha === k).sort((p, q) => p.hora.localeCompare(q.hora)).map(c => {
+    const evs = clases.map(c => ({ c, m: M(c) })).filter(x => x.m.f === k).sort((p, q) => p.m.h.localeCompare(q.m.h)).map(({ c, m }) => {
       const al = alumnos.find(x => x.id === c.alumno_id); if(!al) return '';
-      return `<div class="ev${c.alumno_id === cur ? '' : ' dim'}" style="--c:${esc(al.color)}" title="${esc(al.nombre)} · ${esc(c.curso)} · ${esc(c.hora.slice(0,5))}">${esc(c.hora.slice(0,5))} ${esc(al.nombre.split(' ')[0])} · ${esc(c.curso)}</div>`;
+      return `<div class="ev${c.alumno_id === cur ? '' : ' dim'}" style="--c:${esc(al.color)};--cc:${colorCurso(c.curso)}" title="${esc(al.nombre)} · ${esc(c.curso)} · ${esc(m.h)} (Madrid)">${esc(m.h)} ${esc(al.nombre.split(' ')[0])} · ${esc(c.curso)}</div>`;
     }).join('');
     let tk = '';
     if(a && curso && curso !== MOCK){
       const nx = proxClase(a, curso), n = tareasDe(a, curso).filter(t => !t.hecha).length;
-      if(nx && nx.fecha === k && n) tk = `<div class="ev tarea" title="Tareas para esta clase">✎ ${n} ${n === 1 ? 'tarea' : 'tareas'}</div>`;
+      if(nx && M(nx).f === k && n) tk = `<div class="ev tarea" title="Tareas para esta clase">✎ ${n} ${n === 1 ? 'tarea' : 'tareas'}</div>`;
     }
     const mk = k === lastSunday(d.getFullYear(), d.getMonth()) ? `<div class="ev mock">${MOCK}</div>` : '';
     cells.push(`<button type="button" class="day${outside ? ' out' : ''}${k === today ? ' today' : ''}${canPick && !outside ? ' pick' : ''}${canPick && fin && k > fin ? ' past' : ''}" data-d="${k}"${canPick && fin && k > fin ? ` title="Después de la fecha final del alumno (${fmt(fin)})"` : ''}><b>${d.getDate()}</b>${mk}${evs}${tk}</button>`);
@@ -196,7 +221,7 @@ function renderSide(){
     <div class="tasks">
       <span class="lbl">Tareas para la próxima clase</span>
       <p class="help" style="margin:0 0 8px">${nx
-        ? `Próxima clase de ${esc(curso)}: <strong>${fmt(nx.fecha)} · ${esc(nx.hora.slice(0, 5))}</strong>. Lo que no se haga pasa a la siguiente.`
+        ? `Próxima clase de ${esc(curso)}: <strong>${fmt(M(nx).f)} · ${esc(M(nx).h)} (Madrid)</strong>. Lo que no se haga pasa a la siguiente.`
         : 'No hay clase agendada: las tareas quedan guardadas y se enganchan solas a la próxima que agendes.'}</p>
       <textarea class="in" id="tkText" placeholder="Ej: repasar compases 12–24 con metrónomo a 80…"></textarea>
       <button type="button" class="add" id="tkAdd">Agregar tarea</button>
@@ -207,8 +232,8 @@ function renderSide(){
   side.innerHTML = `
     <h3><i></i>Clases de ${esc(a.nombre)}</h3>
     <div class="courses">
-      ${[...a.cursos, TUTORING].map(c => `<button type="button" class="course" data-c="${esc(c)}" aria-pressed="${c === curso}">${esc(c)}<small>${a.profes_curso?.[c] ? 'Profesor: ' + esc(a.profes_curso[c]) + ' · ' : ''}${nDe(a, c)}${maxDe(a, c) ? ' / ' + maxDe(a, c) : ''} clases agendadas</small></button>`).join('')}
-      <button type="button" class="course" data-c="${MOCK}" aria-pressed="${curso === MOCK}">${MOCK}<small>Automático · último domingo de cada mes</small></button>
+      ${[...a.cursos, TUTORING].map(c => `<button type="button" class="course" data-c="${esc(c)}" style="--cc:${colorCurso(c)}" aria-pressed="${c === curso}">${esc(c)}<small>${a.profes_curso?.[c] ? 'Profesor: ' + esc(a.profes_curso[c]) + ' · ' : ''}${nDe(a, c)}${maxDe(a, c) ? ' / ' + maxDe(a, c) : ''} clases agendadas</small></button>`).join('')}
+      <button type="button" class="course" data-c="${MOCK}" style="--cc:${colorCurso(MOCK)}" aria-pressed="${curso === MOCK}">${MOCK}<small>Automático · último domingo de cada mes</small></button>
     </div>
     ${a.cursos.length ? '' : '<p class="help">Este alumno todavía no tiene cursos asignados. Asígnaselos en <a href="/comunidad" style="color:var(--red)">Comunidad</a>.</p>'}
     ${finDe(a) ? `<p class="help"><strong class="fin">Fecha final: ${fmt(finDe(a))}</strong> No se pueden agendar clases después de esa fecha.</p>` : '<p class="help">Este alumno no tiene fecha final: puedes agendar sin límite. Defínela en <a href="/comunidad" style="color:var(--red)">Comunidad</a>.</p>'}
@@ -219,9 +244,10 @@ function renderSide(){
         ? '<p class="help">Se agenda solo el último domingo de cada mes (verde en el calendario). Aquí solo defines el link.</p>'
         : `<p class="help"><strong>${nDe(a, curso)} / ${maxDe(a, curso)}</strong> clases de ${esc(curso)} agendadas${nDe(a, curso) >= maxDe(a, curso) ? ' · <strong>máximo alcanzado</strong>' : ''}. Haz clic en un día ya agendado para quitar la clase.</p>
            <span class="lbl sub">Clases agendadas</span>
+           <p class="tz">Horas en hora de Madrid (España).</p>
            ${ses.length ? ses.map(s => `<div class="ses${nx && nx.id === s.id ? ' next' : ''}" data-id="${s.id}">
-               <span>${esc(s.fecha.slice(8))}/${esc(s.fecha.slice(5, 7))}</span>
-               <input class="in" type="time" value="${esc(s.hora.slice(0, 5))}" data-f="hora" aria-label="Hora">
+               <span style="--cc:${colorCurso(s.curso)}"><i class="dot"></i>${esc(M(s).f.slice(8))}/${esc(M(s).f.slice(5, 7))}</span>
+               <input class="in" type="time" value="${esc(M(s).h)}" data-f="hora" aria-label="Hora (Madrid)">
                <input class="in" type="url" value="${esc(s.link || '')}" data-f="link" placeholder="Link de Meet" aria-label="Link">
                <button type="button" data-del aria-label="Quitar clase">×</button></div>`).join('') : '<p class="none">Aún no hay clases de este curso.</p>'}`}
     ` : ''}
@@ -297,10 +323,12 @@ $('#side').addEventListener('change', async e => {
   const row = e.target.closest('.ses'); if(!row || !e.target.dataset.f) return;
   const cl = clases.find(x => x.id === row.dataset.id), f = e.target.dataset.f;
   let val = e.target.value.trim() || null;
-  if(f === 'hora' && !val){ e.target.value = cl.hora.slice(0, 5); return; }
-  const { error } = await emnSupabase.from('clases').update({ [f]: val }).eq('id', cl.id);
+  if(f === 'hora' && !val){ e.target.value = M(cl).h; return; }
+  let patch = { [f]: val };
+  if(f === 'hora'){ const l = fromMadrid(M(cl).f, val); patch = { fecha: l.fecha, hora: l.hora }; }   // en pantalla es hora de Madrid; se guarda en hora de Lima
+  const { error } = await emnSupabase.from('clases').update(patch).eq('id', cl.id);
   if(error) return emnAlert('No se pudo guardar el cambio: ' + error.message);
-  cl[f] = val; renderCal();
+  Object.assign(cl, patch); if(patch.hora) cl.hora = patch.hora + ':00'; renderAll();
   if(cl.google_event_id){ const r = await gcal('sync', cl.id); if(r?.ok) renderCal(); }
 });
 
@@ -312,7 +340,7 @@ $('#grid').addEventListener('click', async e => {
     await emnAlert(`${a.nombre} termina el ${fmt(fin)}. No se pueden agendar clases después de la fecha final (${fmt(fecha)} ya la pasa). Si necesitas más tiempo, cambia su fecha de fin en Comunidad.`);
     return;
   }
-  const ya = clases.find(x => x.alumno_id === a.id && x.curso === curso && x.fecha === fecha);
+  const ya = clases.find(x => x.alumno_id === a.id && x.curso === curso && M(x).f === fecha);
   if(ya){   // clic en un día ya agendado de este curso: la quita
     if(!await emnConfirm(`¿Quitar la clase de ${curso} del ${fmt(fecha)}?`, { yesLabel: 'Quitar' })) return;
     if(ya.google_event_id) await gcal('remove', ya.id);
@@ -325,9 +353,10 @@ $('#grid').addEventListener('click', async e => {
     await emnAlert(`${a.nombre} ya tiene las ${mx} clases de ${curso} de su programa. Quita una antes de agendar otra.`);
     return;
   }
-  // La hora por defecto es la de la última clase de este curso (o 18:00).
+  // La hora por defecto es la de la última clase de este curso (o 18:00 de Madrid). El día y la hora clicados son de Madrid.
   const prev = clases.filter(x => x.alumno_id === a.id && x.curso === curso).pop();
-  const row = { alumno_id: a.id, curso, fecha, hora: prev?.hora || '18:00', link: meet[curso] || null };
+  const lima = fromMadrid(fecha, prev ? M(prev).h : '18:00');
+  const row = { alumno_id: a.id, curso, fecha: lima.fecha, hora: lima.hora, link: meet[curso] || null };
   const { data, error } = await emnSupabase.from('clases').insert(row).select().single();
   if(error) return emnAlert('No se pudo agendar la clase: ' + error.message);
   data.hora = data.hora.slice(0, 8); clases.push(data); renderAll();
