@@ -96,3 +96,7 @@ alter table public.alumnos add column if not exists activo boolean not null defa
 -- Correo del profesor (de "Professors Email" en Airtable). Se usa para invitarlo a las clases de Google Calendar
 -- y para reconocerlo en Mi Aula cuando entra con una cuenta con ese mismo correo.
 alter table public.profesores add column if not exists correo text;
+
+-- Google Calendar (funcion google-calendar-sync): un calendario por alumno y un evento por clase.
+alter table public.alumnos add column if not exists google_calendar_id text;
+alter table public.clases add column if not exists google_event_id text;

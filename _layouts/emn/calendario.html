@@ -256,11 +256,27 @@ $('#side').addEventListener('click', async e => {
   if(c){ curso = c.dataset.c; renderAll(); return; }
   if(e.target.closest('[data-del]')){
     const id = e.target.closest('.ses').dataset.id;
+    if(clases.find(x => x.id === id)?.google_event_id) await gcal('remove', id);
     const { error } = await emnSupabase.from('clases').delete().eq('id', id);
     if(error) return emnAlert('No se pudo quitar la clase: ' + error.message);
     clases = clases.filter(x => x.id !== id); renderAll();
   }
 });
+
+// Espejo en Google Calendar (emnlatam@gmail.com): crea/actualiza/borra el evento de la clase, con su Meet abierto
+// e invitando al alumno y al profesor. Si falla, la clase igual queda guardada aquí y se avisa.
+async function gcal(action, id){
+  try{
+    const { data, error } = await emnSupabase.functions.invoke('google-calendar-sync', { body: { action, clase_id: id } });
+    if(error){ let d = error.message; try { const j = await error.context.json(); if(j.error) d = j.error; } catch {} throw new Error(d); }
+    if(data?.error) throw new Error(data.error);
+    return data;
+  }catch(err){
+    console.error('google-calendar-sync', err);
+    await emnAlert('La clase quedó guardada en la página, pero no se pudo sincronizar con Google Calendar: ' + err.message);
+    return null;
+  }
+}
 
 $('#side').addEventListener('change', async e => {
   const tk = e.target.closest('.tk');
@@ -284,6 +300,7 @@ $('#side').addEventListener('change', async e => {
   const { error } = await emnSupabase.from('clases').update({ [f]: val }).eq('id', cl.id);
   if(error) return emnAlert('No se pudo guardar el cambio: ' + error.message);
   cl[f] = val; renderCal();
+  if(cl.google_event_id){ const r = await gcal('sync', cl.id); if(r?.ok) renderCal(); }
 });
 
 $('#grid').addEventListener('click', async e => {
@@ -297,6 +314,7 @@ $('#grid').addEventListener('click', async e => {
   const ya = clases.find(x => x.alumno_id === a.id && x.curso === curso && x.fecha === fecha);
   if(ya){   // clic en un día ya agendado de este curso: la quita
     if(!await emnConfirm(`¿Quitar la clase de ${curso} del ${fmt(fecha)}?`, { yesLabel: 'Quitar' })) return;
+    if(ya.google_event_id) await gcal('remove', ya.id);
     const { error } = await emnSupabase.from('clases').delete().eq('id', ya.id);
     if(error) return emnAlert('No se pudo quitar la clase: ' + error.message);
     clases = clases.filter(x => x.id !== ya.id); renderAll(); return;
@@ -311,7 +329,9 @@ $('#grid').addEventListener('click', async e => {
   const row = { alumno_id: a.id, curso, fecha, hora: prev?.hora || '18:00', link: meet[curso] || null };
   const { data, error } = await emnSupabase.from('clases').insert(row).select().single();
   if(error) return emnAlert('No se pudo agendar la clase: ' + error.message);
-  clases.push(data); renderAll();
+  data.hora = data.hora.slice(0, 8); clases.push(data); renderAll();
+  const r = await gcal('sync', data.id);
+  if(r?.ok){ data.link = r.link; data.google_event_id = r.event_id; renderAll(); }
 });
 
 /* ---------- arranque ---------- */
