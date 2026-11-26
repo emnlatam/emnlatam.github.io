@@ -3603,3 +3603,29 @@
 
 .emn-landing .emn-footer__legal { display:block; margin-top:4px; font-size:11px; opacity:.7; }
 .emn-landing .emn-footer__legal a { color:inherit; text-decoration:underline; }
+
+/* Mi Aula button: always solid red with white letters; user button: white with red letters and red border.
+   (Placed last with high specificity so the dark-header and phone-panel "cta" rules never turn it white.) */
+.emn-landing .emn-header .emn-nav .emn-nav__link.emn-nav__link--aula,
+.emn-landing .emn-header--dark .emn-nav .emn-nav__link.emn-nav__link--aula {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+}
+.emn-landing .emn-header .emn-nav .emn-nav__link.emn-nav__link--aula:hover,
+.emn-landing .emn-header--dark .emn-nav .emn-nav__link.emn-nav__link--aula:hover {
+  background: var(--red-dark);
+  border-color: var(--red-dark);
+  color: #fff;
+}
+.emn-landing .emn-header .emn-nav .emn-nav__link.emn-nav__link--user,
+.emn-landing .emn-header--dark .emn-nav .emn-nav__link.emn-nav__link--user {
+  background: #fff;
+  color: var(--red);
+  border: 2px solid var(--red);
+}
+.emn-landing .emn-header .emn-nav .emn-nav__link.emn-nav__link--user:hover,
+.emn-landing .emn-header--dark .emn-nav .emn-nav__link.emn-nav__link--user:hover {
+  background: var(--red-tint);
+  color: var(--red);
+}
