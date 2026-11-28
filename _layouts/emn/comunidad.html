@@ -505,7 +505,8 @@ $('#form').addEventListener('submit', async e => {
 function openPForm(p){
   editingP = p || null;
   $('#pdlg-title').textContent = p ? 'Editar profesor' : 'Agregar profesor';
-  $('#pfields').innerHTML = PCAMPOS.map(c => fieldHTML(c, p?.[c.key], c.key)).join('');
+  $('#pfields').innerHTML = PCAMPOS.map(c => fieldHTML(c, p?.[c.key], c.key)).join('') +
+    fieldHTML({ label: 'Link de Drive (botón Mi Drive del profesor en Mi Aula)', type: 'url', wide: true }, p?.drive_link, 'drive_link');   // solo en la app, no va a Airtable
   $('#pmsg').hidden = true;
   $('#pdlg').showModal();
   $('#pfields input')?.focus();
@@ -516,6 +517,8 @@ $('#pform').addEventListener('submit', async e => {
   const msg = $('#pmsg'), btn = $('#psave'); msg.hidden = true;
   const fd = new FormData(e.target), row = {};
   PCAMPOS.forEach(c => row[c.key] = (fd.get(c.key) || '').toString().trim() || null);
+  row.drive_link = (fd.get('drive_link') || '').toString().trim() || null;
+  if(row.drive_link && !safeUrl(row.drive_link)){ msg.textContent = 'El link de Drive debe empezar con https://'; msg.hidden = false; return; }
   if(!row.nombre || row.nombre.length < 2){ msg.textContent = 'Escribe el nombre del profesor.'; msg.hidden = false; return; }
   btn.disabled = true; btn.textContent = 'Guardando…';
   let saved;
