@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="es" class="emn-landing">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{% include emn-favicon.html %}
+<title>Cómo funciona EMN — Tu aula y tus apps para llegar a Berklee</title>
+<meta name="description" content="Conoce la web de EMN para alumnos: tu aula con clases, tareas y progreso, y las apps de práctica para cada prueba de la audición a Berklee.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="/assets/css/emn.css?v={{ site.time | date: '%s' }}">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/assets/js/emn-auth.js?v={{ site.time | date: '%s' }}"></script>
+<style>
+  .cf{ background:var(--paper); color:var(--ink); font-family:var(--font-body); }
+  .cf-wrap{ max-width:1120px; margin:0 auto; padding:0 24px; }
+  .cf-tag{ font-size:12px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--red); margin:0 0 12px; }
+
+  /* Hero */
+  .cf-hero{ padding:60px 0 30px; text-align:center; }
+  .cf-hero h1{ font-family:var(--font-display); font-weight:700; font-size:clamp(34px,5.2vw,60px); line-height:1.07; letter-spacing:-.02em; margin:0 auto 18px; max-width:840px; }
+  .cf-hero h1 em{ color:var(--red); font-style:italic; }
+  .cf-hero .lede{ max-width:640px; margin:0 auto 26px; color:var(--gray-700); font-size:17px; line-height:1.65; }
+  .cf-btns{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .cf-btn{ display:inline-block; text-decoration:none; font-weight:700; font-size:15px; border-radius:999px; padding:13px 26px; border:2px solid var(--red); }
+  .cf-btn.solid{ background:var(--red); color:#fff; }
+  .cf-btn.solid:hover{ background:var(--red-dark); border-color:var(--red-dark); }
+  .cf-btn.line{ background:#fff; color:var(--red); }
+  .cf-btn.line:hover{ background:var(--red-tint); }
+
+  /* Screenshot slots: drop a PNG in /assets/img/como-funciona/ with the name shown and it appears by itself. */
+  .cf-shot{ position:relative; margin:0; border-radius:16px; overflow:hidden; border:2px dashed #E3B9C0; background:repeating-linear-gradient(135deg,rgba(200,16,46,.045) 0 14px,transparent 14px 28px); aspect-ratio:16/10; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:16px; }
+  .cf-shot.wide{ aspect-ratio:21/9; max-width:1000px; margin:38px auto 0; }
+  .cf-shot b{ font-family:var(--font-display); font-weight:600; font-size:17px; }
+  .cf-shot span{ font-family:ui-monospace,Menlo,monospace; font-size:12px; color:var(--gray-700); margin-top:6px; }
+  .cf-shot img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; background:#fff; }
+  .cf-shot:has(img){ border:0; box-shadow:0 24px 60px -24px rgba(26,26,26,.35); }
+
+  .cf-sec{ padding:72px 0; }
+  .cf-sec.gray{ background:var(--gray-100); }
+  .cf-head{ max-width:660px; margin:0 auto 40px; text-align:center; }
+  .cf-head h2{ font-family:var(--font-display); font-weight:700; font-size:clamp(27px,3.6vw,40px); line-height:1.12; letter-spacing:-.015em; margin:0 0 12px; }
+  .cf-head p{ color:var(--gray-700); font-size:16px; line-height:1.6; margin:0; }
+
+  /* Feature rows */
+  .cf-feat{ display:grid; grid-template-columns:1fr 1fr; gap:clamp(24px,5vw,60px); align-items:center; padding:30px 0; }
+  .cf-feat.flip .cf-copy{ order:2; }
+  .cf-num{ display:inline-block; font-size:12px; font-weight:700; color:var(--red-dark); background:var(--red-tint); border-radius:20px; padding:3px 12px; margin-bottom:12px; }
+  .cf-copy h3{ font-family:var(--font-display); font-weight:700; font-size:clamp(23px,2.8vw,31px); line-height:1.15; margin:0 0 12px; letter-spacing:-.01em; }
+  .cf-copy p{ color:var(--gray-700); font-size:16px; line-height:1.65; margin:0 0 12px; }
+  .cf-win{ font-weight:600; color:var(--ink) !important; }
+  .cf-win::before{ content:'✓ '; color:var(--red); }
+  .cf-tech{ font-size:12.5px !important; line-height:1.55 !important; color:var(--gray-500) !important; margin-top:12px !important; }
+  .cf-tech b{ color:var(--gray-700); font-weight:600; }
+
+  /* Apps grid */
+  .cf-apps{ display:grid; grid-template-columns:repeat(2,1fr); gap:22px; }
+  .cf-app{ background:#fff; border:2px solid var(--red); border-radius:18px; padding:22px; display:flex; flex-direction:column; gap:12px; }
+  .cf-app h3{ font-family:var(--font-display); font-size:23px; margin:0; }
+  .cf-app p{ margin:0; color:var(--gray-700); font-size:15px; line-height:1.6; }
+  .cf-app .cf-tech{ margin-top:0 !important; }
+  .cf-soon{ display:inline-block; align-self:flex-start; font-size:11.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--gray-700); background:var(--gray-100); border-radius:20px; padding:3px 10px; }
+  .cf-free{ display:inline-block; align-self:flex-start; font-size:11.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--red-dark); background:var(--red-tint); border-radius:20px; padding:3px 10px; }
+
+  /* Steps */
+  .cf-steps{ display:grid; grid-template-columns:repeat(4,1fr); gap:20px; }
+  .cf-step{ background:#fff; border:1px solid var(--gray-300); border-radius:16px; padding:22px 20px; }
+  .cf-step i{ font-style:normal; font-family:var(--font-display); font-weight:700; font-size:30px; color:var(--red); display:block; margin-bottom:6px; }
+  .cf-step h4{ font-family:var(--font-display); font-size:19px; margin:0 0 6px; }
+  .cf-step p{ font-size:14.5px; color:var(--gray-700); margin:0; line-height:1.55; }
+
+  /* Comparison */
+  .cf-cmp{ width:100%; border-collapse:separate; border-spacing:0; background:#fff; border:1px solid var(--gray-300); border-radius:16px; overflow:hidden; font-size:15px; }
+  .cf-cmp th, .cf-cmp td{ padding:14px 18px; text-align:left; vertical-align:top; border-bottom:1px solid var(--gray-300); line-height:1.5; }
+  .cf-cmp tr:last-child td{ border-bottom:0; }
+  .cf-cmp th{ font-family:var(--font-display); font-size:16px; background:var(--gray-100); }
+  .cf-cmp th.us{ background:var(--red); color:#fff; }
+  .cf-cmp td.t{ font-weight:600; width:24%; }
+  .cf-cmp td.o{ color:var(--gray-700); width:33%; }
+  .cf-cmp td.u{ background:#FFF6F7; font-weight:500; }
+  .cf-cmp .x{ color:#B5473A; font-weight:700; margin-right:6px; }
+  .cf-cmp .ok{ color:var(--red); font-weight:700; margin-right:6px; }
+
+  /* Small technical block */
+  .cf-under{ background:var(--ink); color:#EDEDED; border-radius:18px; padding:32px clamp(20px,4vw,42px); }
+  .cf-under h3{ font-family:var(--font-display); font-size:22px; margin:0 0 6px; }
+  .cf-under > p{ font-size:13px; color:#AEB2B8; margin:0 0 18px; }
+  .cf-under ul{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(2,1fr); gap:10px 36px; }
+  .cf-under li{ font-size:12.5px; line-height:1.55; color:#CDD0D5; padding-left:16px; position:relative; }
+  .cf-under li::before{ content:''; position:absolute; left:0; top:7px; width:6px; height:6px; border-radius:50%; background:var(--red); }
+  .cf-under li b{ color:#fff; font-weight:600; }
+
+  .cf-cta{ text-align:center; padding:70px 0 84px; }
+  .cf-cta h2{ font-family:var(--font-display); font-weight:700; font-size:clamp(28px,4vw,44px); line-height:1.1; margin:0 auto 14px; max-width:700px; letter-spacing:-.015em; }
+  .cf-cta p{ color:var(--gray-700); max-width:520px; margin:0 auto 26px; font-size:16px; }
+
+  @media (max-width:820px){
+    .cf-feat{ grid-template-columns:1fr; padding:20px 0; }
+    .cf-feat.flip .cf-copy{ order:0; }
+    .cf-apps{ grid-template-columns:1fr; }
+    .cf-steps{ grid-template-columns:1fr 1fr; }
+    .cf-under ul{ grid-template-columns:1fr; }
+    .cf-cmp th, .cf-cmp td{ padding:11px 12px; font-size:14px; }
+    .cf-cmp td.t{ width:auto; }
+    .cf-sec{ padding:52px 0; }
+  }
+  @media (max-width:520px){ .cf-steps{ grid-template-columns:1fr; } .cf-shot.wide{ aspect-ratio:16/10; } }
+</style>
+</head>
+<body>
+{% include emn-header.html %}
+
+<main class="cf">
+
+  <!-- ===== Hero ===== -->
+  <section class="cf-hero">
+    <div class="cf-wrap">
+      <p class="cf-tag">Así funciona EMN</p>
+      <h1>Todo tu camino a Berklee, <em>en un solo lugar</em></h1>
+      <p class="lede">Tus clases, tus tareas, tu práctica y tu progreso viven en tu propia aula en línea. Y tienes apps hechas por nosotros para entrenar cada prueba de la audición. Entras, ves qué toca hoy y avanzas.</p>
+      <div class="cf-btns">
+        <a class="cf-btn solid" href="https://forms.gle/mseXETCgZFccR4dKA" target="_blank" rel="noopener">Postula</a>
+        <a class="cf-btn line" href="#aula">Ver cómo funciona</a>
+      </div>
+      <figure class="cf-shot wide"><b>Captura: tu aula (Mi Aula)</b><span>Vista completa del panel del alumno · 01-mi-aula.png</span><img src="/assets/img/como-funciona/01-mi-aula.png" alt="Mi Aula, el panel del alumno" loading="lazy" onerror="this.remove()"></figure>
+    </div>
+  </section>
+
+  <!-- ===== Mi Aula ===== -->
+  <section class="cf-sec gray" id="aula">
+    <div class="cf-wrap">
+      <div class="cf-head">
+        <p class="cf-tag">Tu aula</p>
+        <h2>Abres una sola página y sabes qué hacer</h2>
+        <p>Sin buscar links en chats ni preguntar “¿cuándo es mi clase?”.</p>
+      </div>
+
+      <div class="cf-feat">
+        <div class="cf-copy">
+          <span class="cf-num">01 · Tus clases</span>
+          <h3>Tu calendario, con el link de tu clase a un toque</h3>
+          <p>Ves cada clase en el calendario, a tu hora local, con su botón para entrar a la videollamada. Cada curso tiene su color, así distingues de un vistazo qué toca.</p>
+          <p class="cf-win">Llegas a tiempo, sin buscar nada.</p>
+          <p class="cf-tech"><b>Detalle técnico:</b> los horarios se muestran en tu zona horaria (la eliges en tu cuenta); los Mock Auditions aparecen en el calendario automáticamente.</p>
+        </div>
+        <figure class="cf-shot"><b>Captura: calendario de clases</b><span>Mes con botones de video · 02-calendario.png</span><img src="/assets/img/como-funciona/02-calendario.png" alt="Calendario de clases" loading="lazy" onerror="this.remove()"></figure>
+      </div>
+
+      <div class="cf-feat flip">
+        <div class="cf-copy">
+          <span class="cf-num">02 · Tus tareas</span>
+          <h3>Tu profesor te deja tareas; tú las marcas cuando las haces</h3>
+          <p>Al terminar la clase, lo que tienes que practicar queda escrito en tu aula. Marcas lo que ya hiciste con un toque y tu profesor lo ve.</p>
+          <p class="cf-win">Nadie olvida qué había que hacer.</p>
+          <p class="cf-tech"><b>Detalle técnico:</b> las tareas se guardan por alumno y por curso; las hechas desaparecen de tu lista y quedan registradas para tu profesor.</p>
+        </div>
+        <figure class="cf-shot"><b>Captura: tareas pendientes</b><span>Lista con casillas · 03-tareas.png</span><img src="/assets/img/como-funciona/03-tareas.png" alt="Tareas pendientes" loading="lazy" onerror="this.remove()"></figure>
+      </div>
+
+      <div class="cf-feat">
+        <div class="cf-copy">
+          <span class="cf-num">03 · Tu constancia</span>
+          <h3>Una meta clara cada semana y una racha que te motiva</h3>
+          <p>Tu meta es practicar 5 horas por semana. Ves cuántas llevas, y cada semana cumplida suma días a tu racha. Si una semana no puedes, tienes semanas libres para proteger tu racha.</p>
+          <p class="cf-win">Practicar se vuelve un hábito, no una promesa.</p>
+          <p class="cf-tech"><b>Detalle técnico:</b> el tiempo se cuenta solo mientras usas las apps con tu sesión iniciada y la pestaña activa. Cada 4 semanas cumplidas ganas 1 semana libre (hasta 4 guardadas).</p>
+        </div>
+        <figure class="cf-shot"><b>Captura: meta semanal y racha</b><span>Barra de horas + racha · 04-racha.png</span><img src="/assets/img/como-funciona/04-racha.png" alt="Meta semanal y racha" loading="lazy" onerror="this.remove()"></figure>
+      </div>
+
+      <div class="cf-feat flip">
+        <div class="cf-copy">
+          <span class="cf-num">04 · Tu avance</span>
+          <h3>Mira cuánto te falta para tu audición</h3>
+          <p>Tu aula te muestra tu puntaje en cada parte de la audición, mes a mes, y tu avance en Career Progress: canciones, contenido, prensa, portafolio y más. Todo junto te da tu “ruta hacia la audición”.</p>
+          <p class="cf-win">Sabes dónde estás y qué mejorar primero.</p>
+          <p class="cf-tech"><b>Detalle técnico:</b> la ruta se calcula con 25 % de Career Progress y 75 % de tus mejores notas en cada parte del Mock Audition (una nota baja posterior no te resta).</p>
+        </div>
+        <figure class="cf-shot"><b>Captura: progreso por área</b><span>Gráfico mensual por parte · 05-progreso.png</span><img src="/assets/img/como-funciona/05-progreso.png" alt="Progreso por área" loading="lazy" onerror="this.remove()"></figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Apps ===== -->
+  <section class="cf-sec" id="apps">
+    <div class="cf-wrap">
+      <div class="cf-head">
+        <p class="cf-tag">Practice Lab</p>
+        <h2>Apps hechas para entrenar cada prueba</h2>
+        <p>Las creó EMN pensando en lo que realmente piden en la audición a Berklee. Se usan desde el navegador, sin instalar nada.</p>
+      </div>
+      <div class="cf-apps">
+        <div class="cf-app">
+          <figure class="cf-shot"><b>Captura: Sight-Read &amp; Audio</b><span>08-sight-melody.png</span><img src="/assets/img/como-funciona/08-sight-melody.png" alt="Sight-Read y Audio Practice" loading="lazy" onerror="this.remove()"></figure>
+          <h3>Sight-Read &amp; Audio Practice</h3>
+          <p>Lectura a primera vista de melodía y ritmo, generada al azar para que nunca practiques lo mismo. Tu profesor puede conectarse contigo en vivo y ver el mismo ejercicio.</p>
+          <p class="cf-tech"><b>Detalle técnico:</b> modo en vivo sincronizado profesor–alumno; sonido de piano real; el ejercicio se genera a partir de una semilla compartida.</p>
+        </div>
+        <div class="cf-app">
+          <figure class="cf-shot"><b>Captura: Interview Prep</b><span>09-interview-prep.png</span><img src="/assets/img/como-funciona/09-interview-prep.png" alt="Interview Prep" loading="lazy" onerror="this.remove()"></figure>
+          <h3>Berklee Interview Prep</h3>
+          <p>Las preguntas reales de la entrevista, con temporizador y grabación de tus respuestas. Te ayuda a ordenar tus ideas y a llegar con respuestas claras.</p>
+          <p class="cf-tech"><b>Detalle técnico:</b> preguntas previas en español que desbloquean cada pregunta en inglés; conclusiones y borradores asistidos por IA que tu profesor puede revisar contigo.</p>
+        </div>
+        <div class="cf-app">
+          <figure class="cf-shot"><b>Captura: Improvisation Lab</b><span>10-improvisation.png</span><img src="/assets/img/como-funciona/10-improvisation.png" alt="Improvisation Lab" loading="lazy" onerror="this.remove()"></figure>
+          <h3>Improvisation Lab</h3>
+          <p>Pistas de acompañamiento y partituras de Berklee para improvisar en blues, rock, funk, jazz y más. Tocas sobre una banda cuando quieras.</p>
+        </div>
+        <div class="cf-app">
+          <figure class="cf-shot"><b>Captura: Berklee Piece</b><span>11-berklee-piece.png</span><img src="/assets/img/como-funciona/11-berklee-piece.png" alt="Berklee Piece" loading="lazy" onerror="this.remove()"></figure>
+          <span class="cf-soon">Próximamente</span>
+          <h3>Berklee Piece</h3>
+          <p>Cómo elegir y preparar tu pieza para la audición.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Mock + SingSync + Cursos ===== -->
+  <section class="cf-sec gray" id="mas">
+    <div class="cf-wrap">
+      <div class="cf-head">
+        <p class="cf-tag">Y además</p>
+        <h2>Ensayos reales, clases en vivo y cursos</h2>
+        <p>Lo que te acerca a la audición de verdad.</p>
+      </div>
+
+      <div class="cf-feat">
+        <div class="cf-copy">
+          <span class="cf-num">Mock Audition</span>
+          <h3>Una audición de práctica cada mes</h3>
+          <p>El último domingo de cada mes puedes ensayar la audición completa con evaluadores. Te asignamos un horario, te llega un correo de confirmación y, después, tu puntaje aparece en tu aula.</p>
+          <p class="cf-win">Pierdes el miedo antes del día real.</p>
+          <p class="cf-tech"><b>Detalle técnico:</b> cuatro horarios de una hora, en hora de Perú y también en tu hora local; la confirmación se envía por correo automáticamente.</p>
+        </div>
+        <figure class="cf-shot"><b>Captura: Mock Audition</b><span>Horarios y asignación · 06-mock.png</span><img src="/assets/img/como-funciona/06-mock.png" alt="Mock Audition" loading="lazy" onerror="this.remove()"></figure>
+      </div>
+
+      <div class="cf-feat flip">
+        <div class="cf-copy">
+          <span class="cf-num">SingSync · Nuevo</span>
+          <h3>Una sala de clase pensada para tocar y cantar juntos</h3>
+          <p>Cada clase tiene su sala privada: llamada con audio de alta calidad, metrónomo y piano compartidos con tu profesor, y pistas que suenan al mismo tiempo para los dos. Puedes cambiar el tono sin cambiar el tempo.</p>
+          <p class="cf-win">Practicas con tu profesor como si estuvieran en el mismo salón.</p>
+          <p class="cf-tech"><b>Detalle técnico:</b> llamada WebRTC con audio Opus en estéreo; se abre 12 h antes y 12 h después de la clase; recomendamos usar audífonos para evitar eco.</p>
+        </div>
+        <figure class="cf-shot"><b>Captura: sala SingSync</b><span>Llamada + metrónomo + piano · 07-singsync.png</span><img src="/assets/img/como-funciona/07-singsync.png" alt="Sala SingSync" loading="lazy" onerror="this.remove()"></figure>
+      </div>
+
+      <div class="cf-feat">
+        <div class="cf-copy">
+          <span class="cf-num">Cursos en línea</span>
+          <h3>Aprende a tu ritmo, con cursos en video</h3>
+          <p>Además de tus clases en vivo, puedes desbloquear cursos en video con lecciones y quizzes. Ves tu progreso lección por lección.</p>
+          <p class="cf-win">Estudias cuando tú puedes, sin perder el hilo.</p>
+          <p class="cf-tech"><b>Detalle técnico:</b> el contenido está protegido y solo se abre a quienes tienen acceso; el pago se hace con un link seguro de Stripe.</p>
+        </div>
+        <figure class="cf-shot"><b>Captura: curso en línea</b><span>Lección en video · 12-cursos.png</span><img src="/assets/img/como-funciona/12-cursos.png" alt="Cursos en línea" loading="lazy" onerror="this.remove()"></figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Steps ===== -->
+  <section class="cf-sec" id="pasos">
+    <div class="cf-wrap">
+      <div class="cf-head">
+        <p class="cf-tag">Cómo empezar</p>
+        <h2>Cuatro pasos</h2>
+        <p>Sin instalar nada y sin papeleo.</p>
+      </div>
+      <div class="cf-steps">
+        <div class="cf-step"><i>1</i><h4>Postulas</h4><p>Llenas un formulario corto y conversamos contigo para entender tu meta.</p></div>
+        <div class="cf-step"><i>2</i><h4>Recibes tu invitación</h4><p>Te llega un correo para crear tu contraseña y activar tu cuenta.</p></div>
+        <div class="cf-step"><i>3</i><h4>Entras a tu aula</h4><p>Ves tus clases, tus tareas y tus apps. Todo está listo desde el primer día.</p></div>
+        <div class="cf-step"><i>4</i><h4>Practicas y avanzas</h4><p>Tu profesor ve tu práctica y tu progreso, y ajusta tus clases a lo que necesitas.</p></div>
+      </div>
+      <figure class="cf-shot wide"><b>Captura: tu aula en el celular</b><span>Mi Aula vista desde el teléfono · 13-celular.png</span><img src="/assets/img/como-funciona/13-celular.png" alt="Mi Aula en el celular" loading="lazy" onerror="this.remove()"></figure>
+    </div>
+  </section>
+
+  <!-- ===== Difference ===== -->
+  <section class="cf-sec gray" id="distinto">
+    <div class="cf-wrap">
+      <div class="cf-head">
+        <p class="cf-tag">Por qué EMN es distinto</p>
+        <h2>No solo clases: un sistema que te acompaña</h2>
+        <p>Muchas academias dan clases sueltas. En EMN las clases, la práctica y tu progreso están conectados.</p>
+      </div>
+      <table class="cf-cmp">
+        <thead><tr><th>&nbsp;</th><th>Lo habitual</th><th class="us">En EMN</th></tr></thead>
+        <tbody>
+          <tr><td class="t">Dónde está todo</td><td class="o"><span class="x">✕</span>Links y tareas dispersos en chats</td><td class="u"><span class="ok">✓</span>Un solo lugar: tu aula</td></tr>
+          <tr><td class="t">Tu práctica</td><td class="o"><span class="x">✕</span>Practicas sin saber si es suficiente</td><td class="u"><span class="ok">✓</span>Meta semanal, racha y horas registradas</td></tr>
+          <tr><td class="t">Tu profesor</td><td class="o"><span class="x">✕</span>No ve lo que haces entre clases</td><td class="u"><span class="ok">✓</span>Ve tu práctica y tu avance, y prepara la siguiente clase con eso</td></tr>
+          <tr><td class="t">La audición</td><td class="o"><span class="x">✕</span>Ejercicios genéricos</td><td class="u"><span class="ok">✓</span>Apps hechas para cada prueba de Berklee</td></tr>
+          <tr><td class="t">La entrevista</td><td class="o"><span class="x">✕</span>La improvisas el día del examen</td><td class="u"><span class="ok">✓</span>Preguntas reales, grabación y ayuda con IA</td></tr>
+          <tr><td class="t">Ensayo general</td><td class="o"><span class="x">✕</span>Primera vez frente al jurado: el día real</td><td class="u"><span class="ok">✓</span>Mock Audition cada mes con puntaje por parte</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== Under the hood (small print) ===== -->
+  <section class="cf-sec" style="padding-top:56px; padding-bottom:10px">
+    <div class="cf-wrap">
+      <div class="cf-under">
+        <h3>Para los curiosos: cómo está hecho</h3>
+        <p>La parte técnica, en corto.</p>
+        <ul>
+          <li><b>Tu cuenta es tuya.</b> Entras con tu correo y tu contraseña. Cada persona ve solo lo que le corresponde según su rol (alumno, profesor o administrador).</li>
+          <li><b>Funciona en el navegador.</b> Computadora, tablet o celular, sin instalar nada. Las apps de práctica se pueden usar incluso sin iniciar sesión (solo que no se registra tu tiempo).</li>
+          <li><b>Datos en la nube.</b> Tu progreso, tus tareas y tus respuestas se guardan en tu cuenta y te siguen a cualquier dispositivo.</li>
+          <li><b>Tus horarios, a tu hora.</b> Todo se muestra en tu zona horaria; las audiciones de práctica aparecen también en hora de Perú.</li>
+          <li><b>IA con criterio humano.</b> La IA ayuda a resumir y a proponer borradores en Interview Prep; tu profesor revisa contigo lo importante.</li>
+          <li><b>Correos solo cuando sirven.</b> Recibes mensajes como tu invitación o la confirmación de tu Mock Audition, nada más.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CTA ===== -->
+  <section class="cf-cta">
+    <div class="cf-wrap">
+      <h2>¿Listo para entrar a tu aula?</h2>
+      <p>Cuéntanos tu meta. Te mostramos cómo sería tu camino a Berklee, paso a paso.</p>
+      <div class="cf-btns"><a class="cf-btn solid" href="https://forms.gle/mseXETCgZFccR4dKA" target="_blank" rel="noopener">Postula</a><a class="cf-btn line" href="https://calendly.com/emnperu/30min" target="_blank" rel="noopener">Agendar evaluación gratuita</a></div>
+    </div>
+  </section>
+
+</main>
+
+{% include emn-footer.html %}
+</body>
+</html>
