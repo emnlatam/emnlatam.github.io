@@ -59,26 +59,31 @@ let emnRealProfile = null;    // the real `students` row (differs from emnStuden
 // Admin-only "Ver como": the header dropdown lets an admin browse the site with the views and limits of another role.
 // It only changes the role (and a fixed test name) the pages see in emnStudentProfile; the data is still read with the admin's own permissions.
 const EMN_VIEWAS_KEY = 'emn.viewas';
-const EMN_VIEWAS_NAMES = { professor: 'Profesor de prueba', student: 'Estudiante de prueba' };
+// Fixed accounts used for the test views: Albert Azaña (student) and Nicole La Rosa (professor).
+const EMN_VIEWAS_IDS = { professor: 'c0309222-09a8-4b17-8a4f-5fb8b9899b85', student: 'c50b70ac-e10c-45ed-9f1b-228a5d513be6' };
+let emnViewTarget = null;   // the account being viewed (set only while an admin is in a test view)
+function emnViewSession(sess){ return (sess && emnViewTarget) ? { ...sess, user: { ...sess.user, id: emnViewTarget.id, email: emnViewTarget.email, user_metadata: { ...(sess.user.user_metadata || {}) } } } : sess; }
 function emnViewAsGet(){ try{ const v = localStorage.getItem(EMN_VIEWAS_KEY); return v === 'professor' || v === 'student' ? v : null; }catch(e){ return null; } }
 
 async function emnLoadSession(){
   const { data } = await emnSupabase.auth.getSession();
   emnSession = data.session || null;
-  emnStudentProfile = null; emnRealProfile = null;
+  emnStudentProfile = null; emnRealProfile = null; emnViewTarget = null;
   if(emnSession){
     const { data: profile } = await emnSupabase.from('students').select('*').eq('id', emnSession.user.id).maybeSingle();
     emnRealProfile = profile || null;
     emnStudentProfile = profile || null;
     const va = emnViewAsGet();
-    if(profile && profile.role === 'admin' && va) emnStudentProfile = { ...profile, role: va, full_name: EMN_VIEWAS_NAMES[va], avatar_url: null, _viewAs: va };
-    else if(va){ try{ localStorage.removeItem(EMN_VIEWAS_KEY); }catch(e){} }   // only admins can view as another role
+    if(profile && profile.role === 'admin' && va){
+      const { data: tgt } = await emnSupabase.from('students').select('*').eq('id', EMN_VIEWAS_IDS[va]).maybeSingle();
+      if(tgt){ emnViewTarget = tgt; emnStudentProfile = { ...tgt, _viewAs: va }; emnSession = emnViewSession(emnSession); }
+    } else if(va){ try{ localStorage.removeItem(EMN_VIEWAS_KEY); }catch(e){} }   // only admins can view as another role
   }
   return emnSession;
 }
 
 emnSupabase.auth.onAuthStateChange((_event, session) => {
-  emnSession = session;
+  emnSession = emnViewSession(session);
   if(!session){ emnStudentProfile = null; emnRealProfile = null; }
 });
 
@@ -270,6 +275,7 @@ function emnGetTz(){
 }
 
 function emnOpenAccountModal(){
+  if(emnStudentProfile?._viewAs){ emnAlert('Estás viendo la web como ' + (emnStudentProfile.full_name || 'otra cuenta') + '. Vuelve a Admin ("Ver como") para editar tu cuenta.'); return; }
   emnEnsureModalStyles();
   const profile = emnRealProfile || emnStudentProfile || {};
   const overlay = document.createElement('div');
@@ -400,6 +406,20 @@ function emnInjectViewAs(st){
     location.reload();
   });
   nav.appendChild(w);
+}
+
+// Phones: the Administrar sections open as their own pages; this puts a bar at the top to go back to the Administrar menu.
+const EMN_ADMIN_PAGES = ['/comunidad', '/calendario', '/actividad', '/usuarios', '/invoices'];
+function emnInjectAdminBack(){
+  if(!matchMedia('(max-width:640px)').matches) return;
+  if(new URLSearchParams(location.search).has('embed')) return;
+  if(!EMN_ADMIN_PAGES.includes(location.pathname.replace(/\/$/, ''))) return;
+  if(!['admin', 'professor'].includes(emnStudentProfile?.role) || document.getElementById('emn-admin-back')) return;
+  const bar = document.createElement('a');
+  bar.id = 'emn-admin-back'; bar.href = '/administrar'; bar.textContent = '‹ Administrar';
+  bar.style.cssText = 'position:sticky;top:0;z-index:50;display:block;padding:12px 16px;background:#fff;border-bottom:2px solid var(--red,#C8102E);color:var(--red,#C8102E);font:700 16px var(--font-body,system-ui,sans-serif);text-decoration:none';
+  const h = document.querySelector('.emn-header');
+  if(h) h.after(bar); else document.body.prepend(bar);
 }
 
 // Signed-in people get "Interview Prep" in the Practice Lab dropdown split
@@ -565,6 +585,7 @@ async function emnInit(){
   if(emnNavDrawn && cached && cached.in && !live.in){ emnNavSave(live); location.reload(); return; }
   emnRenderNav(live);
   emnNavSave(live);
+  emnInjectAdminBack();
 }
 
 /* ============================= PRACTICE TIME HEARTBEAT =============================

@@ -3638,3 +3638,12 @@
   .emn-landing .emn-viewas { width: 100%; margin: 6px 0; justify-content: space-between; font-size: 14px; }
   .emn-landing .emn-viewas select { font-size: 15px; padding: 7px 14px; }
 }
+
+/* Administrar sections on phones: tighter padding, cards and columns that stack */
+@media (max-width: 640px) {
+  .emn-landing .wrap-a, .emn-landing .wrap-c, .emn-landing .act-wrap, .emn-landing .usuarios-wrap, .emn-landing .wrap-i { padding: 14px 12px 50px; }
+  .emn-landing .al { flex-wrap: wrap; }
+  .emn-landing .al__acts { flex-wrap: wrap; width: 100%; flex-shrink: 1; }
+  .emn-landing .act-layout { grid-template-columns: minmax(0, 1fr); }
+  .emn-landing .usuarios-wrap table { display: block; overflow-x: auto; }
+}

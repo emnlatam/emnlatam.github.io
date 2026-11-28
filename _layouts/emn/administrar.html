@@ -44,6 +44,15 @@
   .in-view #frame{ display:block; }
   #frame:not([src]){ display:none !important; }
   @media (max-width:560px){ .grid-a{ grid-template-columns:minmax(0,1fr); } }
+  /* Celular: menú de botones grandes; cada sección se abre como su propia página (con un botón "Administrar" para volver). */
+  @media (max-width:640px){
+    .adm, .adm.in-view{ padding:22px 14px 40px; text-align:left; max-width:none; }
+    .adm h1{ font-size:32px; }
+    .adm p.lead{ margin-bottom:20px; }
+    .btn-a{ min-height:0; align-items:flex-start; text-align:left; padding:16px 18px; border-color:var(--red); }
+    .btn-a strong{ font-size:22px; }
+    .btn-a span{ max-width:none; }
+  }
 </style>
 </head>
 <body>
@@ -75,6 +84,7 @@ const VIEWS = ['comunidad', 'calendario', 'actividad', 'usuarios', 'invoices'];
 const $ = s => document.querySelector(s);
 const frame = $('#frame'), adm = $('#adm');
 let current = null;
+const PHONE = matchMedia('(max-width:640px)');
 
 function fit(){
   if(!current) return;
@@ -98,7 +108,9 @@ function setView(v, query){
 }
 
 document.addEventListener('click', e => {
-  const b = e.target.closest('[data-v]'); if(b) setView(b.dataset.v);
+  const b = e.target.closest('[data-v]'); if(!b) return;
+  if(PHONE.matches){ location.href = '/' + b.dataset.v; return; }   // celular: la sección se abre como página propia
+  setView(b.dataset.v);
 });
 addEventListener('resize', fit);
 document.querySelector('.emn-nav')?.addEventListener('click', e => {
@@ -123,7 +135,8 @@ emnInit().then(() => {
       VIEWS.splice(0, VIEWS.length, 'calendario', 'actividad');
     }
     $('#adm-body').style.display = 'block';
-    setView(role === 'admin' ? 'comunidad' : 'calendario');   // al entrar se abre la primera sección, con la barra de botones arriba
+    if(PHONE.matches) adm.classList.remove('in-view');   // celular: se queda el menú, sin sección abierta
+    else setView(role === 'admin' ? 'comunidad' : 'calendario');   // al entrar se abre la primera sección, con la barra de botones arriba
     if(location.hash) history.replaceState(null, '', location.pathname);
   } else {
     gate.innerHTML = emnSession ? 'Esta página es solo para administradores.' : 'Inicia sesión para continuar. <a href="/emn-login">Inicia sesión</a>';
