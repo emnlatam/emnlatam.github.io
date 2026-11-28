@@ -3629,3 +3629,12 @@
   background: var(--red-tint);
   color: var(--red);
 }
+
+/* Admin-only "Ver como" role switcher (injected by emn-auth.js) */
+.emn-landing .emn-viewas { display: inline-flex; align-items: center; gap: 6px; margin: 0 6px; font-size: 12px; font-weight: 600; color: var(--gray-700, #4a4d55); white-space: nowrap; }
+.emn-landing .emn-viewas select { font: inherit; font-size: 13px; font-weight: 600; color: var(--red); background: #fff; border: 1.5px solid var(--red); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+.emn-landing .emn-viewas.is-on select { background: var(--red); color: #fff; }
+@media (max-width: 640px) {
+  .emn-landing .emn-viewas { width: 100%; margin: 6px 0; justify-content: space-between; font-size: 14px; }
+  .emn-landing .emn-viewas select { font-size: 15px; padding: 7px 14px; }
+}

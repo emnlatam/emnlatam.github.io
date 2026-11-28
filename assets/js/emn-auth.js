@@ -54,21 +54,32 @@ const emnSupabase = window.supabase.createClient(
 
 let emnSession = null;
 let emnStudentProfile = null; // row from `students` — null until signed in AND loaded
+let emnRealProfile = null;    // the real `students` row (differs from emnStudentProfile only while an admin is "viewing as" another role)
+
+// Admin-only "Ver como": the header dropdown lets an admin browse the site with the views and limits of another role.
+// It only changes the role (and a fixed test name) the pages see in emnStudentProfile; the data is still read with the admin's own permissions.
+const EMN_VIEWAS_KEY = 'emn.viewas';
+const EMN_VIEWAS_NAMES = { professor: 'Profesor de prueba', student: 'Estudiante de prueba' };
+function emnViewAsGet(){ try{ const v = localStorage.getItem(EMN_VIEWAS_KEY); return v === 'professor' || v === 'student' ? v : null; }catch(e){ return null; } }
 
 async function emnLoadSession(){
   const { data } = await emnSupabase.auth.getSession();
   emnSession = data.session || null;
-  emnStudentProfile = null;
+  emnStudentProfile = null; emnRealProfile = null;
   if(emnSession){
     const { data: profile } = await emnSupabase.from('students').select('*').eq('id', emnSession.user.id).maybeSingle();
+    emnRealProfile = profile || null;
     emnStudentProfile = profile || null;
+    const va = emnViewAsGet();
+    if(profile && profile.role === 'admin' && va) emnStudentProfile = { ...profile, role: va, full_name: EMN_VIEWAS_NAMES[va], avatar_url: null, _viewAs: va };
+    else if(va){ try{ localStorage.removeItem(EMN_VIEWAS_KEY); }catch(e){} }   // only admins can view as another role
   }
   return emnSession;
 }
 
 emnSupabase.auth.onAuthStateChange((_event, session) => {
   emnSession = session;
-  if(!session) emnStudentProfile = null;
+  if(!session){ emnStudentProfile = null; emnRealProfile = null; }
 });
 
 // Drops a "Log in" link (signed out) or a "Mi cuenta / Cerrar sesión"
@@ -260,7 +271,7 @@ function emnGetTz(){
 
 function emnOpenAccountModal(){
   emnEnsureModalStyles();
-  const profile = emnStudentProfile || {};
+  const profile = emnRealProfile || emnStudentProfile || {};
   const overlay = document.createElement('div');
   overlay.className = 'emn-modal-overlay';
   const initials = (profile.full_name || emnSession.user.email || '?').trim().charAt(0).toUpperCase();
@@ -337,7 +348,8 @@ function emnOpenAccountModal(){
         if(pwError) throw pwError;
       }
 
-      emnStudentProfile = { ...profile, full_name: newName, avatar_url: avatarUrl };
+      emnRealProfile = { ...profile, full_name: newName, avatar_url: avatarUrl };
+      emnStudentProfile = emnStudentProfile?._viewAs ? emnStudentProfile : emnRealProfile;
       msg.textContent = 'Cambios guardados ✓';
       msg.style.color = '#1E8E5A';
       msg.style.display = 'block';
@@ -370,6 +382,24 @@ function emnInjectAdminMenu(st){
   link.textContent = 'Administrar';
   if(['/administrar', '/comunidad', '/calendario', '/actividad', '/usuarios', '/postulaciones'].includes(location.pathname.replace(/\/$/, ''))) link.classList.add('is-active');
   nav.appendChild(link);
+}
+
+// Admin-only dropdown "Ver como": Admin / Profesor / Estudiante. Reloads the page in the chosen role.
+function emnInjectViewAs(st){
+  if(!st.admin) return;
+  const nav = document.querySelector('.emn-nav');
+  if(!nav) return;
+  const cur = st.role === 'professor' || st.role === 'student' ? st.role : 'admin';
+  const w = document.createElement('label');
+  w.setAttribute('data-emn-inj', '');
+  w.className = 'emn-viewas' + (cur !== 'admin' ? ' is-on' : '');
+  w.innerHTML = '<span>Ver como</span><select aria-label="Ver la web como otro rol">' +
+    [['admin', 'Admin'], ['professor', 'Profesor'], ['student', 'Estudiante']].map(([v, l]) => '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>';
+  w.querySelector('select').addEventListener('change', (e) => {
+    try{ if(e.target.value === 'admin') localStorage.removeItem(EMN_VIEWAS_KEY); else localStorage.setItem(EMN_VIEWAS_KEY, e.target.value); }catch(err){}
+    location.reload();
+  });
+  nav.appendChild(w);
 }
 
 // Signed-in people get "Interview Prep" in the Practice Lab dropdown split
@@ -477,11 +507,11 @@ document.addEventListener('click', (e) => {
 const EMN_NAV_KEY = 'emn.nav';
 let emnNavDrawn = null;   // JSON of the state currently drawn
 
-function emnNavFromLive(){ return { in: !!emnSession, role: emnStudentProfile?.role || null, name: emnStudentProfile?.full_name || emnSession?.user?.email || '' }; }
+function emnNavFromLive(){ return { in: !!emnSession, role: emnStudentProfile?.role || null, name: emnStudentProfile?.full_name || emnSession?.user?.email || '', admin: emnRealProfile?.role === 'admin' }; }
 function emnNavFromCache(){
   try{
     const v = JSON.parse(localStorage.getItem(EMN_NAV_KEY));
-    if(v && typeof v === 'object') return { in: !!v.in, role: v.role || null, name: String(v.name || '') };
+    if(v && typeof v === 'object') return { in: !!v.in, role: v.role || null, name: String(v.name || ''), admin: !!v.admin };
   }catch(e){}
   return null;
 }
@@ -515,6 +545,7 @@ function emnRenderNav(st){
     l.dataset.emnAula = '1';
     l.addEventListener('click', () => { try{ sessionStorage.removeItem(EMN_AULA_KEY); }catch(e){} });
   });
+  emnInjectViewAs(st);
   emnInjectAuthLink(st);
   emnNavDrawn = key;
 }
@@ -553,7 +584,7 @@ const HEARTBEAT_SECONDS = 30;
 const INACTIVITY_LIMIT_MS = 60000;
 
 function emnStartHeartbeat(tool){
-  if(!emnSession) return;
+  if(!emnSession || emnStudentProfile?._viewAs) return;   // an admin viewing as another role must not log practice time
   let lastInteraction = Date.now();
   ['click','keydown','pointermove','touchstart'].forEach(evt => {
     document.addEventListener(evt, () => { lastInteraction = Date.now(); }, { passive: true });
