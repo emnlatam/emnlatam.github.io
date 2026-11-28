@@ -29,11 +29,13 @@
 (function(){
   var h = document.currentScript.previousElementSibling; if(!h) return;
   var b = h.querySelector('.emn-burger'), nm = h.querySelector('.emn-m-name');
-  function set(o){ h.classList.toggle('is-menu-open', o); b.setAttribute('aria-expanded', String(o)); }
+  // Phone: the hamburger opens the menu panel; the user's name opens a small popup with only "Mi cuenta" and "Cerrar sesión".
+  function set(o){ h.classList.toggle('is-menu-open', o); b.setAttribute('aria-expanded', String(o)); if(o) h.classList.remove('is-user-open'); }
+  function setU(o){ h.classList.toggle('is-user-open', o); if(o) set(false); }
   b.addEventListener('click', function(e){ e.stopPropagation(); set(!h.classList.contains('is-menu-open')); });
-  if(nm) nm.addEventListener('click', function(e){ e.stopPropagation(); set(!h.classList.contains('is-menu-open')); });
-  document.addEventListener('click', function(e){ if(!h.contains(e.target)) set(false); });
-  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') set(false); });
+  if(nm) nm.addEventListener('click', function(e){ e.stopPropagation(); setU(!h.classList.contains('is-user-open')); });
+  document.addEventListener('click', function(e){ if(!h.contains(e.target)){ set(false); setU(false); } });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape'){ set(false); setU(false); } });
   var nav = h.querySelector('.emn-nav'), phone = window.matchMedia('(max-width: 640px)');
   // Phone panel: the arrow (or a '#' label like Mi Aula) opens / closes its submenu. Handled here, once, in the
   // capture phase, because not every page ships the desktop caret script (so /practice-lab never opened it).
@@ -50,6 +52,7 @@
   }, true);
   nav.addEventListener('click', function(e){
     var a = e.target.closest('a[href]'); if(a && a.getAttribute('href') !== '#') set(false);
+    if(e.target.closest('.emn-nav__item--user .emn-nav__dropdown-item')) setU(false);
   });
 })();
 </script>

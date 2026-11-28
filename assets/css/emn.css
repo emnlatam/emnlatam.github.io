@@ -427,7 +427,11 @@
   /* the account item: its name is shown in the bar, its two actions sit flat in the panel */
   .emn-landing .emn-nav__item--user .emn-nav__link--user,
   .emn-landing .emn-nav__item--user .emn-nav__caret { display: none; }
-  .emn-landing .emn-nav__item--user .emn-nav__dropdown { display: block; border-left: none; margin: 4px 0 0; padding: 4px 0 0; border-top: 1px solid var(--gray-300); }
+  .emn-landing .emn-nav__item--user .emn-nav__dropdown { display: block; border-left: none; margin: 0; padding: 0; border-top: none; }
+  /* the hamburger panel has everything except the account; tapping the name opens a popup with only the account (Mi cuenta, Cerrar sesión) */
+  .emn-landing .emn-header.is-menu-open .emn-nav__item--user { display: none; }
+  .emn-landing .emn-header.is-user-open .emn-nav { display: flex; width: min(70vw, 220px); }
+  .emn-landing .emn-header.is-user-open .emn-nav > :not(.emn-nav__item--user) { display: none !important; }
 }
 
 /* Main content area */
