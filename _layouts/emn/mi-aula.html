@@ -16,6 +16,10 @@
   #mi-aula-app button:hover{ filter:brightness(0.95); }
   #aula-gate{ text-align:center; padding:80px 20px; color:#5b6070; font-family:Inter,system-ui,sans-serif; }
   #aula-gate a{ color:#C8102E; font-weight:600; }
+  @media (max-width:640px){
+    #mi-aula-app .st-box{ border:1.5px solid #C8102E !important; }
+    #mi-aula-app .ss-long{ display:none; }
+  }
 </style>
 </head>
 <body>
@@ -52,25 +56,25 @@
 <button type="button" style="background: #ffffff; color: #C8102E; border: 1.5px solid #C8102E; border-radius: 999px; padding: 10px 22px; min-height: 48px; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; gap: 8px">
 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Mi Drive</button>
 <button type="button" data-href="{{singsyncHref}}" data-live="singsync" style="background: #C8102E; color: #ffffff; border: 0; border-radius: 999px; padding: 10px 24px; min-height: 48px; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; gap: 8px">
-<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h3l3-8 4 16 3-8h5"/></svg>Entrar a SingSync</button>
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h3l3-8 4 16 3-8h5"/></svg><span class="ss-long">Entrar a </span>SingSync</button>
 </div>
 </div>
 
 <!-- STATS -->
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px">
-<div style="border: 1px solid #e3e5ea; border-radius: 14px; padding: 12px 18px">
+<div class="st-box" style="border: 1px solid #e3e5ea; border-radius: 14px; padding: 12px 18px">
 <div style="font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #5b6070; font-weight: 600">Próxima clase</div>
 <div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600; margin-top: 2px">{{proxClase}}</div>
 </div>
-<div style="border: 1px solid #e3e5ea; border-radius: 14px; padding: 12px 18px">
+<div class="st-box" style="border: 1px solid #e3e5ea; border-radius: 14px; padding: 12px 18px">
 <div style="font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #5b6070; font-weight: 600">Tareas pendientes</div>
 <div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600; margin-top: 2px">{{tareasTxt}}</div>
 </div>
-<div style="border: 1px solid #e3e5ea; border-radius: 14px; padding: 12px 18px">
+<div class="st-box" style="border: 1px solid #e3e5ea; border-radius: 14px; padding: 12px 18px">
 <div style="font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #5b6070; font-weight: 600">Mock Audition</div>
 <div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600; margin-top: 2px">{{mockTxt}}</div>
 </div>
-<div style="border: 1px solid #e3e5ea; border-radius: 14px; padding: 12px 18px">
+<div class="st-box" style="border: 1px solid #e3e5ea; border-radius: 14px; padding: 12px 18px">
 <div style="font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #5b6070; font-weight: 600">Racha de práctica</div>
 <div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600; margin-top: 2px">{{rachaTxt}}</div>
 <div style="font-size: 12px; color: #5b6070; margin-top: 2px">{{rachaSub}}</div>
