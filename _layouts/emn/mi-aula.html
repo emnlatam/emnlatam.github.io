@@ -597,8 +597,18 @@ emnInit().then(async () => {
   const n = new Date(); S.vy = n.getFullYear(); S.vm = n.getMonth();
   if(S.isProf){
     // El profesor ve a SUS alumnos (los que lo tienen asignado en algún curso) en un desplegable.
-    const r = await emnSupabase.rpc('mi_aula_mis_alumnos');
-    S.students = (r.data || []).map(x => ({ id: x.id, full_name: x.nombre }));
+    let mis;
+    if(emnStudentProfile?._viewAs){
+      // Un admin viendo como este profesor: la función de la base corre con la cuenta del admin, así que se hace la misma cuenta aquí.
+      const [pr, al] = await Promise.all([emnSupabase.from('profesores').select('nombre,correo'), emnSupabase.from('alumnos').select('student_id,nombre,profes_curso,activo')]);
+      const norm = x => String(x || '').trim().replace(/:+$/, '').trim().toLowerCase();
+      const em = String(emnStudentProfile.email || '').trim().toLowerCase();
+      const pn = norm((pr.data || []).find(p => String(p.correo || '').trim().toLowerCase() === em)?.nombre);
+      mis = pn ? (al.data || []).filter(x => x.student_id && x.activo && Object.values(x.profes_curso || {}).some(v => norm(v) === pn)).map(x => ({ id: x.student_id, nombre: x.nombre })).sort((p, q) => p.nombre.localeCompare(q.nombre)) : [];
+    } else {
+      mis = (await emnSupabase.rpc('mi_aula_mis_alumnos')).data || [];
+    }
+    S.students = mis.map(x => ({ id: x.id, full_name: x.nombre }));
     if(!S.students.length){
       gate.textContent = 'Todavía no tienes alumnos asignados con cuenta en la app. Cuando Daniel te asigne un curso, aparecerán aquí.';
       gate.hidden = false; return;
