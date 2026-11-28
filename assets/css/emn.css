@@ -404,6 +404,8 @@
     border-color: var(--red);
   }
   .emn-landing .emn-header .emn-nav .emn-nav__link--cta:hover { background: var(--red-tint); color: var(--red); }
+  /* Mi Aula is always the first option of the hamburger panel (every role) */
+  .emn-landing .emn-header .emn-nav .emn-nav__link--aula { order: -1; margin-top: 0; }
   .emn-landing .emn-nav__item { flex-wrap: wrap; width: 100%; }
   /* bigger arrow, always red (also after tapping it: the dark header's open/hover rule used to turn it white) */
   .emn-landing .emn-header .emn-nav .emn-nav__caret { color: var(--red) !important; font-size: 20px; padding: 10px 14px; margin: 0; }
