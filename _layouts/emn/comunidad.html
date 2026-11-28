@@ -256,6 +256,7 @@ async function at(body, table){
 }
 // Airtable distingue mayúsculas: al LEER buscamos la columna sin importar cómo esté escrita.
 const AUTO = /^(mock audition|tutoring)$/i;
+const TUTORING = 'Tutoring';   // automático para todos: no va en `cursos`, pero su profesor y clases/mes sí se guardan en profes_curso / clases_mes
 const splitText = t => String(t || '').split(',').map(x => x.trim()).filter(Boolean);
 const isRec = x => /^rec[A-Za-z0-9]{10,}$/.test(x);
 const pick = (fields, name) => { const k = Object.keys(fields).find(x => x.toLowerCase() === name.toLowerCase()); return k === undefined ? undefined : fields[k]; };
@@ -328,8 +329,8 @@ async function syncAlumnos(){
     if(local){
       // Airtable → app: en lo que existe en los dos lados gana Airtable.
       const cursos = inc.cursos ?? local.cursos;
-      const pc = Object.fromEntries(Object.entries(local.profes_curso || {}).filter(([c]) => cursos.includes(c)));  // sin cursos que ya no tiene
-      const cm = Object.fromEntries(Object.entries(local.clases_mes || {}).filter(([c]) => cursos.includes(c)));
+      const pc = Object.fromEntries(Object.entries(local.profes_curso || {}).filter(([c]) => cursos.includes(c) || c === TUTORING));  // sin cursos que ya no tiene (Tutoring es para todos)
+      const cm = Object.fromEntries(Object.entries(local.clases_mes || {}).filter(([c]) => cursos.includes(c) || c === TUTORING));
       const upd = { clases_mes: cm, airtable_id: rec.id, nombre: inc.nombre, correo: inc.correo ?? local.correo, whatsapp: inc.whatsapp ?? local.whatsapp,
         datos: { ...local.datos, ...inc.datos, ...(inc.extras ? { _extras: inc.extras } : {}) }, cursos, profes_curso: pc, updated_at: new Date().toISOString() };
       const { error } = await emnSupabase.from('alumnos').update(upd).eq('id', local.id);
@@ -366,7 +367,7 @@ function alumnoCard(a){
       <div class="al__main">
         <div class="al__name">${esc(a.nombre)}${off ? ' <span class="tag-off">Archivado</span>' : ''}</div>
         <div class="al__meta">${[a.correo, a.whatsapp, a.datos?.instrumento].filter(Boolean).map(esc).join(' · ') || '—'}</div>
-        <div class="chips">${a.cursos.map(c => `<span class="chip">${esc(c)}${a.profes_curso?.[c] ? ' · ' + esc(a.profes_curso[c]) : ''}${a.clases_mes?.[c] ? ' · ' + a.clases_mes[c] + '/mes' : ''}</span>`).join('')}${off ? '' : '<span class="chip auto">Mock Audition (automático)</span>'}</div>
+        <div class="chips">${a.cursos.map(c => `<span class="chip">${esc(c)}${a.profes_curso?.[c] ? ' · ' + esc(a.profes_curso[c]) : ''}${a.clases_mes?.[c] ? ' · ' + a.clases_mes[c] + '/mes' : ''}</span>`).join('')}${a.profes_curso?.[TUTORING] ? `<span class="chip">${TUTORING} · ${esc(a.profes_curso[TUTORING])}${a.clases_mes?.[TUTORING] ? ' · ' + a.clases_mes[TUTORING] + '/mes' : ''}</span>` : ''}${off ? '' : '<span class="chip auto">Mock Audition (automático)</span>'}</div>
       </div>
       <div class="al__acts">
         ${off ? '' : `<a class="btn" href="/calendario?alumno=${a.id}">Calendario</a>`}
@@ -433,13 +434,18 @@ function fieldHTML(c, v, name){
 function courseRows(a){
   const names = [...CURSOS, ...(a?.cursos || []).filter(c => !CURSOS.includes(c))];
   const profs = [...profesores.map(p => p.nombre)];
+  // Tutoring lo tienen todos los alumnos (no es un curso que se marque): solo se elige su profesor y las clases por mes.
+  const tCur = a?.profes_curso?.[TUTORING] || '', tOpts = [...profs, ...(tCur && !profs.includes(tCur) ? [tCur] : [])];
+  const tutoringRow = `<div class="course-row"><span class="ck">${TUTORING} <small style="color:#8a8a90;font-weight:400">(para todos)</small></span>
+      <select class="prof" name="prof::${TUTORING}" aria-label="Profesor de ${TUTORING}"><option value="">Profesor…</option>${tOpts.map(n => `<option${n === tCur ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select>
+      <select class="cpm" name="cpm::${TUTORING}" aria-label="Clases por mes de ${TUTORING}"><option value="">Clases por mes…</option>${[1,2,3,4,5,6,7,8].map(n => `<option value="${n}"${String(a?.clases_mes?.[TUTORING]) === String(n) ? ' selected' : ''}>${n} por mes</option>`).join('')}</select></div>`;
   return names.map(c => {
     const on = !!a?.cursos.includes(c), cur = a?.profes_curso?.[c] || '';
     const opts = [...profs, ...(cur && !profs.includes(cur) ? [cur] : [])];
     return `<div class="course-row"><label class="ck"><input type="checkbox" name="curso" value="${esc(c)}"${on ? ' checked' : ''}> ${esc(c)}</label>
       <select class="prof" name="prof::${esc(c)}" aria-label="Profesor de ${esc(c)}"${on ? '' : ' hidden'}><option value="">Profesor…</option>${opts.map(n => `<option${n === cur ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select>
       <select class="cpm" name="cpm::${esc(c)}" aria-label="Clases por mes de ${esc(c)}"${on ? '' : ' hidden'}><option value="">Clases por mes…</option>${[1,2,3,4,5,6,7,8].map(n => `<option value="${n}"${String(a?.clases_mes?.[c]) === String(n) ? ' selected' : ''}>${n} por mes</option>`).join('')}</select></div>`;
-  }).join('');
+  }).join('') + tutoringRow;
 }
 
 function openForm(a){
@@ -470,8 +476,9 @@ $('#form').addEventListener('submit', async e => {
   if(editing?.datos?._propuestas) datos._propuestas = editing.datos._propuestas;
   if(editing?.datos?._tareas) datos._tareas = editing.datos._tareas;   // tareas para la próxima clase (Calendario)
   if(editing?.datos?._extras) datos._extras = editing.datos._extras;   // lo automático que ya tenía en Airtable
-  const profes_curso = {}; cursos.forEach(c => { const p = (fd.get('prof::' + c) || '').toString(); if(p) profes_curso[c] = p; });
-  const clases_mes = {}; cursos.forEach(c => { const n = parseInt(fd.get('cpm::' + c), 10); if(n >= 1 && n <= 8) clases_mes[c] = n; });
+  const conTutoring = [...cursos, TUTORING];   // Tutoring siempre se lee: es para todos
+  const profes_curso = {}; conTutoring.forEach(c => { const p = (fd.get('prof::' + c) || '').toString(); if(p) profes_curso[c] = p; });
+  const clases_mes = {}; conTutoring.forEach(c => { const n = parseInt(fd.get('cpm::' + c), 10); if(n >= 1 && n <= 8) clases_mes[c] = n; });
   const row = { nombre: v.nombre, correo: v.correo || null, whatsapp: v.whatsapp || null, datos, cursos, profes_curso, clases_mes, activo: fd.has('activo'), updated_at: new Date().toISOString() };
 
   btn.disabled = true; btn.textContent = 'Guardando…';
